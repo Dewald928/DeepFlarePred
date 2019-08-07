@@ -363,7 +363,7 @@ if __name__ == '__main__':
     for epoch in range(epochs):
         for i, (data, labels) in enumerate(train_loader):
             # Load data as a torch tensor with gradient accumulation abilities
-            data = data.view(-1, series_len, n_features).requires_grad_()
+            data = data.view(-1, series_len, n_features).requires_grad_()  # seq_dim
             # labels = labels.resize_((256,2))
 
             # Clear gradients w.r.t. parameters
@@ -391,7 +391,7 @@ if __name__ == '__main__':
                 # Iterate through test dataset
                 for data, labels in test_loader:
                     # Resize data
-                    data = data.view(-1, seq_dim, n_features)
+                    data = data.view(-1, series_len, n_features)  # seq_dim
 
                     # Forward pass only to get logits/output
                     outputs = model(data)
