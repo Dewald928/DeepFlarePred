@@ -239,22 +239,58 @@ def label_transform(data):
     encoder = LabelEncoder()
     encoder.fit(data)
     encoded_Y = encoder.transform(data)
-    converteddata = np.eye(nclass, dtype='uint8')[encoded_Y]
-    return converteddata
+    # converteddata = np.eye(nclass, dtype='uint8')[encoded_Y]
+    return encoded_Y
 
 def preprocess_customdataset(x_val, y_val):
-    n = 2
-    indices = torch.randint(0, n, size=(4, 7))
-    one_hot = torch.nn.functional.one_hot(indices, n)  # size=(4,7,n)
 
     # change format to tensors and create data set
     x_tensor = torch.tensor(x_val).type(torch.FloatTensor)
-    # y_tensor = torch.tensor(y_val).type(torch.FloatTensor)
-    y_tensor = torch.nn.functional.one_hot(torch.from_numpy(y_val), 2)
+    y_tensor = torch.tensor(y_val).type(torch.LongTensor)
+    # y_tensor = torch.nn.functional.one_hot(torch.LongTensor(y_val), 2)
 
+    datasets = {}
     datasets = CustomDataset.CustomDataset(x_tensor, y_tensor)
 
     return datasets
+
+
+class LSTMModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
+        super(LSTMModel, self).__init__()
+        # Hidden dimensions
+        self.hidden_dim = hidden_dim
+
+        # Number of hidden layers
+        self.layer_dim = layer_dim
+
+        # Building your LSTM
+        # batch_first=True causes input/output tensors to be of shape
+        # (batch_dim, seq_dim, feature_dim)
+        self.lstm = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+
+        # Readout layer
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        # Initialize hidden state with zeros
+        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_()
+
+        # Initialize cell state
+        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_()
+
+        # 28 time steps
+        # We need to detach as we are doing truncated backpropagation through time (BPTT)
+        # If we don't, we'll backprop all the way to the start even after going through another batch
+        out, (hn, cn) = self.lstm(x, (h0.detach(), c0.detach()))
+
+        # Index hidden state of last time step
+        # out.size() --> 100, 28, 100
+        # out[:, -1, :] --> 100, 100 --> just want last time step hidden states!
+        out = self.fc(out[:, -1, :])
+        # out.size() --> 100, 10
+        return out
+
 
 if __name__ == '__main__':
     flare_label = sys.argv[1]
@@ -272,7 +308,9 @@ if __name__ == '__main__':
     series_len = 10
     epochs = 7
     batch_size = 256
+    learning_rate = 1e-3
     nclass = 2
+    hidden_dim = 24
     thlistsize = 201
     thlist = np.linspace(0, 1, thlistsize)
 
@@ -296,26 +334,85 @@ if __name__ == '__main__':
     y_test_tr = label_transform(y_test_data)
 
     # ready custom dataset
-    datasets = preprocess_customdataset(X_train_data, y_train_tr)
+    datasets = {}
+    datasets['train'] = preprocess_customdataset(X_train_data, y_train_tr)
+    datasets['valid'] = preprocess_customdataset(X_valid_data, y_valid_tr)
+    datasets['test'] = preprocess_customdataset(X_test_data, y_test_tr)
 
-    # train_data.data = X_train_data
-    # train_data.targets = y_train_data
-    #
-    # train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-    #                                            batch_size=batch_size,
-    #                                            shuffle=True)
-
-    # transform y label to categorical
-
+    train_loader = torch.utils.data.DataLoader(datasets['train'], batch_size,
+                                               shuffle=False, drop_last=False)
+    valid_loader = torch.utils.data.DataLoader(datasets['valid'], batch_size,
+                                               shuffle=False, drop_last=False)
+    test_loader = torch.utils.data.DataLoader(datasets['test'], batch_size,
+                                              shuffle=False, drop_last=False)
 
     # make model
+    model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=series_len, output_dim=nclass)
 
-    #train model
+    #optimizers
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    print(len(list(model.parameters())))
+
+    for i in range(len(list(model.parameters()))):
+        print(list(model.parameters())[i].size())
+
+
+    iter = 0
+    for epoch in range(epochs):
+        for i, (data, labels) in enumerate(train_loader):
+            # Load data as a torch tensor with gradient accumulation abilities
+            data = data.view(-1, series_len, n_features).requires_grad_()
+            # labels = labels.resize_((256,2))
+
+            # Clear gradients w.r.t. parameters
+            optimizer.zero_grad()
+
+            # Forward pass to get output/logits
+            # outputs.size() --> 100, 10
+            outputs = model(data)
+
+            # Calculate Loss: softmax --> cross entropy loss
+            loss = criterion(outputs, labels)
+
+            # Getting gradients w.r.t. parameters
+            loss.backward()
+
+            # Updating parameters
+            optimizer.step()
+
+            iter += 1
+
+            if iter % 500 == 0:
+                # Calculate Accuracy         
+                correct = 0
+                total = 0
+                # Iterate through test dataset
+                for data, labels in test_loader:
+                    # Resize data
+                    data = data.view(-1, seq_dim, n_features)
+
+                    # Forward pass only to get logits/output
+                    outputs = model(data)
+
+                    # Get predictions from the maximum value
+                    _, predicted = torch.max(outputs.data, 1)
+
+                    # Total number of labels
+                    total += labels.size(0)
+
+                    # Total correct predictions
+                    correct += (predicted == labels).sum()
+
+                accuracy = 100 * correct / total
+
+                # Print Loss
+                print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, loss.item(), accuracy))
+
+
 
     #test model
-
-    print(X_train_data[0], y_train_data[0])
-
 
 
 
