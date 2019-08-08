@@ -352,8 +352,7 @@ if __name__ == '__main__':
     #optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
-    # criterion = nn.CrossEntropyLoss(weight=torch.tensor(class_weights))  # TODO weighted cross entropy
-    criterion = nn.CrossEntropyLoss()  # TODO weighted cross entropy
+    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))  # TODO weighted cross entropy
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     print(len(list(model.parameters())))
