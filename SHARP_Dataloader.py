@@ -254,6 +254,15 @@ def preprocess_customdataset(x_val, y_val):
 
     return datasets
 
+def get_all_preds(model, loader):
+    all_preds = torch.tensor([])
+    for i, (inputs, labels) in enumerate(loader):
+
+        preds = model(inputs)
+        all_preds = torch.cat((all_preds, preds), dim=0)
+
+        return all_preds
+
 
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
@@ -306,7 +315,7 @@ if __name__ == '__main__':
     start_feature = 5
     mask_value = 0
     series_len = 10
-    epochs = 7
+    epochs = 1
     batch_size = 256
     learning_rate = 1e-3
     nclass = 2
@@ -350,7 +359,7 @@ if __name__ == '__main__':
     model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=series_len, output_dim=nclass)
 
     #optimizers
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss()  # TODO weighted cross entropy
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     print(len(list(model.parameters())))
@@ -360,18 +369,20 @@ if __name__ == '__main__':
 
 
     iter = 0
+    print("Training Network...")
     for epoch in range(epochs):
-        for i, (data, labels) in enumerate(train_loader):
-            # Load data as a torch tensor with gradient accumulation abilities
-            data = data.view(-1, series_len, n_features).requires_grad_()  # seq_dim
-            # labels = labels.resize_((256,2))
+        for i, (inputs, labels) in enumerate(train_loader):
+            # Load inputs as a torch tensor with gradient accumulation abilities
+            inputs = inputs.view(-1, series_len, n_features).requires_grad_()  # seq_dim
 
             # Clear gradients w.r.t. parameters
             optimizer.zero_grad()
 
             # Forward pass to get output/logits
             # outputs.size() --> 100, 10
-            outputs = model(data)
+            outputs = model(inputs)
+            all_outputs = torch.tensor([])
+            all_outputs = torch.cat((all_outputs, outputs), dim=0)
 
             # Calculate Loss: softmax --> cross entropy loss
             loss = criterion(outputs, labels)
@@ -384,17 +395,17 @@ if __name__ == '__main__':
 
             iter += 1
 
-            if iter % 500 == 0:
+            if iter % 100 == 0:
                 # Calculate Accuracy         
                 correct = 0
                 total = 0
-                # Iterate through test dataset
-                for data, labels in test_loader:
-                    # Resize data
-                    data = data.view(-1, series_len, n_features)  # seq_dim
+                # Iterate through test inputsset
+                for inputs, labels in test_loader:
+                    # Resize inputs
+                    inputs = inputs.view(-1, series_len, n_features)  # seq_dim
 
                     # Forward pass only to get logits/output
-                    outputs = model(data)
+                    outputs = model(inputs)
 
                     # Get predictions from the maximum value
                     _, predicted = torch.max(outputs.data, 1)
@@ -410,9 +421,59 @@ if __name__ == '__main__':
                 # Print Loss
                 print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, loss.item(), accuracy))
 
+    # test model
+    print('Test model:')
+    # prediction_loader = torch.utils.data.DataLoader(datasets['train'], batch_size=batch_size)
+    # train_preds = get_all_preds(model, prediction_loader)
 
+    # get confusion matrix
+    confusion_matrix = torch.zeros(nclass, nclass)
+    with torch.no_grad():
+        for i, (inputs, classes) in enumerate(datasets['train']):
+            inputs = inputs.view(-1, series_len, n_features).requires_grad_()
+            # classes = classes.to(device)
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            for t, p in zip(classes.view(-1), preds.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
 
-    #test model
+    print(confusion_matrix)
+    # per class accuracy
+    print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
+    # determine skill scores
+    confusion_matrix = confusion_matrix.numpy()
+    N = np.sum(confusion_matrix)
+
+    recall = np.zeros(nclass)
+    precision = np.zeros(nclass)
+    accuracy = np.zeros(nclass)
+    bacc = np.zeros(nclass)
+    tss = np.zeros(nclass)
+    hss = np.zeros(nclass)
+    tp = np.zeros(nclass)
+    fn = np.zeros(nclass)
+    fp = np.zeros(nclass)
+    tn = np.zeros(nclass)
+    for p in range(nclass):
+        tp[p] = confusion_matrix[p][p]
+        for q in range(nclass):
+            if q != p:
+                fn[p] += confusion_matrix[p][q]
+                fp[p] += confusion_matrix[q][p]
+        tn[p] = N - tp[p] - fn[p] - fp[p]
+
+        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
+        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
+        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
+        bacc[p] = round(
+            0.5 * (float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(tn[p] + fp[p])), 3)
+        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p])
+                       / float((tp[p] + fn[p]) * (fn[p] + tn[p])
+                               + (tp[p] + fp[p]) * (fp[p] + tn[p])), 3)
+        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(fp[p]) / float(
+            fp[p] + tn[p] + 1e-6)), 3)
+
+    print('Finished')
 
 
