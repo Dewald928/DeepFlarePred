@@ -254,15 +254,6 @@ def preprocess_customdataset(x_val, y_val):
 
     return datasets
 
-def get_all_preds(model, loader):
-    all_preds = torch.tensor([])
-    for i, (inputs, labels) in enumerate(loader):
-
-        preds = model(inputs)
-        all_preds = torch.cat((all_preds, preds), dim=0)
-
-        return all_preds
-
 
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
@@ -315,7 +306,7 @@ if __name__ == '__main__':
     start_feature = 5
     mask_value = 0
     series_len = 10
-    epochs = 1
+    epochs = 7
     batch_size = 256
     learning_rate = 1e-3
     nclass = 2
@@ -359,6 +350,9 @@ if __name__ == '__main__':
     model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=series_len, output_dim=nclass)
 
     #optimizers
+    class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
+
+    # criterion = nn.CrossEntropyLoss(weight=torch.tensor(class_weights))  # TODO weighted cross entropy
     criterion = nn.CrossEntropyLoss()  # TODO weighted cross entropy
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -423,13 +417,11 @@ if __name__ == '__main__':
 
     # test model
     print('Test model:')
-    # prediction_loader = torch.utils.data.DataLoader(datasets['train'], batch_size=batch_size)
-    # train_preds = get_all_preds(model, prediction_loader)
 
     # get confusion matrix
     confusion_matrix = torch.zeros(nclass, nclass)
     with torch.no_grad():
-        for i, (inputs, classes) in enumerate(datasets['train']):
+        for i, (inputs, classes) in enumerate(train_loader):
             inputs = inputs.view(-1, series_len, n_features).requires_grad_()
             # classes = classes.to(device)
             outputs = model(inputs)
@@ -442,6 +434,7 @@ if __name__ == '__main__':
     print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     # determine skill scores
+    print('Calculating skill scores: ')
     confusion_matrix = confusion_matrix.numpy()
     N = np.sum(confusion_matrix)
 
@@ -471,8 +464,7 @@ if __name__ == '__main__':
         hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p])
                        / float((tp[p] + fn[p]) * (fn[p] + tn[p])
                                + (tp[p] + fp[p]) * (fp[p] + tn[p])), 3)
-        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(fp[p]) / float(
-            fp[p] + tn[p] + 1e-6)), 3)
+        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
 
     print('Finished')
 
