@@ -1,22 +1,14 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
-from sklearn.metrics import confusion_matrix
 import sys
 import numpy as np
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.optim import lr_scheduler
-import torchvision
-from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
-import time
-import os
-import copy
 
-import CustomDataset
+from Test_Scripts import CustomDataset
+
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
     df = pd.read_csv(datafile)
@@ -352,7 +344,7 @@ if __name__ == '__main__':
     #optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
-    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))  # TODO weighted cross entropy
+    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     print(len(list(model.parameters())))
@@ -420,7 +412,7 @@ if __name__ == '__main__':
     # get confusion matrix
     confusion_matrix = torch.zeros(nclass, nclass)
     with torch.no_grad():
-        for i, (inputs, classes) in enumerate(train_loader):
+        for i, (inputs, classes) in enumerate(valid_loader):
             inputs = inputs.view(-1, series_len, n_features).requires_grad_()
             # classes = classes.to(device)
             outputs = model(inputs)
