@@ -1,0 +1,24 @@
+description: random sweep for my little cnn
+
+# Training script to run
+program: WNBtestscript.py
+
+# Method can be bayes, random, grid
+method: bayes
+
+# Metric to optimize
+metric:
+  name: Test_Accuracy
+  goal: minimize
+
+# Should we early terminate runs
+early_terminate:
+  type: envelope
+
+# Parameters to search over
+parameters:
+  lr:
+    min: 0.001
+    max: 0.1
+  epochs:
+    value: 10

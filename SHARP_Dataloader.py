@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 
 from Test_Scripts import CustomDataset
+import wandb
 
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
@@ -285,6 +286,7 @@ class LSTMModel(nn.Module):
 
 
 if __name__ == '__main__':
+    wandb.init(project='Liu_pytorch')
     flare_label = sys.argv[1]
     filepath = './Data/Lui/' + flare_label + '/'
     num_of_fold = 10
@@ -297,7 +299,7 @@ if __name__ == '__main__':
         n_features = 14
     start_feature = 5
     mask_value = 0
-    series_len = 10
+    series_len = 5
     epochs = 7
     batch_size = 256
     learning_rate = 1e-3
@@ -340,6 +342,7 @@ if __name__ == '__main__':
 
     # make model
     model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=series_len, output_dim=nclass)
+    wandb.watch(model, log='all')
 
     #optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
@@ -405,6 +408,9 @@ if __name__ == '__main__':
 
                 # Print Loss
                 print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, loss.item(), accuracy))
+                wandb.log({
+                    "Validation_Accuracy": accuracy,
+                    "Validation_Loss": loss.item()})
 
     # test model
     print('Test model:')
@@ -456,6 +462,22 @@ if __name__ == '__main__':
                        / float((tp[p] + fn[p]) * (fn[p] + tn[p])
                                + (tp[p] + fp[p]) * (fp[p] + tn[p])), 3)
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
+
+    print("tss: " + str(tss))
+    print("hss: " + str(hss))
+    print("bacc: "+str(bacc))
+    print("accuracy: " + str(accuracy))
+    print("precision: " + str(precision))
+    print("recall: " + str(recall))
+
+    wandb.log({
+        "Test_Accuracy": accuracy,
+        "TSS": tss,
+        "HSS": hss,
+        "BACC": bacc,
+        "Test_Precision": precision,
+        "Test_Recall": recall})
+
 
     print('Finished')
 
