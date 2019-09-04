@@ -55,7 +55,7 @@ class Trainer():
                     correct = 0
                     total = 0
                     # Load inputs as a torch tensor with gradient accumulation abilities
-                    inputs = inputs.view(-1, series_len, n_features).requires_grad_()  # seq_dim
+                    inputs = inputs.view(-1, self.model.series_len, self.model.n_features).requires_grad_()  # seq_dim
 
                     # zero the parameter gradients
                     self.optimizer.zero_grad()

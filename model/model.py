@@ -2,13 +2,16 @@ import torch.nn as nn
 import torch
 
 class LSTMModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
+    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim, series_len, n_features):
         super(LSTMModel, self).__init__()
         # Hidden dimensions
         self.hidden_dim = hidden_dim
 
         # Number of hidden layers
         self.layer_dim = layer_dim
+
+        self.series_len = series_len
+        self.n_features = n_features
 
         # Building your LSTM
         # batch_first=True causes input/output tensors to be of shape

@@ -32,7 +32,7 @@ def main():
     mask_value = 0
     series_len = 7
     nclass = 2
-    hidden_dim = 24
+    hidden_dim = 22
     thlistsize = 201
     thlist = np.linspace(0, 1, thlistsize)
 
@@ -80,7 +80,11 @@ def main():
                                          mask_value, args.batch_size)
 
     # Build model architecture
-    model = model_arch.LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=series_len, output_dim=nclass)
+    model = model_arch.LSTMModel(n_features, hidden_dim=hidden_dim,
+                                 layer_dim=series_len, output_dim=nclass,
+                                 series_len=series_len,
+                                 n_features=n_features)
+
     wandb.watch(model, log='all')
 
     # Build optimizer
@@ -98,10 +102,12 @@ def main():
 
     # Train and Validate Model
     trainer = Trainer.Trainer(model, criterion, optimizer,
-                              dataloaders=dataloader,
+                              dataloader=dataloader,
                               scheduler=None,
                               device=device,
                               args=args)
+
+    trainer.train_model()
 
 
 
