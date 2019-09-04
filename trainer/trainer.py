@@ -56,7 +56,7 @@ class Trainer():
                 inputs, target = inputs.to(device), target.to(device)
                 output = model(inputs)
                 # sum up batch loss
-                test_loss += self.criterion(output, target, reduction='sum').item()
+                test_loss += self.criterion(output, target).item()
                 # get the index of the max log-probability
                 pred = output.max(1, keepdim=True)[1]
                 correct += pred.eq(target.view_as(pred)).sum().item()
