@@ -332,7 +332,7 @@ class LSTMModel(nn.Module):
 if __name__ == '__main__':
     wandb.init(project='Liu_pytorch')
     flare_label = sys.argv[1]
-    filepath = './Data/Lui/' + flare_label + '/'
+    filepath = './Data/Liu/' + flare_label + '/'
     num_of_fold = 10
     n_features = 0
     if flare_label == 'M5':
