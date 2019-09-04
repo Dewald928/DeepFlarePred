@@ -247,6 +247,50 @@ def preprocess_customdataset(x_val, y_val):
 
     return datasets
 
+def calculate_metrics(confusion_matrix):
+    # determine skill scores
+    print('Calculating skill scores: ')
+    confusion_matrix = confusion_matrix.numpy()
+    N = np.sum(confusion_matrix)
+
+    recall = np.zeros(nclass)
+    precision = np.zeros(nclass)
+    accuracy = np.zeros(nclass)
+    bacc = np.zeros(nclass)
+    tss = np.zeros(nclass)
+    hss = np.zeros(nclass)
+    tp = np.zeros(nclass)
+    fn = np.zeros(nclass)
+    fp = np.zeros(nclass)
+    tn = np.zeros(nclass)
+    for p in range(nclass):
+        tp[p] = confusion_matrix[p][p]
+        for q in range(nclass):
+            if q != p:
+                fn[p] += confusion_matrix[p][q]
+                fp[p] += confusion_matrix[q][p]
+        tn[p] = N - tp[p] - fn[p] - fp[p]
+
+        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
+        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
+        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
+        bacc[p] = round(
+            0.5 * (float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(tn[p] + fp[p])), 3)
+        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p])
+                       / float((tp[p] + fn[p]) * (fn[p] + tn[p])
+                               + (tp[p] + fp[p]) * (fp[p] + tn[p])), 3)
+        tss[p] = round(
+            (float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
+
+    print("tss: " + str(tss))
+    print("hss: " + str(hss))
+    print("bacc: " + str(bacc))
+    print("accuracy: " + str(accuracy))
+    print("precision: " + str(precision))
+    print("recall: " + str(recall))
+
+    return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
+
 
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
@@ -299,8 +343,8 @@ if __name__ == '__main__':
         n_features = 14
     start_feature = 5
     mask_value = 0
-    series_len = 5
-    epochs = 7
+    series_len = 7
+    epochs = 10
     batch_size = 256
     learning_rate = 1e-3
     nclass = 2
@@ -357,9 +401,12 @@ if __name__ == '__main__':
 
 
     iter = 0
+    confusion_matrix = torch.zeros(nclass, nclass)
     print("Training Network...")
     for epoch in range(epochs):
         for i, (inputs, labels) in enumerate(train_loader):
+            correct = 0
+            total = 0
             # Load inputs as a torch tensor with gradient accumulation abilities
             inputs = inputs.view(-1, series_len, n_features).requires_grad_()  # seq_dim
 
@@ -387,6 +434,7 @@ if __name__ == '__main__':
                 # Calculate Accuracy         
                 correct = 0
                 total = 0
+                confusion_matrix = torch.zeros(nclass, nclass)
                 # Iterate through test inputsset
                 for inputs, labels in test_loader:
                     # Resize inputs
@@ -404,12 +452,27 @@ if __name__ == '__main__':
                     # Total correct predictions
                     correct += (predicted == labels).sum()
 
-                accuracy = 100 * correct / total
+                    for t, p in zip(labels.view(-1), predicted.view(-1)):
+                        confusion_matrix[t.long(), p.long()] += 1
+
+                # validation conf matrix
+                print(confusion_matrix)
+                # per class accuracy
+                print(confusion_matrix.diag() / confusion_matrix.sum(1))
+
+                recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
+
+                wandb.log({
+                    "Validation_Accuracy": accuracy[0],
+                    "Validation_TSS": tss[0],
+                    "Validation_HSS": hss[0],
+                    "Validation_BACC": bacc[0],
+                    "Validation_Precision": precision[0],
+                    "Validation_Recall": recall[0]})
 
                 # Print Loss
                 print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, loss.item(), accuracy))
                 wandb.log({
-                    "Validation_Accuracy": accuracy,
                     "Validation_Loss": loss.item()})
 
     # test model
@@ -433,50 +496,16 @@ if __name__ == '__main__':
     # determine skill scores
     print('Calculating skill scores: ')
     confusion_matrix = confusion_matrix.numpy()
-    N = np.sum(confusion_matrix)
 
-    recall = np.zeros(nclass)
-    precision = np.zeros(nclass)
-    accuracy = np.zeros(nclass)
-    bacc = np.zeros(nclass)
-    tss = np.zeros(nclass)
-    hss = np.zeros(nclass)
-    tp = np.zeros(nclass)
-    fn = np.zeros(nclass)
-    fp = np.zeros(nclass)
-    tn = np.zeros(nclass)
-    for p in range(nclass):
-        tp[p] = confusion_matrix[p][p]
-        for q in range(nclass):
-            if q != p:
-                fn[p] += confusion_matrix[p][q]
-                fp[p] += confusion_matrix[q][p]
-        tn[p] = N - tp[p] - fn[p] - fp[p]
-
-        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
-        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
-        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
-        bacc[p] = round(
-            0.5 * (float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(tn[p] + fp[p])), 3)
-        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p])
-                       / float((tp[p] + fn[p]) * (fn[p] + tn[p])
-                               + (tp[p] + fp[p]) * (fp[p] + tn[p])), 3)
-        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
-
-    print("tss: " + str(tss))
-    print("hss: " + str(hss))
-    print("bacc: "+str(bacc))
-    print("accuracy: " + str(accuracy))
-    print("precision: " + str(precision))
-    print("recall: " + str(recall))
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
 
     wandb.log({
-        "Test_Accuracy": accuracy,
-        "TSS": tss,
-        "HSS": hss,
-        "BACC": bacc,
-        "Test_Precision": precision,
-        "Test_Recall": recall})
+        "Test_Accuracy": accuracy[0],
+        "Test_TSS": tss[0],
+        "Test_HSS": hss[0],
+        "Test_BACC": bacc[0],
+        "Test_Precision": precision[0],
+        "Test_Recall": recall[0]})
 
 
     print('Finished')
