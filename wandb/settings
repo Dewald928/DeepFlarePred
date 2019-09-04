@@ -1,4 +1,6 @@
 [default]
-entity: dewald123
-project: test-project
-base_url: https://api.wandb.ai
+entity = dewald123
+project = test-project
+base_url = https://api.wandb.ai
+disabled = true
+

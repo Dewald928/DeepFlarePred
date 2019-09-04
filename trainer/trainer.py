@@ -4,18 +4,29 @@ import torch
 
 
 class Trainer():
-    def __init__(self, model, criterion, optimizer, scheduler, dataloaders, device, args):
+    def __init__(self, model, criterion, optimizer, scheduler, dataloader, device, args):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.dataloaders = dataloaders
+        self.dataloader = dataloader
         self.device = device
         self.args = args
         self.epochs = self.args.epochs
 
+        self.train_len = len(dataloader.y_train_data)
+        self.val_len = len(dataloader.y_test_data)
 
+        self.dataset_sizes = {
+            'train': self.train_len,
+            'val': self.val_len,
+        }
 
+        self.dataloaders_cat = {
+            'train': self.dataloader.train_loader,
+            'val': self.dataloader.valid_loader,
+            # 'test': test_loader
+        }
 
     def train_model(self):
         since = time.time()
@@ -40,11 +51,11 @@ class Trainer():
                 running_corrects = 0
 
                 # Iterate over data.
-                for i, (inputs, labels) in enumerate(self.dataloaders[phase]):
-                    if use_cuda and torch.cuda.is_available():
-                        inputs = inputs.reshape(-1, 28 * 28).to(self.device)  # remove reshape if cnn
-                        # inputs = inputs.to(device)
-                        labels = labels.to(self.device)
+                for i, (inputs, labels) in enumerate(self.dataloaders_cat[phase]):
+                    correct = 0
+                    total = 0
+                    # Load inputs as a torch tensor with gradient accumulation abilities
+                    inputs = inputs.view(-1, series_len, n_features).requires_grad_()  # seq_dim
 
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
@@ -65,8 +76,8 @@ class Trainer():
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.sum(preds == labels.data)
 
-                epoch_loss = running_loss / dataset_sizes[phase]
-                epoch_acc = running_corrects.double() / dataset_sizes[phase]
+                epoch_loss = running_loss / self.dataset_sizes[phase]
+                epoch_acc = running_corrects.double() / self.dataset_sizes[phase]
 
                 print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                     phase, epoch_loss, epoch_acc))
@@ -80,7 +91,7 @@ class Trainer():
                 if phase == 'val' and epoch_acc > best_acc:
                     best_acc = epoch_acc
                     selected_epoch = epoch
-                    best_model_wts = copy.deepcopy(model.state_dict())
+                    best_model_wts = copy.deepcopy(self.model.state_dict())
 
         time_elapsed = time.time() - since
         print('Training complete in {:.0f}m {:.0f}s'.format(
@@ -90,4 +101,3 @@ class Trainer():
 
         # load best model weights
         # model.load_state_dict(best_model_wts)     #comment out if not the best valid set is chosen
-        return model, train_acc, val_acc

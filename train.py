@@ -1,10 +1,11 @@
-from __future__ import print_function
+# from __future__ import print_function
 import argparse
 
 from data_loader import data_loaders
 import model.model as model_arch
 import model.loss as model_loss
 import model.metrics as model_metric
+import trainer.trainer as Trainer
 
 import torch
 import torch.nn as nn
@@ -95,13 +96,12 @@ def main():
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
-    dataloaders = {
-        'train': data_loaders.train_loader,
-        'val': dataloader.valid_loader,
-    }
-
     # Train and Validate Model
-
+    trainer = Trainer.Trainer(model, criterion, optimizer,
+                              dataloaders=dataloader,
+                              scheduler=None,
+                              device=device,
+                              args=args)
 
 
 
