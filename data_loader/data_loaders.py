@@ -55,11 +55,11 @@ class DataLoader(DataLoader):
         self.datasets['valid'] = preprocess_customdataset(self.X_valid_data, self.y_valid_tr)
         self.datasets['test'] = preprocess_customdataset(self.X_test_data, self.y_test_tr)
 
-        train_loader = torch.utils.data.DataLoader(self.datasets['train'], batch_size,
+        self.train_loader = torch.utils.data.DataLoader(self.datasets['train'], batch_size,
                                                    shuffle=False, drop_last=False)
-        valid_loader = torch.utils.data.DataLoader(self.datasets['valid'], batch_size,
+        self.valid_loader = torch.utils.data.DataLoader(self.datasets['valid'], batch_size,
                                                    shuffle=False, drop_last=False)
-        test_loader = torch.utils.data.DataLoader(self.datasets['test'], batch_size,
+        self.test_loader = torch.utils.data.DataLoader(self.datasets['test'], batch_size,
                                                   shuffle=False, drop_last=False)
 
 def load_lstm_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):

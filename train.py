@@ -95,6 +95,16 @@ def main():
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
+    dataloaders = {
+        'train': data_loaders.train_loader,
+        'val': dataloader.valid_loader,
+    }
+
+    # Train and Validate Model
+
+
+
+
 
 
 
