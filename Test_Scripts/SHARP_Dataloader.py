@@ -329,6 +329,69 @@ class LSTMModel(nn.Module):
         return out
 
 
+def train(model, device, train_loader, optimizer, epoch, criterion):
+    model.train()
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+        _, predicted = torch.max(output.data, 1)
+        if batch_idx % log_interval == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                100. * batch_idx / len(train_loader), loss.item()))
+
+
+def test(model, device, test_loader, criterion):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    confusion_matrix = torch.zeros(nclass, nclass)
+
+    example_images = []
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            # sum up batch loss
+            test_loss += criterion(output, target).item()
+            # get the index of the max log-probability
+            _, predicted = torch.max(output.data, 1)
+            correct += predicted.eq(target.view_as(predicted)).sum().item()
+            example_images.append(wandb.Image(
+                data[0], caption="Pred: {} Truth: {}".format(predicted[0].item(), target[0])))
+
+            for t, p in zip(target.view(-1), predicted.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
+
+    test_loss /= len(test_loader.dataset)
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / len(test_loader.dataset)))
+
+    # validation conf matrix
+    print(confusion_matrix)
+    # per class accuracy
+    print(confusion_matrix.diag() / confusion_matrix.sum(1))
+
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
+
+    wandb.log({
+        "Validation_Accuracy": accuracy[0],
+        "Validation_TSS": tss[0],
+        "Validation_HSS": hss[0],
+        "Validation_BACC": bacc[0],
+        "Validation_Precision": precision[0],
+        "Validation_Recall": recall[0],
+        "Validation_Loss": test_loss})
+
+    # Print Loss
+    print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, test_loss, accuracy))
+
+
 if __name__ == '__main__':
     wandb.init(project='Liu_pytorch')
     flare_label = sys.argv[1]
@@ -344,13 +407,15 @@ if __name__ == '__main__':
     start_feature = 5
     mask_value = 0
     series_len = 7
-    epochs = 10
+    epochs = 15
     batch_size = 256
     learning_rate = 1e-3
     nclass = 2
     hidden_dim = 24
     thlistsize = 201
     thlist = np.linspace(0, 1, thlistsize)
+    log_interval = 10
+    use_cuda = not True and torch.cuda.is_available()
 
     X_train_data, y_train_data = load_data(datafile=filepath + 'normalized_training.csv',
                                            flare_label=flare_label, series_len=series_len,
@@ -388,6 +453,8 @@ if __name__ == '__main__':
     model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=series_len, output_dim=nclass)
     wandb.watch(model, log='all')
 
+    device = torch.device("cuda" if use_cuda else "cpu")
+
     #optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
@@ -403,109 +470,115 @@ if __name__ == '__main__':
     iter = 0
     confusion_matrix = torch.zeros(nclass, nclass)
     print("Training Network...")
+
     for epoch in range(epochs):
-        for i, (inputs, labels) in enumerate(train_loader):
-            correct = 0
-            total = 0
-            # Load inputs as a torch tensor with gradient accumulation abilities
-            inputs = inputs.view(-1, series_len, n_features).requires_grad_()  # seq_dim
+        train(model, device, train_loader, optimizer, epoch, criterion)
+        test(model, device, test_loader, criterion)
 
-            # Clear gradients w.r.t. parameters
-            optimizer.zero_grad()
 
-            # Forward pass to get output/logits
-            # outputs.size() --> 100, 10
-            outputs = model(inputs)
-            all_outputs = torch.tensor([])
-            all_outputs = torch.cat((all_outputs, outputs), dim=0)
-
-            # Calculate Loss: softmax --> cross entropy loss
-            loss = criterion(outputs, labels)
-
-            # Getting gradients w.r.t. parameters
-            loss.backward()
-
-            # Updating parameters
-            optimizer.step()
-
-            iter += 1
-
-            if iter % 100 == 0:
-                # Calculate Accuracy         
-                correct = 0
-                total = 0
-                confusion_matrix = torch.zeros(nclass, nclass)
-                # Iterate through test inputsset
-                for inputs, labels in test_loader:
-                    # Resize inputs
-                    inputs = inputs.view(-1, series_len, n_features)  # seq_dim
-
-                    # Forward pass only to get logits/output
-                    outputs = model(inputs)
-
-                    # Get predictions from the maximum value
-                    _, predicted = torch.max(outputs.data, 1)
-
-                    # Total number of labels
-                    total += labels.size(0)
-
-                    # Total correct predictions
-                    correct += (predicted == labels).sum()
-
-                    for t, p in zip(labels.view(-1), predicted.view(-1)):
-                        confusion_matrix[t.long(), p.long()] += 1
-
-                # validation conf matrix
-                print(confusion_matrix)
-                # per class accuracy
-                print(confusion_matrix.diag() / confusion_matrix.sum(1))
-
-                recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
-
-                wandb.log({
-                    "Validation_Accuracy": accuracy[0],
-                    "Validation_TSS": tss[0],
-                    "Validation_HSS": hss[0],
-                    "Validation_BACC": bacc[0],
-                    "Validation_Precision": precision[0],
-                    "Validation_Recall": recall[0]})
-
-                # Print Loss
-                print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, loss.item(), accuracy))
-                wandb.log({
-                    "Validation_Loss": loss.item()})
-
-    # test model
-    print('Test model:')
-
-    # get confusion matrix
-    confusion_matrix = torch.zeros(nclass, nclass)
-    with torch.no_grad():
-        for i, (inputs, classes) in enumerate(valid_loader):
-            inputs = inputs.view(-1, series_len, n_features).requires_grad_()
-            # classes = classes.to(device)
-            outputs = model(inputs)
-            _, preds = torch.max(outputs, 1)
-            for t, p in zip(classes.view(-1), preds.view(-1)):
-                confusion_matrix[t.long(), p.long()] += 1
-
-    print(confusion_matrix)
-    # per class accuracy
-    print(confusion_matrix.diag() / confusion_matrix.sum(1))
-
-    # determine skill scores
-    print('Calculating skill scores: ')
-    confusion_matrix = confusion_matrix.numpy()
-
-    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
-
-    wandb.log({
-        "Test_Accuracy": accuracy[0],
-        "Test_TSS": tss[0],
-        "Test_HSS": hss[0],
-        "Test_BACC": bacc[0],
-        "Test_Precision": precision[0],
-        "Test_Recall": recall[0]})
+    # for epoch in range(epochs):
+    #     for i, (inputs, labels) in enumerate(train_loader):
+    #         correct = 0
+    #         total = 0
+    #         # Load inputs as a torch tensor with gradient accumulation abilities
+    #         inputs = inputs.view(-1, series_len, n_features).requires_grad_()  # seq_dim
+    #
+    #         # Clear gradients w.r.t. parameters
+    #         optimizer.zero_grad()
+    #
+    #         # Forward pass to get output/logits
+    #         # outputs.size() --> 100, 10
+    #         outputs = model(inputs)
+    #         all_outputs = torch.tensor([])
+    #         all_outputs = torch.cat((all_outputs, outputs), dim=0)
+    #
+    #         # Calculate Loss: softmax --> cross entropy loss
+    #         loss = criterion(outputs, labels)
+    #
+    #         # Getting gradients w.r.t. parameters
+    #         loss.backward()
+    #
+    #         # Updating parameters
+    #         optimizer.step()
+    #
+    #         iter += 1
+    #
+    #         if iter % 100 == 0:
+    #             # Calculate Accuracy
+    #             correct = 0
+    #             total = 0
+    #             confusion_matrix = torch.zeros(nclass, nclass)
+    #             # Iterate through test inputsset
+    #             for inputs, labels in test_loader:
+    #                 # Resize inputs
+    #                 inputs = inputs.view(-1, series_len, n_features)  # seq_dim
+    #
+    #                 # Forward pass only to get logits/output
+    #                 outputs = model(inputs)
+    #
+    #                 # Get predictions from the maximum value
+    #                 _, predicted = torch.max(outputs.data, 1)
+    #
+    #                 # Total number of labels
+    #                 total += labels.size(0)
+    #
+    #                 # Total correct predictions
+    #                 correct += (predicted == labels).sum()
+    #
+    #                 for t, p in zip(labels.view(-1), predicted.view(-1)):
+    #                     confusion_matrix[t.long(), p.long()] += 1
+    #
+    #             # validation conf matrix
+    #             print(confusion_matrix)
+    #             # per class accuracy
+    #             print(confusion_matrix.diag() / confusion_matrix.sum(1))
+    #
+    #             recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
+    #
+    #             wandb.log({
+    #                 "Validation_Accuracy": accuracy[0],
+    #                 "Validation_TSS": tss[0],
+    #                 "Validation_HSS": hss[0],
+    #                 "Validation_BACC": bacc[0],
+    #                 "Validation_Precision": precision[0],
+    #                 "Validation_Recall": recall[0]})
+    #
+    #             # Print Loss
+    #             print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, loss.item(), accuracy))
+    #             wandb.log({
+    #                 "Validation_Loss": loss.item()})
+    #
+    # # test model
+    # print('Test model:')
+    #
+    # # get confusion matrix
+    # confusion_matrix = torch.zeros(nclass, nclass)
+    # with torch.no_grad():
+    #     for i, (inputs, classes) in enumerate(valid_loader):
+    #         inputs = inputs.view(-1, series_len, n_features).requires_grad_()
+    #         # classes = classes.to(device)
+    #         outputs = model(inputs)
+    #         _, preds = torch.max(outputs, 1)
+    #         for t, p in zip(classes.view(-1), preds.view(-1)):
+    #             confusion_matrix[t.long(), p.long()] += 1
+    #
+    # print(confusion_matrix)
+    # # per class accuracy
+    # print(confusion_matrix.diag() / confusion_matrix.sum(1))
+    #
+    # # determine skill scores
+    # print('Calculating skill scores: ')
+    # confusion_matrix = confusion_matrix.numpy()
+    #
+    # recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
+    #
+    # wandb.log({
+    #     "Test_Accuracy": accuracy[0],
+    #     "Test_TSS": tss[0],
+    #     "Test_HSS": hss[0],
+    #     "Test_BACC": bacc[0],
+    #     "Test_Precision": precision[0],
+    #     "Test_Recall": recall[0]})
 
 
     print('Finished')
