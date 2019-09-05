@@ -2,7 +2,7 @@ import time
 import copy
 import torch
 import wandb
-
+from torchsummary import summary
 
 class Trainer():
     def __init__(self, model, criterion, optimizer, scheduler, dataloader, device, args):
@@ -29,32 +29,49 @@ class Trainer():
             # 'test': test_loader
         }
 
-    def train(self, args, model, device, train_loader, optimizer, epoch):
-        model.train()
-        for batch_idx, (inputs, target) in enumerate(train_loader):
-            inputs = inputs.view(-1, model.series_len, model.n_features).requires_grad_()  # seq_dim
-            inputs, target = inputs.to(device), target.to(device)
-            optimizer.zero_grad()
-            output = model(inputs)
+    def train(self, args, epoch):
+        self.model.train()
+        train_loss = 0
+        correct = 0
+
+        for batch_idx, (inputs, target) in enumerate(self.dataloader.train_loader):
+            inputs = inputs.view(-1, self.model.series_len, self.model.n_features).requires_grad_()  # seq_dim
+            inputs, target = inputs.to(self.device), target.to(self.device)
+            self.optimizer.zero_grad()
+            output = self.model(inputs)
             loss = self.criterion(output, target)
+
+            a = list(self.model.parameters())[0].clone()
             loss.backward()
-            optimizer.step()
+            self.optimizer.step()
+            b = list(self.model.parameters())[0].clone()
+            torch.equal(a.data, b.data)
+
+            # sum up batch loss
+            train_loss += loss.item()
+            # get the index of the max log-probability
+            pred = output.max(1, keepdim=True)[1]
+            correct += pred.eq(target.view_as(pred)).sum().item()
             if batch_idx % args.log_interval == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * len(inputs), len(train_loader.dataset),
-                           100. * batch_idx / len(train_loader), loss.item()))
+                    epoch, batch_idx * len(inputs), len(self.dataloader.train_loader.dataset),
+                           100. * batch_idx / len(self.dataloader.train_loader), loss.item()))
+        train_loss /= len(self.dataloader.train_loader.dataset)
+        wandb.log({
+            "Train_Accuracy": 100. * correct / len(self.dataloader.train_loader.dataset),
+            "Train_Loss": train_loss})
 
-    def validate(self, args, model, device, test_loader):
-        model.eval()
+    def validate(self, args):
+        self.model.eval()
         test_loss = 0
         correct = 0
 
         example_images = []
         with torch.no_grad():
-            for inputs, target in test_loader:
-                inputs = inputs.view(-1, model.series_len, model.n_features).requires_grad_()  # seq_dim
-                inputs, target = inputs.to(device), target.to(device)
-                output = model(inputs)
+            for inputs, target in self.dataloader.valid_loader:
+                inputs = inputs.view(-1, self.model.series_len, self.model.n_features).requires_grad_()  # seq_dim
+                inputs, target = inputs.to(self.device), target.to(self.device)
+                output = self.model(inputs)
                 # sum up batch loss
                 test_loss += self.criterion(output, target).item()
                 # get the index of the max log-probability
@@ -63,21 +80,21 @@ class Trainer():
                 example_images.append(wandb.Image(
                     inputs[0], caption="Pred: {} Truth: {}".format(pred[0].item(), target[0])))
 
-        test_loss /= len(test_loader.dataset)
-        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-            test_loss, correct, len(test_loader.dataset),
-            100. * correct / len(test_loader.dataset)))
+        test_loss /= len(self.dataloader.valid_loader.dataset)
+        print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            test_loss, correct, len(self.dataloader.valid_loader.dataset),
+            100. * correct / len(self.dataloader.valid_loader.dataset)))
         wandb.log({
             "Examples": example_images,
-            "Test_Accuracy": 100. * correct / len(test_loader.dataset),
-            "Test_Loss": test_loss})
+            "Validation_Accuracy": 100. * correct / len(self.dataloader.valid_loader.dataset),
+            "Validation_Loss": test_loss})
 
     def train_model(self):
         since = time.time()
 
         for epoch in range(1, self.args.epochs + 1):
-            self.train(self.args, self.model, self.device, self.dataloader.train_loader, self.optimizer, epoch)
-            self.validate(self.args, self.model, self.device, self.dataloader.test_loader)
+            self.train(self.args,  epoch)
+            self.validate(self.args)
 
 
         # use_cuda = True
