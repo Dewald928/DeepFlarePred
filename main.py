@@ -9,7 +9,6 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
 import sys
 import numpy as np
-import argparse
 
 import torch
 import torch.nn as nn
@@ -346,7 +345,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         loss.backward()
         optimizer.step()
         _, predicted = torch.max(output.data, 1)
-        if batch_idx % args.log_interval == 0:
+        if batch_idx % log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
@@ -400,64 +399,45 @@ def validate(model, device, valid_loader, criterion):
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch')
-
-    # parse hyperparameters
-    parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                        help='input batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                        help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--learning-rate', type=float, default=0.01, metavar='LR',
-                        help='learning rate (default: 0.01)')
-    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
-                        help='SGD momentum (default: 0.5)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=20, metavar='N',
-                        help='how many batches to wait before logging training status')
-    parser.add_argument('--flare-label', default="M",
-                        help='Types of flare class (default: M-Class')
-    parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
-                        help='how many hidden layers (default: 10)')
-    args = parser.parse_args()
-    wandb.config.update(args)
-
-    # initialize parameters
-    filepath = './Data/Liu/' + args.flare_label + '/'
+    wandb.init(project='Liu_pytorch', allow_val_change=True)
+    flare_label = sys.argv[1]
+    filepath = './Data/Liu/' + flare_label + '/'
     num_of_fold = 10
     n_features = 0
-    if args.flare_label == 'M5':
+    if flare_label == 'M5':
         n_features = 20
-    elif args.flare_label == 'M':
+    elif flare_label == 'M':
         n_features = 22
-    elif args.flare_label == 'C':
+    elif flare_label == 'C':
         n_features = 14
+
+    # initialize parameters
     start_feature = 5
     mask_value = 0
+    series_len = 10
+    epochs = 5
+    batch_size = 256
+    learning_rate = 1e-3
     nclass = 2
     hidden_dim = 24
     thlistsize = 201
     thlist = np.linspace(0, 1, thlistsize)
+    log_interval = 10
     use_cuda = not True and torch.cuda.is_available()
 
     # setup dataloaders
     X_train_data, y_train_data = load_data(datafile=filepath + 'normalized_training.csv',
-                                           flare_label=args.flare_label, series_len=args.layer_dim,
+                                           flare_label=flare_label, series_len=series_len,
                                            start_feature=start_feature, n_features=n_features,
                                            mask_value=mask_value)
 
     X_valid_data, y_valid_data = load_data(datafile=filepath + 'normalized_validation.csv',
-                                           flare_label=args.flare_label, series_len=args.layer_dim,
+                                           flare_label=flare_label, series_len=series_len,
                                            start_feature=start_feature, n_features=n_features,
                                            mask_value=mask_value)
 
     X_test_data, y_test_data = load_data(datafile=filepath + 'normalized_testing.csv',
-                                         flare_label=args.flare_label, series_len=args.layer_dim,
+                                         flare_label=flare_label, series_len=series_len,
                                          start_feature=start_feature, n_features=n_features,
                                          mask_value=mask_value)
 
@@ -471,37 +451,39 @@ if __name__ == '__main__':
     datasets['valid'] = preprocess_customdataset(X_valid_data, y_valid_tr)
     datasets['test'] = preprocess_customdataset(X_test_data, y_test_tr)
 
-    train_loader = torch.utils.data.DataLoader(datasets['train'], args.batch_size,
+    train_loader = torch.utils.data.DataLoader(datasets['train'], batch_size,
                                                shuffle=False, drop_last=False)
-    valid_loader = torch.utils.data.DataLoader(datasets['valid'], args.batch_size,
+    valid_loader = torch.utils.data.DataLoader(datasets['valid'], batch_size,
                                                shuffle=False, drop_last=False)
-    test_loader = torch.utils.data.DataLoader(datasets['test'], args.batch_size,
+    test_loader = torch.utils.data.DataLoader(datasets['test'], batch_size,
                                               shuffle=False, drop_last=False)
 
     # make model
-    model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=args.layer_dim, output_dim=nclass)
+    model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=series_len, output_dim=nclass)
     wandb.watch(model, log='all')
 
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    # optimizers
+    #optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     print(len(list(model.parameters())))
 
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
+
     iter = 0
     confusion_matrix = torch.zeros(nclass, nclass)
     print("Training Network...")
 
-    for epoch in range(args.epochs):
+    for epoch in range(epochs):
         train(model, device, train_loader, optimizer, epoch, criterion)
         validate(model, device, valid_loader, criterion)
+
 
     print('Finished')
 
