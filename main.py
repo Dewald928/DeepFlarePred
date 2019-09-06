@@ -9,6 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
 import sys
 import numpy as np
+import argparse
 
 import torch
 import torch.nn as nn
@@ -337,21 +338,48 @@ class LSTMModel(nn.Module):
 
 def train(model, device, train_loader, optimizer, epoch, criterion):
     model.train()
+    confusion_matrix = torch.zeros(nclass, nclass)
+    loss_epoch = 0
+
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
+        loss_epoch += criterion(output, target).item()
         loss.backward()
         optimizer.step()
         _, predicted = torch.max(output.data, 1)
+
+        for t, p in zip(target.view(-1), predicted.view(-1)):
+            confusion_matrix[t.long(), p.long()] += 1
+
         if batch_idx % log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
 
+    # training conf matrix
+    print(confusion_matrix)
+    # per class accuracy
+    print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
-def validate(model, device, valid_loader, criterion):
+    loss_epoch /= len(train_loader.dataset)
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
+
+    wandb.log({
+        "Training_Accuracy": accuracy[0],
+        "Training_TSS": tss[0],
+        "Training_HSS": hss[0],
+        "Training_BACC": bacc[0],
+        "Training_Precision": precision[0],
+        "Training_Recall": recall[0],
+        "Training_Loss": loss_epoch}, step=epoch)
+
+
+
+
+def validate(model, device, valid_loader, criterion, epoch):
     model.eval()
     valid_loss = 0
     correct = 0
@@ -392,30 +420,53 @@ def validate(model, device, valid_loader, criterion):
         "Validation_BACC": bacc[0],
         "Validation_Precision": precision[0],
         "Validation_Recall": recall[0],
-        "Validation_Loss": valid_loss})
-
-    # Print Loss
-    print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, valid_loss, accuracy))
+        "Validation_Loss": valid_loss}, step=epoch)
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', allow_val_change=True)
-    flare_label = sys.argv[1]
-    filepath = './Data/Liu/' + flare_label + '/'
+    wandb.init(project='Liu_pytorch')
+
+    # parse hyperparameters
+    parser = argparse.ArgumentParser(description='Deep Flare Prediction')
+    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+                        help='input batch size for training (default: 64)')
+    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
+                        help='input batch size for testing (default: 1000)')
+    parser.add_argument('--epochs', type=int, default=10, metavar='N',
+                        help='number of epochs to train (default: 10)')
+    parser.add_argument('--learning-rate', type=float, default=0.01, metavar='LR',
+                        help='learning rate (default: 0.01)')
+    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
+                        help='SGD momentum (default: 0.5)')
+    parser.add_argument('--no-cuda', action='store_true', default=False,
+                        help='disables CUDA training')
+    parser.add_argument('--seed', type=int, default=1, metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+                        help='how many batches to wait before logging training status')
+    parser.add_argument('--flare-label', default="M",
+                        help='Types of flare class (default: M-Class')
+    parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
+                        help='how many hidden layers (default: 10)')
+    args = parser.parse_args()
+    wandb.config.update(args)
+
+    # initialize parameters
+    filepath = './Data/Liu/' + args.flare_label + '/'
     num_of_fold = 10
     n_features = 0
-    if flare_label == 'M5':
+    if args.flare_label == 'M5':
         n_features = 20
-    elif flare_label == 'M':
+    elif args.flare_label == 'M':
         n_features = 22
-    elif flare_label == 'C':
+    elif args.flare_label == 'C':
         n_features = 14
 
     # initialize parameters
     start_feature = 5
     mask_value = 0
     series_len = 10
-    epochs = 5
+    epochs = 10
     batch_size = 256
     learning_rate = 1e-3
     nclass = 2
@@ -423,21 +474,29 @@ if __name__ == '__main__':
     thlistsize = 201
     thlist = np.linspace(0, 1, thlistsize)
     log_interval = 10
-    use_cuda = not True and torch.cuda.is_available()
+    use_cuda = True and torch.cuda.is_available()
+
+    # set seed
+    torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(args.seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False  # And this
+    np.random.seed(args.seed)
 
     # setup dataloaders
     X_train_data, y_train_data = load_data(datafile=filepath + 'normalized_training.csv',
-                                           flare_label=flare_label, series_len=series_len,
+                                           flare_label=args.flare_label, series_len=series_len,
                                            start_feature=start_feature, n_features=n_features,
                                            mask_value=mask_value)
 
     X_valid_data, y_valid_data = load_data(datafile=filepath + 'normalized_validation.csv',
-                                           flare_label=flare_label, series_len=series_len,
+                                           flare_label=args.flare_label, series_len=series_len,
                                            start_feature=start_feature, n_features=n_features,
                                            mask_value=mask_value)
 
     X_test_data, y_test_data = load_data(datafile=filepath + 'normalized_testing.csv',
-                                         flare_label=flare_label, series_len=series_len,
+                                         flare_label=args.flare_label, series_len=series_len,
                                          start_feature=start_feature, n_features=n_features,
                                          mask_value=mask_value)
 
@@ -482,9 +541,9 @@ if __name__ == '__main__':
 
     for epoch in range(epochs):
         train(model, device, train_loader, optimizer, epoch, criterion)
-        validate(model, device, valid_loader, criterion)
+        validate(model, device, valid_loader, criterion, epoch)
 
-
+    # TODO save model
     print('Finished')
 
 
