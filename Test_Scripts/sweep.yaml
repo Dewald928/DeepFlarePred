@@ -1,7 +1,7 @@
-description: random sweep for my little cnn
+description: random sweep for my little solar predictor
 
 # Training script to run
-program: WNBtestscript.py
+program: main.py
 
 # Method can be bayes, random, grid
 method: bayes
@@ -17,8 +17,5 @@ early_terminate:
 
 # Parameters to search over
 parameters:
-  lr:
-    min: 0.001
-    max: 0.1
   epochs:
-    value: 10
+    value: [5,10]
