@@ -320,10 +320,10 @@ class LSTMModel(nn.Module):
 
     def forward(self, x):
         # Initialize hidden state with zeros
-        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_()
+        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
 
         # Initialize cell state
-        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_()
+        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
 
         # 28 time steps
         # We need to detach as we are doing truncated backpropagation through time (BPTT)
@@ -360,11 +360,6 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
-
-    # # training conf matrix
-    # print(confusion_matrix)
-    # # per class accuracy
-    # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
@@ -444,7 +439,7 @@ if __name__ == '__main__':
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--log_interval', type=int, default=10, metavar='N',
+    parser.add_argument('--log_interval', type=int, default=20, metavar='N',
                         help='how many batches to wait before logging training status')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -475,7 +470,13 @@ if __name__ == '__main__':
     hidden_dim = 24
     thlistsize = 201
     thlist = np.linspace(0, 1, thlistsize)
+
+    # GPU check
     use_cuda = args.cuda and torch.cuda.is_available()
+    if args.cuda == True and torch.cuda.is_available():
+        print("Cuda enabled and available")
+    elif args.cuda == True and torch.cuda.is_available() == False:
+        print("Cuda enabled not not available, CPU used.")
 
     # set seed
     torch.manual_seed(args.seed)
@@ -519,12 +520,11 @@ if __name__ == '__main__':
                                               shuffle=False, drop_last=False)
 
     # make model
-    model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=args.layer_dim, output_dim=nclass)
+    device = torch.device("cuda" if use_cuda else "cpu")
+    model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=args.layer_dim, output_dim=nclass).to(device)
     wandb.watch(model, log='all')
 
-    device = torch.device("cuda" if use_cuda else "cpu")
-
-    #optimizers
+    # optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))  # weighted cross entropy
