@@ -4,6 +4,8 @@ Ecclesiastes 5:12 New King James Version (NKJV)
 Whether he eats little or much;
 But the abundance of the rich will not permit him to sleep.
 '''
+# TODO l2 reg
+# TODO dropout
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
@@ -526,19 +528,15 @@ if __name__ == '__main__':
     #optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
-    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))
+    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))  # weighted cross entropy
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+    # print model parameters
     print(len(list(model.parameters())))
-
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
-
-    iter = 0
-    confusion_matrix = torch.zeros(nclass, nclass)
     print("Training Network...")
-
     for epoch in range(epochs):
         train(model, device, train_loader, optimizer, epoch, criterion)
         validate(model, device, valid_loader, criterion, epoch)
