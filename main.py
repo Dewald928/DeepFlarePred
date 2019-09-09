@@ -356,7 +356,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         for t, p in zip(target.view(-1), predicted.view(-1)):
             confusion_matrix[t.long(), p.long()] += 1
 
-        if batch_idx % log_interval == 0:
+        if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
@@ -430,17 +430,17 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=256, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 10)')
-    parser.add_argument('--learning-rate', type=float, default=0.01, metavar='LR',
+    parser.add_argument('--learning-rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.01)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
+    parser.add_argument('--cuda', action='store_true', default=True,
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
@@ -467,16 +467,15 @@ if __name__ == '__main__':
     # initialize parameters
     start_feature = 5
     mask_value = 0
-    series_len = 10
-    epochs = 10
-    batch_size = 256
-    learning_rate = 1e-3
+    # series_len = 10
+    # epochs = 10
+    # batch_size = 256
+    # learning_rate = 1e-3
     nclass = 2
     hidden_dim = 24
     thlistsize = 201
     thlist = np.linspace(0, 1, thlistsize)
-    log_interval = 10
-    use_cuda = True and torch.cuda.is_available()
+    use_cuda = args.cuda and torch.cuda.is_available()
 
     # set seed
     torch.manual_seed(args.seed)
@@ -488,17 +487,17 @@ if __name__ == '__main__':
 
     # setup dataloaders
     X_train_data, y_train_data = load_data(datafile=filepath + 'normalized_training.csv',
-                                           flare_label=args.flare_label, series_len=series_len,
+                                           flare_label=args.flare_label, series_len=args.layer_dim,
                                            start_feature=start_feature, n_features=n_features,
                                            mask_value=mask_value)
 
     X_valid_data, y_valid_data = load_data(datafile=filepath + 'normalized_validation.csv',
-                                           flare_label=args.flare_label, series_len=series_len,
+                                           flare_label=args.flare_label, series_len=args.layer_dim,
                                            start_feature=start_feature, n_features=n_features,
                                            mask_value=mask_value)
 
     X_test_data, y_test_data = load_data(datafile=filepath + 'normalized_testing.csv',
-                                         flare_label=args.flare_label, series_len=series_len,
+                                         flare_label=args.flare_label, series_len=args.layer_dim,
                                          start_feature=start_feature, n_features=n_features,
                                          mask_value=mask_value)
 
@@ -512,15 +511,15 @@ if __name__ == '__main__':
     datasets['valid'] = preprocess_customdataset(X_valid_data, y_valid_tr)
     datasets['test'] = preprocess_customdataset(X_test_data, y_test_tr)
 
-    train_loader = torch.utils.data.DataLoader(datasets['train'], batch_size,
+    train_loader = torch.utils.data.DataLoader(datasets['train'], args.batch_size,
                                                shuffle=False, drop_last=False)
-    valid_loader = torch.utils.data.DataLoader(datasets['valid'], batch_size,
+    valid_loader = torch.utils.data.DataLoader(datasets['valid'], args.batch_size,
                                                shuffle=False, drop_last=False)
-    test_loader = torch.utils.data.DataLoader(datasets['test'], batch_size,
+    test_loader = torch.utils.data.DataLoader(datasets['test'], args.batch_size,
                                               shuffle=False, drop_last=False)
 
     # make model
-    model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=series_len, output_dim=nclass)
+    model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=args.layer_dim, output_dim=nclass)
     wandb.watch(model, log='all')
 
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -529,7 +528,7 @@ if __name__ == '__main__':
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))  # weighted cross entropy
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     # print model parameters
     print(len(list(model.parameters())))
@@ -537,7 +536,7 @@ if __name__ == '__main__':
         print(list(model.parameters())[i].size())
 
     print("Training Network...")
-    for epoch in range(epochs):
+    for epoch in range(args.epochs):
         train(model, device, train_loader, optimizer, epoch, criterion)
         validate(model, device, valid_loader, criterion, epoch)
 
