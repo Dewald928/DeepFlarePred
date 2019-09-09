@@ -193,7 +193,8 @@ dependencies:
     - smmap==0.9.0
     - smmap2==2.0.5
     - subprocess32==3.5.4
-    - wandb==0.8.7
+    - torchsummary==1.5.1
+    - wandb==0.8.9
     - watchdog==0.9.0
 prefix: /home/fuzzy/local/miniconda3/envs/DeepFlarePred
 
