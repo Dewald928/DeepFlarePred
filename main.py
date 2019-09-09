@@ -361,12 +361,13 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
 
-    # training conf matrix
-    print(confusion_matrix)
-    # per class accuracy
-    print(confusion_matrix.diag() / confusion_matrix.sum(1))
+    # # training conf matrix
+    # print(confusion_matrix)
+    # # per class accuracy
+    # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     loss_epoch /= len(train_loader.dataset)
+    print("Training Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
 
     wandb.log({
@@ -397,8 +398,6 @@ def validate(model, device, valid_loader, criterion, epoch):
             # get the index of the max log-probability
             _, predicted = torch.max(output.data, 1)
             correct += predicted.eq(target.view_as(predicted)).sum().item()
-            example_images.append(wandb.Image(
-                data[0], caption="Pred: {} Truth: {}".format(predicted[0].item(), target[0])))
 
             for t, p in zip(target.view(-1), predicted.view(-1)):
                 confusion_matrix[t.long(), p.long()] += 1
@@ -408,11 +407,12 @@ def validate(model, device, valid_loader, criterion, epoch):
         valid_loss, correct, len(valid_loader.dataset),
         100. * correct / len(valid_loader.dataset)))
 
-    # validation conf matrix
-    print(confusion_matrix)
-    # per class accuracy
-    print(confusion_matrix.diag() / confusion_matrix.sum(1))
+    # # validation conf matrix
+    # print(confusion_matrix)
+    # # per class accuracy
+    # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
+    print("Validation Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
 
     wandb.log({
@@ -430,13 +430,13 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch-size', type=int, default=256, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=256, metavar='N',
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
+    parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
+    parser.add_argument('--epochs', type=int, default=15, metavar='N',
                         help='number of epochs to train (default: 10)')
-    parser.add_argument('--learning-rate', type=float, default=0.001, metavar='LR',
+    parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.01)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
@@ -444,9 +444,9 @@ if __name__ == '__main__':
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+    parser.add_argument('--log_interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--flare-label', default="M",
+    parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
                         help='how many hidden layers (default: 10)')

@@ -4,12 +4,12 @@ description: random sweep for my little solar predictor
 program: main.py
 
 # Method can be bayes, random, grid
-method: bayes
+method: grid
 
 # Metric to optimize
 metric:
-  name: Test_Accuracy
-  goal: minimize
+  name: Validation_TSS
+  goal: maximize
 
 # Should we early terminate runs
 early_terminate:
@@ -17,5 +17,15 @@ early_terminate:
 
 # Parameters to search over
 parameters:
+  seed:
+    values: [1,5,10]
+  batch_size:
+    values: [64,128,256,512]
+  flare_label:
+    values: ["C", "M", "M5"]
+  learning_rate:
+    values: [0.1,0.01,0.001]
   epochs:
-    value: [5,10]
+    values: [15]
+  layer_dim:
+    values: [1,5,10]
