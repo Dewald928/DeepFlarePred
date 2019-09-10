@@ -527,7 +527,7 @@ if __name__ == '__main__':
     # optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
-    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights))  # weighted cross entropy
+    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(device))  # weighted cross entropy
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     # print model parameters
