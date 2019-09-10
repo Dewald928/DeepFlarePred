@@ -375,8 +375,6 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         "Training_Loss": loss_epoch}, step=epoch)
 
 
-
-
 def validate(model, device, valid_loader, criterion, epoch):
     model.eval()
     valid_loss = 0
@@ -426,22 +424,22 @@ if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
     parser.add_argument('--batch_size', type=int, default=256, metavar='N',
-                        help='input batch size for training (default: 64)')
+                        help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=15, metavar='N',
-                        help='number of epochs to train (default: 10)')
+                        help='number of epochs to train (default: 15)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
-                        help='learning rate (default: 0.01)')
+                        help='learning rate (default: 0.001)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
-    parser.add_argument('--cuda', action='store_true', default=True,
-                        help='disables CUDA training')
+    parser.add_argument('--cuda', action='store_true', default=False,
+                        help='enables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--log_interval', type=int, default=20, metavar='N',
+    parser.add_argument('--log_interval', type=int, default=30, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--flare_label', default="M5",
+    parser.add_argument('--flare_label', default="M",
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
                         help='how many hidden layers (default: 10)')
@@ -477,6 +475,8 @@ if __name__ == '__main__':
         print("Cuda enabled and available")
     elif args.cuda == True and torch.cuda.is_available() == False:
         print("Cuda enabled not not available, CPU used.")
+    elif args.cuda == False:
+        print("Cuda disabled")
 
     # set seed
     torch.manual_seed(args.seed)
