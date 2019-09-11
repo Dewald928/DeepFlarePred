@@ -30,8 +30,8 @@ parameters:
 #  layer_dim:
 #    values: [1,5,10]
   dropout:
-    min: 0
+    min: 0.0
     max: 0.9
   weight_decay:
-    min: 1e-5
-    max: 0
+    min: 0.0
+    max: 0.0001
