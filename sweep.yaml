@@ -1,4 +1,4 @@
-description: random sweep for my little solar predictor
+description: sweep with l2 norm and dropout
 
 # Training script to run
 program: main.py

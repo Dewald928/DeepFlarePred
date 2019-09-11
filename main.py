@@ -423,7 +423,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch_size', type=int, default=256, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=512, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
@@ -433,15 +433,15 @@ if __name__ == '__main__':
                         help='learning rate (default: 0.001)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
-    parser.add_argument('--cuda', action='store_true', default=False,
+    parser.add_argument('--cuda', action='store_true', default=True,
                         help='enables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--log_interval', type=int, default=30, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--flare_label', default="M",
+    parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
+    parser.add_argument('--layer_dim', type=int, default=5, metavar='N',
                         help='how many hidden layers (default: 10)')
     args = parser.parse_args()
     wandb.config.update(args)
