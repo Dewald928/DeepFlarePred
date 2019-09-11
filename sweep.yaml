@@ -1,10 +1,10 @@
-description: sweep with l2 norm and dropout
+description: sweep for l2 norm and dropout
 
 # Training script to run
 program: main.py
 
 # Method can be bayes, random, grid
-method: grid
+method: bayes
 
 # Metric to optimize
 metric:
@@ -17,15 +17,21 @@ early_terminate:
 
 # Parameters to search over
 parameters:
-  seed:
-    values: [1,5,10]
-  batch_size:
-    values: [64,128,256,512]
-  flare_label:
-    values: ["C", "M", "M5"]
-  learning_rate:
-    values: [0.1,0.01,0.001]
-  epochs:
-    values: [15]
-  layer_dim:
-    values: [1,5,10]
+#  seed:
+#    values: [1,5,10]
+#  batch_size:
+#    values: [64,128,256,512]
+#  flare_label:
+#    values: ["C", "M", "M5"]
+#  learning_rate:
+#    values: [0.1,0.01,0.001]
+#  epochs:
+#    values: [15]
+#  layer_dim:
+#    values: [1,5,10]
+  dropout:
+    min: 0
+    max: 0.9
+  weight_decay:
+    min: 1e-5
+    max: 0

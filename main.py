@@ -237,6 +237,7 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features, mask
     print(X_arr.shape)
     return X_arr, y_arr
 
+
 def label_transform(data):
     encoder = LabelEncoder()
     encoder.fit(data)
@@ -244,8 +245,8 @@ def label_transform(data):
     # converteddata = np.eye(nclass, dtype='uint8')[encoded_Y]
     return encoded_Y
 
-def preprocess_customdataset(x_val, y_val):
 
+def preprocess_customdataset(x_val, y_val):
     # change format to tensors and create data set
     x_tensor = torch.tensor(x_val).type(torch.FloatTensor)
     y_tensor = torch.tensor(y_val).type(torch.LongTensor)
@@ -255,6 +256,7 @@ def preprocess_customdataset(x_val, y_val):
     datasets = CustomDataset.CustomDataset(x_tensor, y_tensor)
 
     return datasets
+
 
 def calculate_metrics(confusion_matrix):
     # determine skill scores
@@ -313,7 +315,7 @@ class LSTMModel(nn.Module):
         # Building your LSTM
         # batch_first=True causes input/output tensors to be of shape
         # (batch_dim, seq_dim, feature_dim)
-        self.lstm = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+        self.lstm = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True, dropout=args.dropout)
 
         # Readout layer
         self.fc = nn.Linear(hidden_dim, output_dim)
@@ -359,7 +361,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+                       100. * batch_idx / len(train_loader), loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
@@ -427,7 +429,7 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=15, metavar='N',
+    parser.add_argument('--epochs', type=int, default=30, metavar='N',
                         help='number of epochs to train (default: 15)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
@@ -443,6 +445,10 @@ if __name__ == '__main__':
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--layer_dim', type=int, default=5, metavar='N',
                         help='how many hidden layers (default: 10)')
+    parser.add_argument('--dropout', type=float, default=0.4, metavar='M',
+                        help='percentage dropout (default: 0.4)')
+    parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
+                        help='L2 regularizing (default: 0.0001)')
     args = parser.parse_args()
     wandb.config.update(args)
 
@@ -460,10 +466,6 @@ if __name__ == '__main__':
     # initialize parameters
     start_feature = 5
     mask_value = 0
-    # series_len = 10
-    # epochs = 10
-    # batch_size = 256
-    # learning_rate = 1e-3
     nclass = 2
     hidden_dim = 24
     thlistsize = 201
@@ -522,13 +524,17 @@ if __name__ == '__main__':
     # make model
     device = torch.device("cuda" if use_cuda else "cpu")
     model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=args.layer_dim, output_dim=nclass).to(device)
-    wandb.watch(model, log='all')
+    try:
+        wandb.watch(model, log='all')
+    except:
+        pass
 
     # optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(device))  # weighted cross entropy
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate,
+                                 weight_decay=args.weight_decay, amsgrad=False)
 
     # print model parameters
     print(len(list(model.parameters())))
@@ -542,5 +548,3 @@ if __name__ == '__main__':
 
     # TODO save model
     print('Finished')
-
-
