@@ -302,8 +302,10 @@ def calculate_metrics(confusion_matrix):
 
 
 class LSTMModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
+    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim, rnn_module='LSTM'):
         super(LSTMModel, self).__init__()
+        self.input_dim = input_dim
+        self.rnn_module = rnn_module
         # Hidden dimensions
         self.hidden_dim = hidden_dim
 
@@ -313,29 +315,59 @@ class LSTMModel(nn.Module):
         # Building your LSTM
         # batch_first=True causes input/output tensors to be of shape
         # (batch_dim, seq_dim, feature_dim)
-        self.lstm = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True, dropout=args.dropout)
+        if rnn_module == "RNN":
+            self.rnn = nn.RNN(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout)
+        elif rnn_module == "LSTM":
+            self.rnn = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout, batch_first=True)
+        elif rnn_module == "GRU":
+            self.rnn = nn.GRU(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout)
 
         # Readout layer
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        # Initialize hidden state with zeros
-        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        # # Initialize hidden state with zeros
+        # h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        # # Initialize cell state
+        # c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
 
-        # Initialize cell state
-        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        # # 28 time steps
+        # # We need to detach as we are doing truncated backpropagation through time (BPTT)
+        # # If we don't, we'll backprop all the way to the start even after going through another batch
+        # # shape of lstm_out: [input_size, batch_size, hidden_dim]
+        # out, (hn, cn) = self.rnn(x, (h0.detach(), c0.detach()))
+        #
+        # # Index hidden state of last time step
+        # # out.size() --> 100, 28, 100
+        # # out[:, -1, :] --> 100, 100 --> just want last time step hidden states!
+        # out = self.fc(out[:, -1, :])
+        # # out.size() --> 100, 10
 
-        # 28 time steps
-        # We need to detach as we are doing truncated backpropagation through time (BPTT)
-        # If we don't, we'll backprop all the way to the start even after going through another batch
-        out, (hn, cn) = self.lstm(x, (h0.detach(), c0.detach()))
+        if self.rnn_module == "RNN":
+            h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+            out, (hn) = self.rnn(x, (h0.detach()))
+            out = self.fc(out[:, -1, :])
+        elif self.rnn_module == "LSTM":
+            h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+            c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
 
-        # Index hidden state of last time step
-        # out.size() --> 100, 28, 100
-        # out[:, -1, :] --> 100, 100 --> just want last time step hidden states!
-        out = self.fc(out[:, -1, :])
-        # out.size() --> 100, 10
+            out, (hn, cn) = self.rnn(x, (h0.detach(), c0.detach()))
+            out = self.fc(out[:, -1, :])
+
+        elif self.rnn_module == "GRU":
+            h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+            out, (hn) = self.rnn(x, (h0.detach()))
+            out = self.fc(out[:, -1, :])
+
         return out
+
+    def initHidden(self, batch_size):
+        # initialize hidden state to zeros
+        if self.rnn_module == "LSTM":
+            return torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(device),\
+                   torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(device)
+        else:
+            return torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(device)
 
 
 def train(model, device, train_loader, optimizer, epoch, criterion):
@@ -344,6 +376,11 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
     loss_epoch = 0
 
     for batch_idx, (data, target) in enumerate(train_loader):
+        # # Detach hidden layer and reset gradients
+        # if args.rnn_module == "LSTM":
+        #     tuple(h.detach_() for h in hidden)
+        # else:
+        #     hidden.detach_()
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -449,6 +486,8 @@ if __name__ == '__main__':
                         help='percentage dropout (default: 0.4)')
     parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
+    parser.add_argument('--rnn_module', default="GRU",
+                        help='Types of rnn (default: LSTM')
     args = parser.parse_args()
     wandb.config.update(args)
 
@@ -523,6 +562,7 @@ if __name__ == '__main__':
     # make model
     device = torch.device("cuda" if use_cuda else "cpu")
     model = LSTMModel(n_features, hidden_dim=args.hidden_dim, layer_dim=args.layer_dim, output_dim=nclass).to(device)
+
     try:
         wandb.watch(model, log='all')
     except:
