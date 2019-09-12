@@ -4,8 +4,6 @@ Ecclesiastes 5:12 New King James Version (NKJV)
 Whether he eats little or much;
 But the abundance of the rich will not permit him to sleep.
 '''
-# TODO l2 reg
-# TODO dropout
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
@@ -16,7 +14,7 @@ import argparse
 import torch
 import torch.nn as nn
 
-from Test_Scripts import CustomDataset
+from data_loader import CustomDataset
 import wandb
 
 
@@ -444,7 +442,9 @@ if __name__ == '__main__':
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--layer_dim', type=int, default=5, metavar='N',
-                        help='how many hidden layers (default: 10)')
+                        help='how many hidden layers (default: 5)')
+    parser.add_argument('--hidden_dim', type=int, default=64, metavar='N',
+                        help='how many nodes in layers (default: 64)')
     parser.add_argument('--dropout', type=float, default=0.4, metavar='M',
                         help='percentage dropout (default: 0.4)')
     parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
@@ -467,7 +467,6 @@ if __name__ == '__main__':
     start_feature = 5
     mask_value = 0
     nclass = 2
-    hidden_dim = 24
     thlistsize = 201
     thlist = np.linspace(0, 1, thlistsize)
 
@@ -523,7 +522,7 @@ if __name__ == '__main__':
 
     # make model
     device = torch.device("cuda" if use_cuda else "cpu")
-    model = LSTMModel(n_features, hidden_dim=hidden_dim, layer_dim=args.layer_dim, output_dim=nclass).to(device)
+    model = LSTMModel(n_features, hidden_dim=args.hidden_dim, layer_dim=args.layer_dim, output_dim=nclass).to(device)
     try:
         wandb.watch(model, log='all')
     except:

@@ -16,7 +16,7 @@ Only the ```main.py``` script is functional, the rest is still broken
 * [ ] GPU optimization
 * [x] Implement Weight and Biases
 * [x] W&B sweeps check if it work
-* [x] W&B multiple gpu sweep. [How to](https://www.wandb.com/articles/multi-gpu-sweeps)
+* [x] W&B multiple gpu sweep. [How to](https://www.wandb.com/articles/multi-gpu-sweeps) by using ```tmux```
 * [x] Pytorch bottleneck test: ***Inconclusive, revisit***
 * [ ] [Attention models](https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66)
 
