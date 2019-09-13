@@ -350,7 +350,6 @@ class LSTMModel(nn.Module):
         elif self.rnn_module == "LSTM":
             h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
             c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
-
             out, (hn, cn) = self.rnn(x, (h0.detach(), c0.detach()))
             out = self.fc(out[:, -1, :])
 
@@ -376,11 +375,6 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
     loss_epoch = 0
 
     for batch_idx, (data, target) in enumerate(train_loader):
-        # # Detach hidden layer and reset gradients
-        # if args.rnn_module == "LSTM":
-        #     tuple(h.detach_() for h in hidden)
-        # else:
-        #     hidden.detach_()
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -584,6 +578,9 @@ if __name__ == '__main__':
     for epoch in range(args.epochs):
         train(model, device, train_loader, optimizer, epoch, criterion)
         validate(model, device, valid_loader, criterion, epoch)
+
+    print("Do K-Fold cross validation")
+
 
     # TODO save model
     print('Finished')

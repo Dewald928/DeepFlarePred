@@ -9,7 +9,7 @@ Only the ```main.py``` script is functional, the rest is still broken
 ### Preliminary tests
 * [x] Copy Liu's code to pytorch somewhat.
 * [ ] Copy Liu architecture completely
-* [ ] Cross-validation
+* [ ] Cross-validation: [Skorch library](https://skorch.readthedocs.io/en/stable/user/dataset.html)
 * [x] Regularization: L2 + Dropout
 * [ ] Shuffled vs. Unshuffled
 * [x] GPU integration
@@ -20,6 +20,8 @@ Only the ```main.py``` script is functional, the rest is still broken
 * [x] Pytorch bottleneck test: ***Inconclusive, revisit***
 * [ ] [Attention models](https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66)
 * [ ] Understand LSTM 
+* [x] GRU, LSTM and RNN switchable between
+
 ### Main Objectives
 * [ ] Create MLP that is equivalent to Nishzuka et al paper
 * [ ] Establish a baseline MLP
