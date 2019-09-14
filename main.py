@@ -13,6 +13,9 @@ import argparse
 
 import torch
 import torch.nn as nn
+# import skorch
+from skorch import NeuralNetClassifier
+from sklearn.model_selection import cross_val_predict
 
 from data_loader import CustomDataset
 import wandb
@@ -318,9 +321,11 @@ class LSTMModel(nn.Module):
         if rnn_module == "RNN":
             self.rnn = nn.RNN(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout)
         elif rnn_module == "LSTM":
-            self.rnn = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout, batch_first=True)
+            self.rnn = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout,
+                               batch_first=True)
         elif rnn_module == "GRU":
-            self.rnn = nn.GRU(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout)
+            self.rnn = nn.GRU(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout,
+                              batch_first=True)
 
         # Readout layer
         self.fc = nn.Linear(hidden_dim, output_dim)
@@ -555,7 +560,8 @@ if __name__ == '__main__':
 
     # make model
     device = torch.device("cuda" if use_cuda else "cpu")
-    model = LSTMModel(n_features, hidden_dim=args.hidden_dim, layer_dim=args.layer_dim, output_dim=nclass).to(device)
+    model = LSTMModel(n_features, hidden_dim=args.hidden_dim, layer_dim=args.layer_dim,
+                      output_dim=nclass, rnn_module="GRU").to(device)
 
     try:
         wandb.watch(model, log='all')
@@ -579,7 +585,26 @@ if __name__ == '__main__':
         train(model, device, train_loader, optimizer, epoch, criterion)
         validate(model, device, valid_loader, criterion, epoch)
 
-    print("Do K-Fold cross validation")
+    # print("Do K-Fold cross validation in skorch wrapper")
+    # train_loader = torch.utils.data.DataLoader({datasets['train'], datasets['valid']}, args.batch_size,
+    #                                            shuffle=False, drop_last=False)
+    # net = NeuralNetClassifier(
+    #     module=LSTMModel,
+    #     criterion=criterion,
+    #     optimizer=optimizer,
+    #     max_epochs=args.epochs,
+    #     lr=args.learning_rate,
+    #     device=device,
+    #     train_split=None,
+    #     batch_size=args.batch_size,
+    # )
+
+    # X_data = datasets[datasets.columns[:-1]].values.astype(np.float32)
+    # y_data = datasets["y"].astype("category").cat.codes.values.astype(np.int64)
+    # print(X_data.shape, y_data.shape)
+    #
+    # from sklearn.model_selection import cross_val_score
+    # scores = cross_val_score(net, X_train_data, y_train_tr, cv=5, scoring="accuracy")
 
 
     # TODO save model
