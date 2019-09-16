@@ -13,6 +13,7 @@ import argparse
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 # import skorch
 from skorch import NeuralNetClassifier
 from sklearn.model_selection import cross_val_predict
@@ -329,7 +330,10 @@ class LSTMModel(nn.Module):
                               batch_first=True)
 
         # rough attention layer
-        # self.att = nn.Linear(hi)
+        self.fc_att = nn.Linear(hidden_dim, 1).to(device)
+        self.fc0 = nn.Linear(hidden_dim, hidden_dim).to(device)
+        self.act = nn.ReLU()
+        self.drop = nn.Dropout(args.dropout)
         # Readout layer
         self.fc = nn.Linear(hidden_dim, output_dim)
 
@@ -358,7 +362,11 @@ class LSTMModel(nn.Module):
 
         elif self.rnn_module == "GRU":
             h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
-            out, (hn) = self.rnn(x, (h0.detach()))
+            out, (hn) = self.rnn(x, (h0.detach())) #-> [batch, layers, hiddendim]
+            att = self.fc_att(out).squeeze(-1) # -> [batch, layers]
+            att = F.softmax(att, dim=-1)
+            r_att = torch.sum(att.unsqueeze(-1) * out, dim=1)  # -> [batch, hiddendim]
+            f = self.drop(self.act(self.fc0(out)))  # -> [batch, layers, hiddendim]
             out = self.fc(out[:, -1, :])
 
         return out
