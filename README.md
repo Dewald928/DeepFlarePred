@@ -31,3 +31,6 @@ Only the ```main.py``` script is functional, the rest is still broken
 ### Future plans
 * [ ] Incorporate SHARP magnetogram images like Chen article
 * [ ] Use GAN for detecting anomalies
+
+### Data sets
+* [Chen et al. 2019 data (some of it)](https://deepblue.lib.umich.edu/data/concern/data_sets/0r967377q?locale=en)

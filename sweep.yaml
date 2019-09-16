@@ -1,7 +1,7 @@
 description: sweep for l2 norm and dropout
 
 # Training script to run
-program: main.py
+program: main_LSTM_Liu.py
 
 # Method can be bayes, random, grid
 method: bayes

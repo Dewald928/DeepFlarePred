@@ -319,7 +319,8 @@ class LSTMModel(nn.Module):
         # batch_first=True causes input/output tensors to be of shape
         # (batch_dim, seq_dim, feature_dim)
         if rnn_module == "RNN":
-            self.rnn = nn.RNN(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout)
+            self.rnn = nn.RNN(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout,
+                              batch_first=True)
         elif rnn_module == "LSTM":
             self.rnn = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout,
                                batch_first=True)
@@ -327,15 +328,12 @@ class LSTMModel(nn.Module):
             self.rnn = nn.GRU(input_size=input_dim, hidden_size=hidden_dim, num_layers=layer_dim, dropout=args.dropout,
                               batch_first=True)
 
+        # rough attention layer
+        self.att = nn.Linear(hi)
         # Readout layer
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        # # Initialize hidden state with zeros
-        # h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
-        # # Initialize cell state
-        # c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
-
         # # 28 time steps
         # # We need to detach as we are doing truncated backpropagation through time (BPTT)
         # # If we don't, we'll backprop all the way to the start even after going through another batch
@@ -463,7 +461,7 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=30, metavar='N',
+    parser.add_argument('--epochs', type=int, default=40, metavar='N',
                         help='number of epochs to train (default: 15)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
@@ -505,8 +503,6 @@ if __name__ == '__main__':
     start_feature = 5
     mask_value = 0
     nclass = 2
-    thlistsize = 201
-    thlist = np.linspace(0, 1, thlistsize)
 
     # GPU check
     use_cuda = args.cuda and torch.cuda.is_available()
