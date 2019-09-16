@@ -329,7 +329,7 @@ class LSTMModel(nn.Module):
                               batch_first=True)
 
         # rough attention layer
-        self.att = nn.Linear(hi)
+        # self.att = nn.Linear(hi)
         # Readout layer
         self.fc = nn.Linear(hidden_dim, output_dim)
 

@@ -18,9 +18,12 @@ Only the ```main.py``` script is functional, the rest is still broken
 * [x] W&B sweeps check if it work
 * [x] W&B multiple gpu sweep. [How to](https://www.wandb.com/articles/multi-gpu-sweeps) by using ```tmux```
 * [x] Pytorch bottleneck test: ***Inconclusive, revisit***
-* [ ] [Attention models](https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66)
+* [x] [Attention models](https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66)
+Tested, but not implemented on dataset
 * [ ] Understand LSTM 
 * [x] GRU, LSTM and RNN switchable between
+* [x] hdf5 test script: Chen data uses hdf5, but unable to read the data
+* [x] MLP skorch test: RNN and custom logs not well supported
 
 ### Main Objectives
 * [ ] Create MLP that is equivalent to Nishzuka et al paper
