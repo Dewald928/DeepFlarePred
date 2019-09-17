@@ -406,7 +406,10 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
 
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
-        data = data.view(args.batch_size, n_features, args.layer_dim)
+        try:
+            data = data.view(len(data), n_features, args.layer_dim)
+        except:
+            print("woah the cowboy")
         # data = data.clone().detach().type(torch.FloatTensor)
         # data = data.to(device)
         optimizer.zero_grad()
@@ -449,7 +452,10 @@ def validate(model, device, valid_loader, criterion, epoch):
     with torch.no_grad():
         for data, target in valid_loader:
             data, target = data.to(device), target.to(device)
-            data = data.view(args.batch_size, n_features, args.layer_dim)
+            try:
+                data = data.view(len(data), n_features, args.layer_dim)
+            except:
+                print("woah the cowboy")
             output = model(data)
             # sum up batch loss
             valid_loss += criterion(output, target).item()
@@ -484,11 +490,11 @@ def validate(model, device, valid_loader, criterion, epoch):
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch')
+    wandb.init(project='Liu_pytorch', name='tcn')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch_size', type=int, default=512, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=150, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
@@ -514,7 +520,7 @@ if __name__ == '__main__':
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--ksize', type=int, default=5,
                         help='kernel size (default: 5)')
-    parser.add_argument('--levels', type=int, default=5,
+    parser.add_argument('--levels', type=int, default=2,
                         help='# of levels (default: 4)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='report interval (default: 100')
@@ -522,7 +528,7 @@ if __name__ == '__main__':
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--nhid', type=int, default=512,
+    parser.add_argument('--nhid', type=int, default=150,
                         help='number of hidden units per layer (default: 150)')
     parser.add_argument('--data', type=str, default='Nott',
                         help='the dataset to run (default: Nott)')
