@@ -24,6 +24,7 @@ Tested, but not implemented on dataset
 * [x] GRU, LSTM and RNN switchable between
 * [x] hdf5 test script: Chen data uses hdf5, but unable to read the data
 * [x] MLP skorch test: RNN and custom logs not well supported
+* [ ] [TCN networks](https://github.com/locuslab/TCN)
 
 ### Main Objectives
 * [ ] Create MLP that is equivalent to Nishzuka et al paper
