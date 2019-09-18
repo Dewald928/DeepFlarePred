@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from skorch import NeuralNetClassifier
 from sklearn.model_selection import cross_val_predict
 
+from collections import OrderedDict
 from data_loader import CustomDataset
 import wandb
 
@@ -46,17 +47,24 @@ MLP model
 
 
 class MLP(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, dropout=0.5,):
+    def __init__(self, input_dim, hidden_dim, output_dim, layer_dim, dropout=0.5,):
         super(MLP, self).__init__()
         self.dropout = nn.Dropout(dropout)
+        self.input_layer = nn.Linear(input_dim, hidden_dim)
+        layers = []
+        layers += [nn.Linear(input_dim, hidden_dim)]
 
-        self.hidden = nn.Linear(input_dim, hidden_dim)
-        self.output = nn.Linear(hidden_dim, output_dim)
+        for i in range(layer_dim):
+            layers += [nn.Linear(hidden_dim, hidden_dim)]
+            layers += [nn.ReLU()]
+
+        layers += [nn.Linear(hidden_dim, output_dim)]
+
+        self.network = nn.Sequential(*layers)
+
 
     def forward(self, X, **kwargs):
-        X = F.relu(self.hidden(X))
-        X = self.dropout(X)
-        X = F.softmax(self.output(X), dim=-1)
+        X = F.softmax(self.network(X), dim=-1)
         return X
 
 """
@@ -87,7 +95,7 @@ if __name__ == '__main__':
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--layer_dim', type=int, default=5, metavar='N',
                         help='how many hidden layers (default: 5)')
-    parser.add_argument('--hidden_dim', type=int, default=64, metavar='N',
+    parser.add_argument('--hidden_dim', type=int, default=1000, metavar='N',
                         help='how many nodes in layers (default: 64)')
     parser.add_argument('--dropout', type=float, default=0.4, metavar='M',
                         help='percentage dropout (default: 0.4)')
@@ -152,7 +160,7 @@ if __name__ == '__main__':
     y_test_tr = label_transform(y_test_data)
 
     device = torch.device("cuda" if use_cuda else "cpu")
-    model = MLP(input_dim=n_features, hidden_dim=args.hidden_dim, output_dim=nclass).to(device)
+    model = MLP(input_dim=n_features, hidden_dim=args.hidden_dim, output_dim=nclass, layer_dim=args.layer_dim).to(device)
 
     net = NeuralNetClassifier(
         model,
@@ -163,7 +171,7 @@ if __name__ == '__main__':
 
     net.fit(X_train_data.astype(np.float32), y_train_tr.astype(np.long))
 
-    y_pred = net.predict(X_train_data[:5])
-    print(y_pred)
+    # y_pred = net.predict(X_train_data[:5])
+    # print(y_pred)
 
     print("finished")

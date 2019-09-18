@@ -410,8 +410,6 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
             data = data.view(len(data), n_features, args.layer_dim)
         except:
             print("woah the cowboy")
-        # data = data.clone().detach().type(torch.FloatTensor)
-        # data = data.to(device)
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
@@ -490,7 +488,7 @@ def validate(model, device, valid_loader, criterion, epoch):
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', name='tcn')
+    wandb.init(project='Liu_TCN', name='tcn2')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
@@ -504,23 +502,23 @@ if __name__ == '__main__':
                         help='enables CUDA training')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
+    parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="GRU",
                         help='Types of rnn (default: LSTM')
 
-    parser.add_argument('--layer_dim', type=int, default=5, metavar='N',
+    parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
                         help='how many hidden layers (default: 5)')
 
     parser.add_argument('--dropout', type=float, default=0.25,
                         help='dropout applied to layers (default: 0.25)')
     parser.add_argument('--clip', type=float, default=0.2,
                         help='gradient clip, -1 means no clip (default: 0.2)')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=20,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--ksize', type=int, default=5,
                         help='kernel size (default: 5)')
-    parser.add_argument('--levels', type=int, default=2,
+    parser.add_argument('--levels', type=int, default=4,
                         help='# of levels (default: 4)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='report interval (default: 100')
@@ -532,7 +530,7 @@ if __name__ == '__main__':
                         help='number of hidden units per layer (default: 150)')
     parser.add_argument('--data', type=str, default='Nott',
                         help='the dataset to run (default: Nott)')
-    parser.add_argument('--seed', type=int, default=1111,
+    parser.add_argument('--seed', type=int, default=1,
                         help='random seed (default: 1111)')
     args = parser.parse_args()
     wandb.config.update(args)
