@@ -1,6 +1,8 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
+from sklearn.model_selection import cross_val_predict
+
 import sys
 import numpy as np
 import argparse
@@ -8,10 +10,11 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from skorch import NeuralNetClassifier
-from sklearn.model_selection import cross_val_predict
 
-from collections import OrderedDict
+from skorch import NeuralNetClassifier
+from skorch import toy
+from skorch.callbacks import EpochScoring
+
 from data_loader import CustomDataset
 import wandb
 
@@ -117,7 +120,7 @@ class MLP(nn.Module):
 
 
     def forward(self, X, **kwargs):
-        X = F.softmax(self.network(X), dim=-1)
+        X = self.network(X)
         return X
 
 def train(model, device, train_loader, optimizer, epoch, criterion):
@@ -210,7 +213,7 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=40, metavar='N',
+    parser.add_argument('--epochs', type=int, default=20, metavar='N',
                         help='number of epochs to train (default: 15)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
@@ -224,16 +227,14 @@ if __name__ == '__main__':
                         help='how many batches to wait before logging training status')
     parser.add_argument('--flare_label', default="M",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--layer_dim', type=int, default=5, metavar='N',
+    parser.add_argument('--layer_dim', type=int, default=2, metavar='N',
                         help='how many hidden layers (default: 5)')
     parser.add_argument('--hidden_dim', type=int, default=1000, metavar='N',
                         help='how many nodes in layers (default: 64)')
     parser.add_argument('--dropout', type=float, default=0.4, metavar='M',
                         help='percentage dropout (default: 0.4)')
-    parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
+    parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
-    parser.add_argument('--rnn_module', default="GRU",
-                        help='Types of rnn (default: LSTM')
     args = parser.parse_args()
     wandb.config.update(args)
 
@@ -318,26 +319,35 @@ if __name__ == '__main__':
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
-    print("Training Network...")
-    for epoch in range(args.epochs):
-        train(model, device, train_loader, optimizer, epoch, criterion)
-        validate(model, device, valid_loader, criterion, epoch)
+    # print("Training Network...")
+    # for epoch in range(args.epochs):
+    #     train(model, device, train_loader, optimizer, epoch, criterion)
+    #     validate(model, device, valid_loader, criterion, epoch)
 
     '''
     K-fold cross validation
     '''
+    model = toy.make_binary_classifier(input_units=n_features, output_units=2, hidden_units=500, num_hidden=2, dropout=args.dropout)
+    auc = EpochScoring(scoring='f1', lower_is_better=False, name="f1")
+
+
+
     net = NeuralNetClassifier(
         model,
         max_epochs=args.epochs,
-        lr=args.learning_rate,
+        batch_size=args.batch_size,
+        criterion=nn.CrossEntropyLoss,
+        criterion__weight=torch.FloatTensor(class_weights).to(device),
+        optimizer=torch.optim.Adam,
+        optimizer__lr=args.learning_rate,
+        optimizer__weight_decay=args.weight_decay,
         device=device,
-        train_split=None
+        # train_split=None, #die breek die logs
+        callbacks=[auc],
     )
 
-    from sklearn.model_selection import cross_val_predict
+    net.fit(np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)))
 
-    y_pred = cross_val_predict(net, X_train_data, y_train_tr, cv=5)
-
-    # net.fit(X_train_data, y_train_tr)
+    y_pred = cross_val_predict(net, np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)), cv=5)
 
     print("finished")
