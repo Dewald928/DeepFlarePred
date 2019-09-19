@@ -589,24 +589,31 @@ if __name__ == '__main__':
         train(model, device, train_loader, optimizer, epoch, criterion)
         validate(model, device, valid_loader, criterion, epoch)
 
+    '''
+    K-fold Cross validation
+    '''
     # print("Do K-Fold cross validation in skorch wrapper")
-    # train_loader = torch.utils.data.DataLoader({datasets['train'], datasets['valid']}, args.batch_size,
-    #                                            shuffle=False, drop_last=False)
     # net = NeuralNetClassifier(
-    #     module=LSTMModel,
-    #     criterion=criterion,
-    #     optimizer=optimizer,
+    #     model,
     #     max_epochs=args.epochs,
-    #     lr=args.learning_rate,
-    #     device=device,
-    #     train_split=None,
     #     batch_size=args.batch_size,
+    #     criterion=nn.CrossEntropyLoss,
+    #     criterion__weight=torch.FloatTensor(class_weights).to(device),
+    #     optimizer=torch.optim.Adam,
+    #     optimizer__lr=args.learning_rate,
+    #     optimizer__weight_decay=args.weight_decay,
+    #     device=device,
+    #     # train_split=None, #die breek die logs
+    #     # callbacks=[auc, tss],
+    #     # iterator_train__shuffle=True,  # batches shuffle
     # )
 
     # X_data = datasets[datasets.columns[:-1]].values.astype(np.float32)
     # y_data = datasets["y"].astype("category").cat.codes.values.astype(np.int64)
     # print(X_data.shape, y_data.shape)
-    #
+
+    # net.fit(np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)))
+
     # from sklearn.model_selection import cross_val_score
     # scores = cross_val_score(net, X_train_data, y_train_tr, cv=5, scoring="accuracy")
 

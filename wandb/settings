@@ -1,6 +1,5 @@
 [default]
 entity = dewald123
-project = Liu_pytorch
+project = Liu_MLP
 base_url = https://api.wandb.ai
-disabled = true
 

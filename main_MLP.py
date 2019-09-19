@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
 from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_val_score
 from sklearn.metrics import make_scorer
 
 import sys
@@ -103,7 +104,7 @@ def calculate_metrics(confusion_matrix):
 def get_tss(y_true, y_pred):
     # determine skill scores
     from sklearn.metrics import confusion_matrix
-    print('Calculating skill scores: ')
+    # print('Calculating skill scores: ')
     confusion_matrix = confusion_matrix(y_true, y_pred)
     N = np.sum(confusion_matrix)
 
@@ -154,12 +155,16 @@ class MLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, layer_dim, dropout=0.5,):
         super(MLP, self).__init__()
         self.dropout = nn.Dropout(dropout)
+        self.layer_dim = layer_dim
         self.input_layer = nn.Linear(input_dim, hidden_dim)
+        self.hidden = nn.Linear(hidden_dim, hidden_dim)
+        self.output = nn.Linear(hidden_dim, output_dim)
         layers = []
         layers += [nn.Linear(input_dim, hidden_dim)]
 
         for i in range(layer_dim):
             layers += [nn.Linear(hidden_dim, hidden_dim)]
+            layers += [nn.BatchNorm1d(hidden_dim)]
             layers += [nn.ReLU()]
 
         layers += [nn.Linear(hidden_dim, output_dim)]
@@ -168,8 +173,15 @@ class MLP(nn.Module):
 
 
     def forward(self, X, **kwargs):
-        X = self.network(X)
-        return X
+        # normal net
+        # X = self.network(X)
+
+        # Skip connections
+        X = self.input_layer(X)
+        for i in range(self.layer_dim):
+            X = self.hidden(X) + X
+        X = self.output(X)
+        return X.squeeze(-1)
 
 def train(model, device, train_loader, optimizer, epoch, criterion):
     model.train()
@@ -259,7 +271,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
     parser.add_argument('--batch_size', type=int, default=512, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
+    parser.add_argument('--test_batch_size', type=int, default=500, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=20, metavar='N',
                         help='number of epochs to train (default: 15)')
@@ -362,10 +374,10 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(device))  # weighted cross entropy
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
-    # print model parameters
-    print(len(list(model.parameters())))
-    for i in range(len(list(model.parameters()))):
-        print(list(model.parameters())[i].size())
+    # # print model parameters
+    # print(len(list(model.parameters())))
+    # for i in range(len(list(model.parameters()))):
+    #     print(list(model.parameters())[i].size())
 
     # print("Training Network...")
     # for epoch in range(args.epochs):
@@ -375,9 +387,11 @@ if __name__ == '__main__':
     '''
     K-fold cross validation
     '''
-    model = toy.make_binary_classifier(input_units=n_features, output_units=2, hidden_units=500, num_hidden=2, dropout=args.dropout)
+    # model = toy.make_binary_classifier(input_units=n_features, output_units=2, hidden_units=1000, num_hidden=2, dropout=args.dropout)
+    # wandb.watch(model, log='all')
+
     auc = EpochScoring(scoring='roc_auc', lower_is_better=False)
-    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False)
+    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss')  # on train to set on train
 
     # scoring = {'tss':make_scorer(tss)}
     net = NeuralNetClassifier(
@@ -392,10 +406,20 @@ if __name__ == '__main__':
         device=device,
         # train_split=None, #die breek die logs
         callbacks=[auc, tss],
+        # iterator_train__shuffle=True,  # batches shuffle
     )
 
     net.fit(np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)))
 
-    y_pred = cross_val_predict(net, np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)), cv=5)
+    y_pred = cross_val_score(net, np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)),
+                             cv=2, scoring=make_scorer(get_tss))
+
+    print(y_pred)
+    history = net.history
+
+    print(history[:, 'tss'])
+
+    wandb.log({"Validation_TSS": history[:, 'tss'],
+               'Validation_ROC_AUC': history[:, 'roc_auc']})
 
     print("finished")
