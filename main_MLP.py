@@ -269,11 +269,11 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch_size', type=int, default=512, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=150, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=500, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=20, metavar='N',
+    parser.add_argument('--epochs', type=int, default=50, metavar='N',
                         help='number of epochs to train (default: 15)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
@@ -287,9 +287,9 @@ if __name__ == '__main__':
                         help='how many batches to wait before logging training status')
     parser.add_argument('--flare_label', default="M",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--layer_dim', type=int, default=2, metavar='N',
+    parser.add_argument('--layer_dim', type=int, default=7, metavar='N',
                         help='how many hidden layers (default: 5)')
-    parser.add_argument('--hidden_dim', type=int, default=1000, metavar='N',
+    parser.add_argument('--hidden_dim', type=int, default=200, metavar='N',
                         help='how many nodes in layers (default: 64)')
     parser.add_argument('--dropout', type=float, default=0.4, metavar='M',
                         help='percentage dropout (default: 0.4)')
