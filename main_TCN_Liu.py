@@ -488,7 +488,7 @@ def validate(model, device, valid_loader, criterion, epoch):
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_TCN', name='tcn2')
+    wandb.init(project='Liu_pytorch', name='tcn')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
@@ -510,7 +510,7 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--dropout', type=float, default=0.25,
+    parser.add_argument('--dropout', type=float, default=0.0,
                         help='dropout applied to layers (default: 0.25)')
     parser.add_argument('--clip', type=float, default=0.2,
                         help='gradient clip, -1 means no clip (default: 0.2)')
@@ -526,7 +526,7 @@ if __name__ == '__main__':
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--nhid', type=int, default=150,
+    parser.add_argument('--nhid', type=int, default=128,
                         help='number of hidden units per layer (default: 150)')
     parser.add_argument('--data', type=str, default='Nott',
                         help='the dataset to run (default: Nott)')
