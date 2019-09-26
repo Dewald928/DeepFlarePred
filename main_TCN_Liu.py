@@ -488,7 +488,7 @@ def validate(model, device, valid_loader, criterion, epoch):
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', name='tcn')
+    wandb.init(project='Liu_pytorch', name='tcn_basic')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
@@ -522,7 +522,7 @@ if __name__ == '__main__':
                         help='# of levels (default: 4)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='report interval (default: 100')
-    parser.add_argument('--lr', type=float, default=1e-3,
+    parser.add_argument('--learning_rate', type=float, default=1e-3,
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
@@ -616,7 +616,7 @@ if __name__ == '__main__':
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
 
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(device))  # weighted cross entropy
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate,
                                  weight_decay=args.weight_decay, amsgrad=False)
 
     # print model parameters
