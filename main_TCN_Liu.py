@@ -516,7 +516,7 @@ if __name__ == '__main__':
                         help='gradient clip, -1 means no clip (default: 0.2)')
     parser.add_argument('--epochs', type=int, default=20,
                         help='upper epoch limit (default: 100)')
-    parser.add_argument('--ksize', type=int, default=5,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
     parser.add_argument('--levels', type=int, default=4,
                         help='# of levels (default: 4)')
