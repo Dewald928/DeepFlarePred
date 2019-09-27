@@ -23,7 +23,6 @@ from sklearn.model_selection import cross_val_predict
 from data_loader import CustomDataset
 import wandb
 
-
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
     df = pd.read_csv(datafile)
     df_values = df.values
@@ -488,7 +487,7 @@ def validate(model, device, valid_loader, criterion, epoch):
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', name='tcn_basic')
+    wandb.init(project='Liu_pytorch', notes='TCN_Deeper')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
@@ -504,7 +503,7 @@ if __name__ == '__main__':
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
-    parser.add_argument('--rnn_module', default="GRU",
+    parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
 
     parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
@@ -520,7 +519,7 @@ if __name__ == '__main__':
                         help='kernel size (default: 5)')
     parser.add_argument('--levels', type=int, default=4,
                         help='# of levels (default: 4)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+    parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
     parser.add_argument('--learning_rate', type=float, default=1e-3,
                         help='initial learning rate (default: 1e-3)')
@@ -565,7 +564,7 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
     torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False  # And this
+    torch.backends.cudnn.benchmark = True  # And this
     np.random.seed(args.seed)
 
     # setup dataloaders
@@ -609,8 +608,7 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if use_cuda else "cpu")
     model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size, dropout=dropout)
-    wandb.watch(model, log='all')
-
+    # wandb.watch(model, log='all')
 
     # optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
