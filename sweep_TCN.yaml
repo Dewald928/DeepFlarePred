@@ -1,4 +1,4 @@
-description: TCN sweep
+description: TCN sweep for kernel and levels
 
 # Training script to run
 program: main_TCN_Liu.py
@@ -23,10 +23,10 @@ parameters:
     values: [256]
 #    values: [64,128,256,512]
   flare_label:
-    values: ['M5']
-#    values: ["C", "M", "M5"]
+#    values: ['M5']
+    values: ["C", "M", "M5"]
   learning_rate:
-    values: [0.01]
+    values: [0.001]
 #    values: [0.1,0.01,0.001]
   epochs:
     values: [20]
