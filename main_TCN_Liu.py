@@ -513,7 +513,7 @@ if __name__ == '__main__':
                         help='dropout applied to layers (default: 0.25)')
     parser.add_argument('--clip', type=float, default=0.2,
                         help='gradient clip, -1 means no clip (default: 0.2)')
-    parser.add_argument('--epochs', type=int, default=50,
+    parser.add_argument('--epochs', type=int, default=20,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
@@ -564,7 +564,7 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
     torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = True  # And this
+    torch.backends.cudnn.benchmark = True
     np.random.seed(args.seed)
 
     # setup dataloaders
@@ -607,7 +607,7 @@ if __name__ == '__main__':
     dropout = args.dropout
 
     device = torch.device("cuda" if use_cuda else "cpu")
-    model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size, dropout=dropout)
+    model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size, dropout=dropout).to(device)
     # wandb.watch(model, log='all')
 
     # optimizers

@@ -40,12 +40,9 @@ class TemporalBlock(nn.Module):
             self.downsample.weight.data.normal_(0, 0.01)
 
     def forward(self, x):
-        # x = x.clone().detach().type(torch.cuda.FloatTensor)
-        # x = x.to('cuda:0')
-        x1 = x.clone().detach().type(torch.FloatTensor)
-        out = self.net(x1)
-        res = x if self.downsample is None else self.downsample(x1)
-        return self.relu(out.to('cuda:0') + res.to('cuda:0'))
+        out = self.net(x)
+        res = x if self.downsample is None else self.downsample(x)
+        return self.relu(out) + res
 
 
 class TemporalConvNet(nn.Module):
