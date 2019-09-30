@@ -17,6 +17,7 @@ import torch.nn.functional as F
 # import skorch
 from skorch import NeuralNetClassifier
 from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_val_score
 
 from data_loader import CustomDataset
 import wandb
@@ -491,7 +492,7 @@ if __name__ == '__main__':
                         help='percentage dropout (default: 0.4)')
     parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
-    parser.add_argument('--rnn_module', default="GRU",
+    parser.add_argument('--rnn_module', default="LSTM",
                         help='Types of rnn (default: LSTM')
     args = parser.parse_args()
     wandb.config.update(args)
@@ -565,7 +566,7 @@ if __name__ == '__main__':
     # make model
     device = torch.device("cuda" if use_cuda else "cpu")
     model = LSTMModel(n_features, hidden_dim=args.hidden_dim, layer_dim=args.layer_dim,
-                      output_dim=nclass, rnn_module="GRU").to(device)
+                      output_dim=nclass, rnn_module=args.rnn_module).to(device)
 
     try:
         wandb.watch(model, log='all')
@@ -585,36 +586,42 @@ if __name__ == '__main__':
         print(list(model.parameters())[i].size())
 
     print("Training Network...")
-    for epoch in range(args.epochs):
-        train(model, device, train_loader, optimizer, epoch, criterion)
-        validate(model, device, valid_loader, criterion, epoch)
+    # for epoch in range(args.epochs):
+    #     train(model, device, train_loader, optimizer, epoch, criterion)
+    #     validate(model, device, valid_loader, criterion, epoch)
 
     '''
     K-fold Cross validation
     '''
-    # print("Do K-Fold cross validation in skorch wrapper")
-    # net = NeuralNetClassifier(
-    #     model,
-    #     max_epochs=args.epochs,
-    #     batch_size=args.batch_size,
-    #     criterion=nn.CrossEntropyLoss,
-    #     criterion__weight=torch.FloatTensor(class_weights).to(device),
-    #     optimizer=torch.optim.Adam,
-    #     optimizer__lr=args.learning_rate,
-    #     optimizer__weight_decay=args.weight_decay,
-    #     device=device,
-    #     # train_split=None, #die breek die logs
-    #     # callbacks=[auc, tss],
-    #     # iterator_train__shuffle=True,  # batches shuffle
-    # )
+    print("Do K-Fold cross validation in skorch wrapper")
+    net = NeuralNetClassifier(
+        model,
+        max_epochs=args.epochs,
+        batch_size=args.batch_size,
+        criterion=nn.CrossEntropyLoss,
+        criterion__weight=torch.FloatTensor(class_weights).to(device),
+        optimizer=torch.optim.Adam,
+        optimizer__lr=args.learning_rate,
+        optimizer__weight_decay=args.weight_decay,
+        optimizer__amsgrad=False,
+        device=device,
+        # train_split=None, #die breek die logs
+        # callbacks=[auc, tss],
+        # iterator_train__shuffle=True,  # batches shuffle
+    )
 
     # X_data = datasets[datasets.columns[:-1]].values.astype(np.float32)
     # y_data = datasets["y"].astype("category").cat.codes.values.astype(np.int64)
     # print(X_data.shape, y_data.shape)
 
     # net.fit(np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)))
+    net.fit(torch.tensor(X_train_data).float(), torch.tensor(y_train_tr).long())
 
-    # from sklearn.model_selection import cross_val_score
+    y_pred = cross_val_score(net, np.concatenate((X_train_data, X_valid_data)),
+                             np.concatenate((y_train_tr, y_valid_tr)),
+                             cv=2)
+
+
     # scores = cross_val_score(net, X_train_data, y_train_tr, cv=5, scoring="accuracy")
 
 

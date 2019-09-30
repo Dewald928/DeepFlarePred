@@ -24,12 +24,12 @@ Tested, but not sweeped
 * [x] GRU, LSTM and RNN switchable between
 * [x] hdf5 test script: Chen data uses hdf5, but unable to read the data
 * [x] MLP skorch test: RNN and custom logs not well supported
-* [x] [TCN networks](https://github.com/locuslab/TCN) : not better so far
+* [x] [TCN networks](https://github.com/locuslab/TCN) : better so far, slightly
 
 ### Main Objectives
 * [ ] Create MLP that is equivalent to Nishzuka et al paper
 * [ ] Establish a baseline MLP
-* [ ] Find best features
+* [ ] Find best featuresnot
 
 
 ### Future plans

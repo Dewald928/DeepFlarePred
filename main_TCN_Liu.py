@@ -493,7 +493,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
     parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
+    parser.add_argument('--test_batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
@@ -501,7 +501,7 @@ if __name__ == '__main__':
                         help='enables CUDA training')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
+    parser.add_argument('--weight_decay', type=float, default=0.001, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
@@ -509,11 +509,11 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--dropout', type=float, default=0.0,
+    parser.add_argument('--dropout', type=float, default=0.77,
                         help='dropout applied to layers (default: 0.25)')
     parser.add_argument('--clip', type=float, default=0.2,
                         help='gradient clip, -1 means no clip (default: 0.2)')
-    parser.add_argument('--epochs', type=int, default=30,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--ksize', type=int, default=3,
                         help='kernel size (default: 5)')
