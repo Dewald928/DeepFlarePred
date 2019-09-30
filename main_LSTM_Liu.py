@@ -7,6 +7,8 @@ But the abundance of the rich will not permit him to sleep.
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
+from sklearn.metrics import make_scorer
+
 import sys
 import numpy as np
 import argparse
@@ -18,6 +20,7 @@ import torch.nn.functional as F
 from skorch import NeuralNetClassifier
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import cross_val_score
+from skorch.callbacks import EpochScoring
 
 from data_loader import CustomDataset
 import wandb
@@ -306,6 +309,53 @@ def calculate_metrics(confusion_matrix):
     return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
 
 
+def get_tss(y_true, y_pred):
+    # determine skill scores
+    from sklearn.metrics import confusion_matrix
+    # print('Calculating skill scores: ')
+    confusion_matrix = confusion_matrix(y_true, y_pred)
+    N = np.sum(confusion_matrix)
+
+    recall = np.zeros(nclass)
+    precision = np.zeros(nclass)
+    accuracy = np.zeros(nclass)
+    bacc = np.zeros(nclass)
+    tss = np.zeros(nclass)
+    hss = np.zeros(nclass)
+    tp = np.zeros(nclass)
+    fn = np.zeros(nclass)
+    fp = np.zeros(nclass)
+    tn = np.zeros(nclass)
+    for p in range(nclass):
+        tp[p] = confusion_matrix[p][p]
+        for q in range(nclass):
+            if q != p:
+                fn[p] += confusion_matrix[p][q]
+                fp[p] += confusion_matrix[q][p]
+        tn[p] = N - tp[p] - fn[p] - fp[p]
+
+        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
+        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
+        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
+        bacc[p] = round(
+            0.5 * (float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(tn[p] + fp[p])), 3)
+        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p])
+                       / float((tp[p] + fn[p]) * (fn[p] + tn[p])
+                               + (tp[p] + fp[p]) * (fp[p] + tn[p])), 3)
+        tss[p] = round(
+            (float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
+
+    # print("tss: " + str(tss))
+    # print("hss: " + str(hss))
+    # print("bacc: " + str(bacc))
+    # print("accuracy: " + str(accuracy))
+    # print("precision: " + str(precision))
+    # print("recall: " + str(recall))
+
+    return tss[0]
+    # return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
+
+
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim, rnn_module='LSTM'):
         super(LSTMModel, self).__init__()
@@ -470,7 +520,7 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=80, metavar='N',
+    parser.add_argument('--epochs', type=int, default=30, metavar='N',
                         help='number of epochs to train (default: 15)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
@@ -594,6 +644,9 @@ if __name__ == '__main__':
     K-fold Cross validation
     '''
     print("Do K-Fold cross validation in skorch wrapper")
+
+    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss')  # on train to set on train
+
     net = NeuralNetClassifier(
         model,
         max_epochs=args.epochs,
@@ -606,20 +659,23 @@ if __name__ == '__main__':
         optimizer__amsgrad=False,
         device=device,
         # train_split=None, #die breek die logs
-        # callbacks=[auc, tss],
+        callbacks=[tss],
         # iterator_train__shuffle=True,  # batches shuffle
     )
 
-    # X_data = datasets[datasets.columns[:-1]].values.astype(np.float32)
-    # y_data = datasets["y"].astype("category").cat.codes.values.astype(np.int64)
-    # print(X_data.shape, y_data.shape)
+    # net.fit(torch.tensor(np.concatenate((X_train_data, X_valid_data))).float(),
+    #                      torch.tensor(np.concatenate((y_train_tr, y_valid_tr))).long())
+    inputs = torch.tensor(np.concatenate((X_train_data, X_valid_data))).float()
+    labels = torch.tensor(np.concatenate((y_train_tr, y_valid_tr))).long()
 
-    # net.fit(np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)))
-    net.fit(torch.tensor(X_train_data).float(), torch.tensor(y_train_tr).long())
+    inputs = inputs.numpy()
+    labels = labels.numpy()
 
-    y_pred = cross_val_score(net, np.concatenate((X_train_data, X_valid_data)),
-                             np.concatenate((y_train_tr, y_valid_tr)),
-                             cv=2)
+    y_pred = cross_val_score(net, inputs,
+                             labels, cv=10,
+                             scoring=make_scorer(get_tss))
+
+    wandb.log(y_pred)
 
 
     # scores = cross_val_score(net, X_train_data, y_train_tr, cv=5, scoring="accuracy")
