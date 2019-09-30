@@ -4,7 +4,7 @@ description: TCN sweep for kernel and levels
 program: main_TCN_Liu.py
 
 # Method can be bayes, random, grid
-method: grid
+method: bayes
 
 # Metric to optimize
 metric:
@@ -19,29 +19,29 @@ early_terminate:
 parameters:
   seed:
     values: [1,5,10]
-  batch_size:
-    values: [2048]
-#    values: [64,128,256,512]
-  flare_label:
-    values: ['M5']
-#    values: ["C", "M", "M5"]
-  learning_rate:
-    values: [0.001]
-#    values: [0.1,0.01,0.001]
-  epochs:
-    values: [25]
-  layer_dim:
-    values: [1]
-#    values: [1,5,10]
-  ksize:
-    values: [2,3,4,5]
-  levels:
-    values: [1,3,5,7]
-  nhid:
-    values: [64,128,256]
-#  dropout:
-#    min: 0.4
-#    max: 0.9
-#  weight_decay:
-#    min: 0.0
-#    max: 0.01
+#  batch_size:
+#    values: [2048]
+##    values: [64,128,256,512]
+#  flare_label:
+#    values: ['M5']
+##    values: ["C", "M", "M5"]
+#  learning_rate:
+#    values: [0.001]
+##    values: [0.1,0.01,0.001]
+#  epochs:
+#    values: [25]
+#  layer_dim:
+#    values: [1]
+##    values: [1,5,10]
+#  ksize:
+#    values: [2,3,4,5]
+#  levels:
+#    values: [1,3,5,7]
+#  nhid:
+#    values: [64,128,256]
+  dropout:
+    min: 0.2
+    max: 0.9
+  weight_decay:
+    min: 0.0
+    max: 0.001

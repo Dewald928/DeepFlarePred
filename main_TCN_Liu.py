@@ -506,18 +506,18 @@ if __name__ == '__main__':
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
 
-    parser.add_argument('--layer_dim', type=int, default=5, metavar='N',
+    parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
     parser.add_argument('--dropout', type=float, default=0.0,
                         help='dropout applied to layers (default: 0.25)')
     parser.add_argument('--clip', type=float, default=0.2,
                         help='gradient clip, -1 means no clip (default: 0.2)')
-    parser.add_argument('--epochs', type=int, default=20,
+    parser.add_argument('--epochs', type=int, default=30,
                         help='upper epoch limit (default: 100)')
-    parser.add_argument('--ksize', type=int, default=2,
+    parser.add_argument('--ksize', type=int, default=3,
                         help='kernel size (default: 5)')
-    parser.add_argument('--levels', type=int, default=1,
+    parser.add_argument('--levels', type=int, default=5,
                         help='# of levels (default: 4)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
@@ -525,7 +525,7 @@ if __name__ == '__main__':
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--nhid', type=int, default=64,
+    parser.add_argument('--nhid', type=int, default=128,
                         help='number of hidden units per layer (default: 150)')
     parser.add_argument('--data', type=str, default='Nott',
                         help='the dataset to run (default: Nott)')
