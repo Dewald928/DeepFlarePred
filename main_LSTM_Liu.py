@@ -675,10 +675,11 @@ if __name__ == '__main__':
                              labels, cv=10,
                              scoring=make_scorer(get_tss))
 
-    wandb.log(y_pred)
+    print(y_pred)
+    # wandb.log(y_pred)
 
-
-    # scores = cross_val_score(net, X_train_data, y_train_tr, cv=5, scoring="accuracy")
+    scores = cross_val_predict(net, inputs, labels, cv=2)
+    print(scores)
 
 
     # TODO save model
