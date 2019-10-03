@@ -684,8 +684,14 @@ if __name__ == '__main__':
 
     net.fit(inputs, labels)
 
+    inputs = torch.tensor(X_test_data).float()
+    labels = torch.tensor(y_test_tr).long()
+
+    inputs = inputs.numpy()
+    labels = labels.numpy()
+
     net.max_epochs = 1
-    score = cross_val_score(net, inputs, labels, cv=2, scoring=make_scorer(get_tss))
+    score = cross_val_score(net, inputs, labels, cv=10, scoring=make_scorer(get_tss))
     print(score)
     # y_pred = cross_val_predict(net, inputs, labels, cv=2)
 
@@ -707,7 +713,7 @@ if __name__ == '__main__':
     labels = labels.numpy()
 
     y_test = net.predict(inputs)
-    tss_test_score = get_tss(np.concatenate((y_train_tr, y_valid_tr)), y_test)
+    tss_test_score = get_tss(y_train_tr, y_test)
     print("Test TSS:" + str(tss_test_score))
 
 
