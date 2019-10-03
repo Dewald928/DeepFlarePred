@@ -525,7 +525,7 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=30, metavar='N',
+    parser.add_argument('--epochs', type=int, default=40, metavar='N',
                         help='number of epochs to train (default: 15)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
@@ -662,8 +662,9 @@ if __name__ == '__main__':
 
     valid_ds = Dataset(X_valid_data, y_valid_tr)
 
-    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss', use_caching=False)  # on train to set on train
+    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss', use_caching=True)  # on train to set on train
     earlystop = EarlyStopping(monitor='tss', lower_is_better=False, patience=10)
+    checkpoint = Checkpoint(monitor='tss_best', f_pickle='my_model.pkl', dirname='./saved/models/exp1')
 
     net = NeuralNetClassifier(
         model,
@@ -678,11 +679,14 @@ if __name__ == '__main__':
         device=device,
         # train_split=None, #die breek die logs
         train_split=predefined_split(valid_ds),
-        callbacks=[tss, earlystop],
+        callbacks=[tss, earlystop, checkpoint],
         # iterator_train__shuffle=True,  # batches shuffle
     )
 
     net.fit(inputs, labels)
+
+    net.initialize()
+    net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
     inputs = torch.tensor(X_test_data).float()
     labels = torch.tensor(y_test_tr).long()
@@ -690,30 +694,26 @@ if __name__ == '__main__':
     inputs = inputs.numpy()
     labels = labels.numpy()
 
-    net.max_epochs = 1
+    net.max_epochs = 0
     score = cross_val_score(net, inputs, labels, cv=10, scoring=make_scorer(get_tss))
     print(score)
     # y_pred = cross_val_predict(net, inputs, labels, cv=2)
-
     # print(y_pred)
     # # wandb.log(y_pred)
-    #
-    # scores = cross_val_predict(net, inputs, labels, cv=2)
-    # print(scores)
 
     ''' 
     Test Results
     '''
-    inputs = torch.tensor(X_train_data).float()
-    labels = torch.tensor(y_train_tr).long()
-    # inputs = torch.tensor(X_test_data).float()
-    # labels = torch.tensor(y_test_tr).long()
+    # inputs = torch.tensor(X_valid_data).float()
+    # labels = torch.tensor(y_valid_tr).long()
+    inputs = torch.tensor(X_test_data).float()
+    labels = torch.tensor(y_test_tr).long()
 
     inputs = inputs.numpy()
     labels = labels.numpy()
 
     y_test = net.predict(inputs)
-    tss_test_score = get_tss(y_train_tr, y_test)
+    tss_test_score = get_tss(labels, y_test)
     print("Test TSS:" + str(tss_test_score))
 
 
