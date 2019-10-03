@@ -8,6 +8,9 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
 from sklearn.metrics import make_scorer
+from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_validate
 
 import sys
 import numpy as np
@@ -18,9 +21,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 # import skorch
 from skorch import NeuralNetClassifier
-from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import cross_val_score
 from skorch.callbacks import EpochScoring
+from skorch.callbacks import *
+from skorch.helper import predefined_split
+from skorch.dataset import Dataset
 
 from data_loader import CustomDataset
 import wandb
@@ -311,9 +315,10 @@ def calculate_metrics(confusion_matrix):
 
 def get_tss(y_true, y_pred):
     # determine skill scores
-    from sklearn.metrics import confusion_matrix
+    import sklearn.metrics
     # print('Calculating skill scores: ')
-    confusion_matrix = confusion_matrix(y_true, y_pred)
+    confusion_matrix = []
+    confusion_matrix = sklearn.metrics.confusion_matrix(y_true, y_pred)
     N = np.sum(confusion_matrix)
 
     recall = np.zeros(nclass)
@@ -538,9 +543,9 @@ if __name__ == '__main__':
                         help='how many hidden layers (default: 5)')
     parser.add_argument('--hidden_dim', type=int, default=64, metavar='N',
                         help='how many nodes in layers (default: 64)')
-    parser.add_argument('--dropout', type=float, default=0.4, metavar='M',
+    parser.add_argument('--dropout', type=float, default=0.0, metavar='M',
                         help='percentage dropout (default: 0.4)')
-    parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
+    parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="LSTM",
                         help='Types of rnn (default: LSTM')
@@ -645,7 +650,20 @@ if __name__ == '__main__':
     '''
     print("Do K-Fold cross validation in skorch wrapper")
 
-    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss')  # on train to set on train
+    inputs = torch.tensor(X_train_data).float()
+    labels = torch.tensor(y_train_tr).long()
+    X_valid_data = torch.tensor(X_valid_data).float()
+    y_valid_tr = torch.tensor(y_valid_tr).long()
+
+    inputs = inputs.numpy()
+    labels = labels.numpy()
+    X_valid_data = X_valid_data.numpy()
+    y_valid_tr = y_valid_tr.numpy()
+
+    valid_ds = Dataset(X_valid_data, y_valid_tr)
+
+    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss', use_caching=False)  # on train to set on train
+    earlystop = EarlyStopping(monitor='tss', lower_is_better=False, patience=10)
 
     net = NeuralNetClassifier(
         model,
@@ -659,27 +677,38 @@ if __name__ == '__main__':
         optimizer__amsgrad=False,
         device=device,
         # train_split=None, #die breek die logs
-        callbacks=[tss],
+        train_split=predefined_split(valid_ds),
+        callbacks=[tss, earlystop],
         # iterator_train__shuffle=True,  # batches shuffle
     )
 
-    # net.fit(torch.tensor(np.concatenate((X_train_data, X_valid_data))).float(),
-    #                      torch.tensor(np.concatenate((y_train_tr, y_valid_tr))).long())
-    inputs = torch.tensor(np.concatenate((X_train_data, X_valid_data))).float()
-    labels = torch.tensor(np.concatenate((y_train_tr, y_valid_tr))).long()
+    net.fit(inputs, labels)
+
+    net.max_epochs = 1
+    score = cross_val_score(net, inputs, labels, cv=2, scoring=make_scorer(get_tss))
+    print(score)
+    # y_pred = cross_val_predict(net, inputs, labels, cv=2)
+
+    # print(y_pred)
+    # # wandb.log(y_pred)
+    #
+    # scores = cross_val_predict(net, inputs, labels, cv=2)
+    # print(scores)
+
+    ''' 
+    Test Results
+    '''
+    inputs = torch.tensor(X_train_data).float()
+    labels = torch.tensor(y_train_tr).long()
+    # inputs = torch.tensor(X_test_data).float()
+    # labels = torch.tensor(y_test_tr).long()
 
     inputs = inputs.numpy()
     labels = labels.numpy()
 
-    y_pred = cross_val_score(net, inputs,
-                             labels, cv=10,
-                             scoring=make_scorer(get_tss))
-
-    print(y_pred)
-    # wandb.log(y_pred)
-
-    scores = cross_val_predict(net, inputs, labels, cv=2)
-    print(scores)
+    y_test = net.predict(inputs)
+    tss_test_score = get_tss(np.concatenate((y_train_tr, y_valid_tr)), y_test)
+    print("Test TSS:" + str(tss_test_score))
 
 
     # TODO save model
