@@ -495,6 +495,10 @@ def test(model, device, test_loader, criterion):
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
+            try:
+                data = data.view(len(data), n_features, args.layer_dim)
+            except:
+                print("woah the cowboy")
             output = model(data)
             # sum up batch loss
             test_loss += criterion(output, target).item()
@@ -510,7 +514,12 @@ def test(model, device, test_loader, criterion):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-    print("Testing Scores:")
+    # # testation conf matrix
+    # print(confusion_matrix)
+    # # per class accuracy
+    # print(confusion_matrix.diag() / confusion_matrix.sum(1))
+
+    print("Test Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
 
     wandb.log({
@@ -522,13 +531,12 @@ def test(model, device, test_loader, criterion):
         "Test_Recall": recall[0],
         "Test_Loss": test_loss})
 
-
 if __name__ == '__main__':
     wandb.init(project='Liu_pytorch', notes='TCN_Deeper')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for testing (default: 1000)')
@@ -550,9 +558,9 @@ if __name__ == '__main__':
                         help='dropout applied to layers (default: 0.25)')
     parser.add_argument('--clip', type=float, default=0.2,
                         help='gradient clip, -1 means no clip (default: 0.2)')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=20,
                         help='upper epoch limit (default: 100)')
-    parser.add_argument('--ksize', type=int, default=3,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
     parser.add_argument('--levels', type=int, default=5,
                         help='# of levels (default: 4)')

@@ -13,7 +13,7 @@ metric:
 
 # Should we early terminate runs
 early_terminate:
-  type: hyperband
+  type: envelope
 
 # Parameters to search over
 parameters:
