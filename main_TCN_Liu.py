@@ -536,7 +536,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for testing (default: 1000)')
@@ -560,7 +560,7 @@ if __name__ == '__main__':
                         help='gradient clip, -1 means no clip (default: 0.2)')
     parser.add_argument('--epochs', type=int, default=20,
                         help='upper epoch limit (default: 100)')
-    parser.add_argument('--ksize', type=int, default=2,
+    parser.add_argument('--ksize', type=int, default=3,
                         help='kernel size (default: 5)')
     parser.add_argument('--levels', type=int, default=5,
                         help='# of levels (default: 4)')
@@ -574,7 +574,7 @@ if __name__ == '__main__':
                         help='number of hidden units per layer (default: 150)')
     parser.add_argument('--data', type=str, default='Nott',
                         help='the dataset to run (default: Nott)')
-    parser.add_argument('--seed', type=int, default=1,
+    parser.add_argument('--seed', type=int, default=10,
                         help='random seed (default: 1111)')
     args = parser.parse_args()
     wandb.config.update(args)
