@@ -540,11 +540,6 @@ def test(model, device, test_loader, criterion):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-    # # validation conf matrix
-    # print(confusion_matrix)
-    # # per class accuracy
-    # print(confusion_matrix.diag() / confusion_matrix.sum(1))
-
     print("Testing Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
 
@@ -565,7 +560,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
     parser.add_argument('--batch_size', type=int, default=512, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--test_batch_size', type=int, default=1000, metavar='N',
+    parser.add_argument('--test_batch_size', type=int, default=1024, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=30, metavar='N',
                         help='number of epochs to train (default: 15)')
@@ -682,83 +677,82 @@ if __name__ == '__main__':
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
-    print("Training Network...")
-    for epoch in range(args.epochs):
-        train(model, device, train_loader, optimizer, epoch, criterion)
-        validate(model, device, valid_loader, criterion, epoch)
-    test(model, device, test_loader, criterion)
+    # print("Training Network...")
+    # for epoch in range(args.epochs):
+    #     train(model, device, train_loader, optimizer, epoch, criterion)
+    #     validate(model, device, valid_loader, criterion, epoch)
+    # test(model, device, test_loader, criterion)
 
     '''
     K-fold Cross validation
     '''
-    # print("Do K-Fold cross validation in skorch wrapper")
-    #
-    # inputs = torch.tensor(X_train_data).float()
-    # labels = torch.tensor(y_train_tr).long()
-    # X_valid_data = torch.tensor(X_valid_data).float()
-    # y_valid_tr = torch.tensor(y_valid_tr).long()
-    #
-    # inputs = inputs.numpy()
-    # labels = labels.numpy()
-    # X_valid_data = X_valid_data.numpy()
-    # y_valid_tr = y_valid_tr.numpy()
-    #
-    # valid_ds = Dataset(X_valid_data, y_valid_tr)
-    #
-    # tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss', use_caching=True)  # on train to set on train
-    # earlystop = EarlyStopping(monitor='tss', lower_is_better=False, patience=10)
-    # checkpoint = Checkpoint(monitor='tss_best', f_pickle='my_model.pkl', dirname='./saved/models/exp1')
-    #
-    # net = NeuralNetClassifier(
-    #     model,
-    #     max_epochs=args.epochs,
-    #     batch_size=args.batch_size,
-    #     criterion=nn.CrossEntropyLoss,
-    #     criterion__weight=torch.FloatTensor(class_weights).to(device),
-    #     optimizer=torch.optim.Adam,
-    #     optimizer__lr=args.learning_rate,
-    #     optimizer__weight_decay=args.weight_decay,
-    #     optimizer__amsgrad=False,
-    #     device=device,
-    #     # train_split=None, #die breek die logs
-    #     train_split=predefined_split(valid_ds),
-    #     callbacks=[tss, earlystop, checkpoint],
-    #     # iterator_train__shuffle=True,  # batches shuffle
-    # )
-    #
-    # net.fit(inputs, labels)
-    #
-    # net.initialize()
-    # net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
-    #
-    # inputs = torch.tensor(X_test_data).float()
-    # labels = torch.tensor(y_test_tr).long()
-    #
-    # inputs = inputs.numpy()
-    # labels = labels.numpy()
-    #
-    # net.max_epochs = 0
-    # score = cross_val_score(net, inputs, labels, cv=10, scoring=make_scorer(get_tss))
-    # print(score)
-    # # y_pred = cross_val_predict(net, inputs, labels, cv=2)
-    # # print(y_pred)
-    # # # wandb.log(y_pred)
-    #
-    # '''
-    # Test Results
-    # '''
-    # # inputs = torch.tensor(X_valid_data).float()
-    # # labels = torch.tensor(y_valid_tr).long()
-    # inputs = torch.tensor(X_test_data).float()
-    # labels = torch.tensor(y_test_tr).long()
-    #
-    # inputs = inputs.numpy()
-    # labels = labels.numpy()
-    #
-    # y_test = net.predict(inputs)
-    # tss_test_score = get_tss(labels, y_test)
-    # print("Test TSS:" + str(tss_test_score))
+    print("Do K-Fold cross validation in skorch wrapper")
 
+    inputs = torch.tensor(X_train_data).float()
+    labels = torch.tensor(y_train_tr).long()
+    X_valid_data = torch.tensor(X_valid_data).float()
+    y_valid_tr = torch.tensor(y_valid_tr).long()
+
+    inputs = inputs.numpy()
+    labels = labels.numpy()
+    X_valid_data = X_valid_data.numpy()
+    y_valid_tr = y_valid_tr.numpy()
+
+    valid_ds = Dataset(X_valid_data, y_valid_tr)
+
+    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss', use_caching=True)
+    earlystop = EarlyStopping(monitor='tss', lower_is_better=False, patience=10)
+    checkpoint = Checkpoint(monitor='tss_best', dirname='./saved/models/exp1')
+
+    net = NeuralNetClassifier(
+        model,
+        max_epochs=args.epochs,
+        batch_size=args.batch_size,
+        criterion=nn.CrossEntropyLoss,
+        criterion__weight=torch.FloatTensor(class_weights).to(device),
+        optimizer=torch.optim.Adam,
+        optimizer__lr=args.learning_rate,
+        optimizer__weight_decay=args.weight_decay,
+        optimizer__amsgrad=False,
+        device=device,
+        # train_split=None, #die breek die logs
+        train_split=predefined_split(valid_ds),
+        callbacks=[tss, earlystop, checkpoint],
+        # iterator_train__shuffle=True,  # batches shuffle
+        # warm_start=False
+    )
+
+    # net.fit(inputs, labels)
+
+    net.initialize()
+    net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+
+    # inputs = torch.tensor(X_test_data).float()
+    # labels = torch.tensor(y_test_tr).long()
+    #
+    # inputs = inputs.numpy()
+    # labels = labels.numpy()
+
+    # net.max_epochs = 0
+    score = cross_val_score(net, inputs, labels, cv=10, scoring=make_scorer(get_tss))
+    print(score)
+    # y_pred = cross_val_predict(net, inputs, labels, cv=2)
+    # print(y_pred)
+
+    '''
+    Test Results
+    '''
+    # inputs = torch.tensor(X_valid_data).float()
+    # labels = torch.tensor(y_valid_tr).long()
+    inputs = torch.tensor(X_test_data).float()
+    labels = torch.tensor(y_test_tr).long()
+
+    inputs = inputs.numpy()
+    labels = labels.numpy()
+
+    y_test = net.predict(inputs)
+    tss_test_score = get_tss(labels, y_test)
+    print("Test TSS:" + str(tss_test_score))
 
     # TODO save model
     print('Finished')

@@ -262,6 +262,43 @@ def validate(model, device, valid_loader, criterion, epoch):
         "Validation_Recall": recall[0],
         "Validation_Loss": valid_loss}, step=epoch)
 
+def test(model, device, test_loader, criterion):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    confusion_matrix = torch.zeros(nclass, nclass)
+
+    example_images = []
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            # sum up batch loss
+            test_loss += criterion(output, target).item()
+            # get the index of the max log-probability
+            _, predicted = torch.max(output.data, 1)
+            correct += predicted.eq(target.view_as(predicted)).sum().item()
+
+            for t, p in zip(target.view(-1), predicted.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
+
+    test_loss /= len(test_loader.dataset)
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / len(test_loader.dataset)))
+
+    print("Testing Scores:")
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
+
+    wandb.log({
+        "Test_Accuracy": accuracy[0],
+        "Test_TSS": tss[0],
+        "Test_HSS": hss[0],
+        "Test_BACC": bacc[0],
+        "Test_Precision": precision[0],
+        "Test_Recall": recall[0],
+        "Test_Loss": test_loss})
+
 
 
 if __name__ == '__main__':
