@@ -20,6 +20,7 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 # import skorch
 from skorch import NeuralNetClassifier
 from skorch.callbacks import EpochScoring
@@ -518,7 +519,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss, best_epoch
         "Validation_Loss": valid_loss}, step=epoch)
 
     # checkpoint on best tss
-    if tss[0] > best_tss:
+    if tss[0] >= best_tss:
         best_tss = tss[0]
         best_epoch = epoch
         torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
@@ -584,7 +585,7 @@ if __name__ == '__main__':
                         help='how many nodes in layers (default: 64)')
     parser.add_argument('--dropout', type=float, default=0.5, metavar='M',
                         help='percentage dropout (default: 0.5)')
-    parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
+    parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="LSTM",
                         help='Types of rnn (default: LSTM')

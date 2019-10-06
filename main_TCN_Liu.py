@@ -7,7 +7,9 @@ But the abundance of the rich will not permit him to sleep.
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
+
 import sys
+import os
 import numpy as np
 import argparse
 
@@ -21,6 +23,7 @@ from skorch import NeuralNetClassifier
 from sklearn.model_selection import cross_val_predict
 
 from data_loader import CustomDataset
+from utils import early_stopping
 import wandb
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
@@ -439,7 +442,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         "Training_Loss": loss_epoch}, step=epoch)
 
 
-def validate(model, device, valid_loader, criterion, epoch):
+def validate(model, device, valid_loader, criterion, epoch, best_tss, best_epoch):
     model.eval()
     valid_loss = 0
     correct = 0
@@ -484,6 +487,16 @@ def validate(model, device, valid_loader, criterion, epoch):
         "Validation_Precision": precision[0],
         "Validation_Recall": recall[0],
         "Validation_Loss": valid_loss}, step=epoch)
+
+    # checkpoint on best tss
+    if tss[0] >= best_tss:
+        best_tss = tss[0]
+        best_epoch = epoch
+        torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
+        print('[INFO] Checkpointing...')
+
+    return tss[0], best_tss, best_epoch
+
 
 def test(model, device, test_loader, criterion):
     model.eval()
@@ -532,50 +545,56 @@ def test(model, device, test_loader, criterion):
         "Test_Loss": test_loss})
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', notes='TCN_Deeper')
+    wandb.init(project='Liu_pytorch', notes='now with early stopping :D')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
-                        help='input batch size for training (default: 256)')
-    parser.add_argument('--test_batch_size', type=int, default=1024, metavar='N',
-                        help='input batch size for testing (default: 1000)')
-    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
-                        help='SGD momentum (default: 0.5)')
-    parser.add_argument('--cuda', action='store_true', default=True,
-                        help='enables CUDA training')
+    parser.add_argument('--epochs', type=int, default=40,
+                        help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--weight_decay', type=float, default=0.001, metavar='LR',
+    parser.add_argument('--batch_size', type=int, default=512, metavar='N',
+                        help='input batch size for training (default: 256)')
+    parser.add_argument('--learning_rate', type=float, default=1e-4,
+                        help='initial learning rate (default: 1e-3)')
+    parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
+                        help='how many hidden layers (default: 5)')
+
+
+    parser.add_argument('--levels', type=int, default=9,
+                        help='# of levels (default: 4)')
+    parser.add_argument('--ksize', type=int, default=2,
+                        help='kernel size (default: 5)')
+    parser.add_argument('--nhid', type=int, default=128,
+                        help='number of hidden units per layer (default: 128)')
+
+    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
+                        help='SGD momentum (default: 0.5)')
+
+    parser.add_argument('--dropout', type=float, default=0.0,
+                        help='dropout applied to layers (default: 0.25)')
+    parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
 
-    parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
-                        help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--dropout', type=float, default=0.77,
-                        help='dropout applied to layers (default: 0.25)')
     parser.add_argument('--clip', type=float, default=0.2,
                         help='gradient clip, -1 means no clip (default: 0.2)')
-    parser.add_argument('--epochs', type=int, default=20,
-                        help='upper epoch limit (default: 100)')
-    parser.add_argument('--ksize', type=int, default=3,
-                        help='kernel size (default: 5)')
-    parser.add_argument('--levels', type=int, default=5,
-                        help='# of levels (default: 4)')
-    parser.add_argument('--log-interval', type=int, default=20, metavar='N',
-                        help='report interval (default: 100')
-    parser.add_argument('--learning_rate', type=float, default=1e-3,
-                        help='initial learning rate (default: 1e-3)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--nhid', type=int, default=128,
-                        help='number of hidden units per layer (default: 150)')
-    parser.add_argument('--data', type=str, default='Nott',
-                        help='the dataset to run (default: Nott)')
     parser.add_argument('--seed', type=int, default=10,
                         help='random seed (default: 1111)')
+    parser.add_argument('--log-interval', type=int, default=20, metavar='N',
+                        help='report interval (default: 100')
+    parser.add_argument('--cuda', action='store_true', default=True,
+                        help='enables CUDA training')
+    parser.add_argument('--early_stop', action='store_true', default=True,
+                        help='Stops training if overfitting')
+    parser.add_argument('--restore', action='store_true', default=False,
+                        help='restores model')
+    parser.add_argument('--training', action='store_true', default=True,
+                        help='trains and test model, if false only tests')
     args = parser.parse_args()
     wandb.config.update(args)
 
@@ -667,12 +686,28 @@ if __name__ == '__main__':
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
+    # early stopping check
+    early_stop = early_stopping.EarlyStopping(mode='max', patience=15)
+    best_tss = 0.0
+    best_epoch = 0
+
     print("Training Network...")
-    for epoch in range(args.epochs):
-        train(model, device, train_loader, optimizer, epoch, criterion)
-        validate(model, device, valid_loader, criterion, epoch)
+    if args.training:
+        for epoch in range(args.epochs):
+            train(model, device, train_loader, optimizer, epoch, criterion)
+            tss, best_tss, best_epoch = validate(model, device, valid_loader, criterion, epoch, best_tss, best_epoch)
+            if early_stop.step(tss):
+                break
+
+    wandb.log({"Best_Validation_TSS": best_tss,
+               "Best_Validation_epoch": best_epoch})
+
+    # reload best tss checkpoint and test
+    print("[INFO] Loading model at epoch:" + str(best_epoch))
+    try:
+        model.load_state_dict(torch.load(os.path.join(wandb.run.dir, 'model.pt')))
+    except:
+        print('No model loaded...')
     test(model, device, test_loader, criterion)
 
-
-    # TODO save model
     print('Finished')
