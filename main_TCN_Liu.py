@@ -536,9 +536,9 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--test_batch_size', type=int, default=2048, metavar='N',
+    parser.add_argument('--test_batch_size', type=int, default=1024, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')

@@ -28,6 +28,7 @@ from skorch.helper import predefined_split
 from skorch.dataset import Dataset
 
 from data_loader import CustomDataset
+from utils import early_stopping
 import wandb
 
 
@@ -474,7 +475,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         "Training_Loss": loss_epoch}, step=epoch)
 
 
-def validate(model, device, valid_loader, criterion, epoch):
+def validate(model, device, valid_loader, criterion, epoch, best_tss, best_epoch):
     model.eval()
     valid_loss = 0
     correct = 0
@@ -512,9 +513,19 @@ def validate(model, device, valid_loader, criterion, epoch):
         "Validation_TSS": tss[0],
         "Validation_HSS": hss[0],
         "Validation_BACC": bacc[0],
-        "Validation_Precision": precision[0],
-        "Validation_Recall": recall[0],
+        "Validation_Precision": precision,
+        "Validation_Recall": recall,
         "Validation_Loss": valid_loss}, step=epoch)
+
+    # Todo checkpoint on best tss
+    if tss[0] > best_tss:
+        best_tss = tss[0]
+        best_epoch = epoch
+        torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
+        print('[INFO] Checkpointing...')
+
+    return tss[0], best_tss, best_epoch
+
 
 def test(model, device, test_loader, criterion):
     model.eval()
@@ -563,7 +574,7 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--test_batch_size', type=int, default=1024, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=1, metavar='N',
+    parser.add_argument('--epochs', type=int, default=40, metavar='N',
                         help='number of epochs to train (default: 15)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
@@ -589,8 +600,10 @@ if __name__ == '__main__':
                         help='Types of rnn (default: LSTM')
     parser.add_argument('--early_stop', action='store_true', default=True,
                         help='Stops training if overfitting')
-    parser.add_argument('--restore', action='store_true', default=True,
+    parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')
+    parser.add_argument('--training', action='store_true', default=True,
+                        help='trains and test model')
     args = parser.parse_args()
     wandb.config.update(args)
 
@@ -664,7 +677,8 @@ if __name__ == '__main__':
     device = torch.device("cuda" if use_cuda else "cpu")
     model = LSTMModel(n_features, hidden_dim=args.hidden_dim, layer_dim=args.layer_dim,
                       output_dim=nclass, rnn_module=args.rnn_module).to(device)
-    # Todo restore point?
+
+    # restore a previous model
     if args.restore:
         # wandb.restore('model.pt')
         model.load_state_dict(torch.load('./model.pt'))
@@ -686,10 +700,22 @@ if __name__ == '__main__':
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
+    # early stopping check
+    early_stop = early_stopping.EarlyStopping(mode='max', patience=10)
+    best_tss = 0.0
+    best_epoch = 0
+
     print("Training Network...")
-    for epoch in range(args.epochs):
-        train(model, device, train_loader, optimizer, epoch, criterion)
-        validate(model, device, valid_loader, criterion, epoch)
+    if args.training:
+        for epoch in range(args.epochs):
+            train(model, device, train_loader, optimizer, epoch, criterion)
+            tss, best_tss, best_epoch = validate(model, device, valid_loader, criterion, epoch, best_tss, best_epoch)
+            if early_stop.step(tss):
+                break
+
+    # reload best tss checkpoint and test
+    print("[INFO] Reverting to checkpoint at epoch:" + str(best_epoch))
+    model.load_state_dict(torch.load(os.path.join(wandb.run.dir, 'model.pt')))
     test(model, device, test_loader, criterion)
 
     '''
@@ -764,5 +790,5 @@ if __name__ == '__main__':
     # print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
-    torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
+    # torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
     print('Finished')
