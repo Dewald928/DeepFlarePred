@@ -764,5 +764,5 @@ if __name__ == '__main__':
     # print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
-    torch.save(model.state_dict(), 'model.pt')
+    torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
     print('Finished')
