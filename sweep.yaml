@@ -26,7 +26,7 @@ parameters:
   learning_rate:
     values: [0.001]
   epochs:
-    values: [40]
+    values: [50]
   layer_dim:
     values: [1,5,10]
   dropout:

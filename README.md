@@ -3,9 +3,32 @@
 By using the [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction), that contains SHARP parameters
 (not images), we train a DNN to predict the likelihood of a flare erupting from a sunspot.
 
-Only the ```main.py``` script is functional, the rest is still broken
+## Installation
+### Create virtual environment
+Install conda and run:
+```conda env create --file deepflarepred.yaml```
+### Download and prepare data
+The Liu data should be downloaded from [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction) and extracted
+For the ```main_LSTM_Liu.py``` and ```main_TCN_Liu.py``` the Liu dataset need to be downloaded and extracted to the
+ "/Data/Liu" folder such that:
+ ```bash
+./Data/
+├── Liu
+│   ├── C
+│   ├── M
+│   └── M5
+ ```
+### Run script
+To run the script, you can either do a Weight & Biases sweep, or just simply run:
 
-## Plans for the Neural Network
+```python main_LSTM_Liu.py```
+
+The default args can be changed or passed inline e.g.
+
+```python main_LSTM_Liu.py --learning_rate 0.001```
+
+
+## Plans for the Project
 ### Preliminary tests
 * [x] Copy Liu's code to pytorch somewhat.
 * [ ] Copy Liu architecture completely
