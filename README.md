@@ -26,7 +26,7 @@ Tested, but not sweeped
 * [x] MLP skorch test: RNN and custom logs not well supported
 * [x] [TCN networks](https://github.com/locuslab/TCN) : better so far, slightly
 * [x] Early stopping and checkpointing on best validation TSS (LSTM only, so far)
-
+* [ ] Test data? best wat to test network?
 
 ### Main Objectives
 * [ ] Create MLP that is equivalent to Nishzuka et al paper

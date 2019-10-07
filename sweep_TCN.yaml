@@ -20,7 +20,7 @@ parameters:
   seed:
     values: [1,5,10]
   batch_size:
-    values: [1024]
+    values: [512,1024]
 #    values: [64,128,256,512]
   flare_label:
     values: ['M5']
@@ -29,19 +29,17 @@ parameters:
     values: [0.001]
 ##    values: [0.1,0.01,0.001]
   epochs:
-    values: [35]
+    values: [50]
   layer_dim:
     values: [1]
 ##    values: [1,5,10]
   ksize:
     values: [2,3]
   levels:
-    values: [5,7,9]
+    values: [5,7]
   nhid:
     values: [128]
-#  dropout:
-#    min: 0.2
-#    max: 0.9
-#  weight_decay:
-#    min: 0.0
-#    max: 0.001
+  dropout:
+    values: [0.7]
+  weight_decay:
+    values: [0.0001]

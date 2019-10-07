@@ -17,21 +17,19 @@ early_terminate:
 
 # Parameters to search over
 parameters:
-#  seed:
-#    values: [1,5,10]
-#  batch_size:
-#    values: [64,128,256,512]
-#  flare_label:
-#    values: ["C", "M", "M5"]
-#  learning_rate:
-#    values: [0.1,0.01,0.001]
-#  epochs:
-#    values: [15]
-#  layer_dim:
-#    values: [1,5,10]
+  seed:
+    values: [1,5,10]
+  batch_size:
+    values: [512,1024]
+  flare_label:
+    values: ["M5"]
+  learning_rate:
+    values: [0.001]
+  epochs:
+    values: [40]
+  layer_dim:
+    values: [1,5,10]
   dropout:
-    min: 0.4
-    max: 0.9
+    values: [0.5]
   weight_decay:
-    min: 0.0
-    max: 0.01
+    values: [0]
