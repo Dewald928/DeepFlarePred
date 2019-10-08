@@ -5,11 +5,17 @@ By using the [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction)
 
 ## Installation
 ### Create virtual environment
-Install conda and run:
+Install conda and install environment:
+
 ```conda env create --file deepflarepred.yaml```
+
+Activate environment:
+
+```conda activate DeepFlarePred```
+
 ### Download and prepare data
-The Liu data should be downloaded from [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction) and extracted
-For the ```main_LSTM_Liu.py``` and ```main_TCN_Liu.py``` the Liu dataset need to be downloaded and extracted to the
+The Liu data should be downloaded from [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction).
+For the ```main_LSTM_Liu.py``` and ```main_TCN_Liu.py``` the Liu dataset needs to be downloaded and extracted to the
  "/Data/Liu" folder such that:
  ```bash
 ./Data/
@@ -70,5 +76,5 @@ Tested, but not sweeped
 
 ### Data sets
 * [Chen et al. 2019 data (some of it)](https://deepblue.lib.umich.edu/data/concern/data_sets/0r967377q?locale=en)
-* 
+* [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction)
 

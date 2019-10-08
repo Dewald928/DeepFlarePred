@@ -4,7 +4,7 @@ description: sweep for l2 norm and dropout
 program: main_LSTM_Liu.py
 
 # Method can be bayes, random, grid
-method: bayes
+method: grid
 
 # Metric to optimize
 metric:
@@ -20,7 +20,7 @@ parameters:
   seed:
     values: [1,5,10]
   batch_size:
-    values: [512,1024]
+    values: [512,1024,2048]
   flare_label:
     values: ["M5"]
   learning_rate:
