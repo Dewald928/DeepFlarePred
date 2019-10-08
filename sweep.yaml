@@ -24,7 +24,7 @@ parameters:
   flare_label:
     values: ["M5"]
   learning_rate:
-    values: [0.001]
+    values: [0.001,0.0001]
   epochs:
     values: [50]
   layer_dim:
