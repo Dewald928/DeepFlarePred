@@ -12,8 +12,8 @@ metric:
   goal: maximize
 
 # Should we early terminate runs
-early_terminate:
-  type: envelope
+#early_terminate:
+#  type: envelope
 
 # Parameters to search over
 parameters:
