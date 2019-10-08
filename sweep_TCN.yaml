@@ -4,7 +4,7 @@ description: TCN sweep for kernel and levels
 program: main_TCN_Liu.py
 
 # Method can be bayes, random, grid
-method: bayes
+method: grid
 
 # Metric to optimize
 metric:
