@@ -549,7 +549,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=50,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -561,9 +561,9 @@ if __name__ == '__main__':
                         help='how many hidden layers (default: 5)')
 
 
-    parser.add_argument('--levels', type=int, default=5,
+    parser.add_argument('--levels', type=int, default=7,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=3,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=128,
                         help='number of hidden units per layer (default: 128)')
@@ -589,7 +589,7 @@ if __name__ == '__main__':
                         help='report interval (default: 100')
     parser.add_argument('--cuda', action='store_true', default=True,
                         help='enables CUDA training')
-    parser.add_argument('--early_stop', action='store_true', default=True,
+    parser.add_argument('--early_stop', action='store_true', default=False,
                         help='Stops training if overfitting')
     parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')

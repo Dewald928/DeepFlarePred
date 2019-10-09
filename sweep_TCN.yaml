@@ -20,7 +20,7 @@ parameters:
   seed:
     values: [1,5,10]
   batch_size:
-    values: [2048]
+    values: [1024]
 #    values: [64,128,256,512]
   flare_label:
     values: ['M5']
@@ -29,7 +29,7 @@ parameters:
     values: [0.001]
 ##    values: [0.1,0.01,0.001]
   epochs:
-    values: [50]
+    values: [100]
   layer_dim:
     values: [1]
 ##    values: [1,5,10]
