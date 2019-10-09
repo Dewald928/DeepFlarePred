@@ -571,19 +571,19 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=40, metavar='N',
+    parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 40)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M5-Class')
-    parser.add_argument('--batch_size', type=int, default=256, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for training (default: 512)')
     parser.add_argument('--learning_rate', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
-    parser.add_argument('--layer_dim', type=int, default=10, metavar='N',
+    parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
     parser.add_argument('--hidden_dim', type=int, default=24, metavar='N',
                         help='how many nodes in layers (default: 64)')
-    parser.add_argument('--dropout', type=float, default=0.5, metavar='M',
+    parser.add_argument('--dropout', type=float, default=0.0, metavar='M',
                         help='percentage dropout (default: 0.5)')
     parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
