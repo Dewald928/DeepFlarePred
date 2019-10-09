@@ -587,7 +587,7 @@ if __name__ == '__main__':
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
-    parser.add_argument('--cuda', action='store_true', default=True,
+    parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
     parser.add_argument('--early_stop', action='store_true', default=False,
                         help='Stops training if overfitting')
@@ -696,7 +696,7 @@ if __name__ == '__main__':
         for epoch in range(args.epochs):
             train(model, device, train_loader, optimizer, epoch, criterion)
             tss, best_tss, best_epoch = validate(model, device, valid_loader, criterion, epoch, best_tss, best_epoch)
-            if early_stop.step(tss):
+            if early_stop.step(tss) and args.early_stop:
                 break
 
     wandb.log({"Best_Validation_TSS": best_tss,
