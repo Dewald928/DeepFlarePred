@@ -672,7 +672,7 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if use_cuda else "cpu")
     model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size, dropout=dropout).to(device)
-    # wandb.watch(model, log='all')
+    wandb.watch(model, log='all')
 
     # optimizers
     class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train_data), y_train_data)
