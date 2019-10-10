@@ -26,7 +26,7 @@ parameters:
     values: ['M5']
 ##    values: ["C", "M", "M5"]
   learning_rate:
-    values: [0.0002]
+    values: [0.0001,0.0005,0.001,0.005]
 ##    values: [0.1,0.01,0.001]
   epochs:
     values: [100]
@@ -34,9 +34,9 @@ parameters:
     values: [1]
 ##    values: [1,5,10]
   ksize:
-    values: [2] #maak die 3
+    values: [3] #maak die 3
   levels:
-    values: [7] #maak die 5
+    values: [5] #maak die 5
   nhid:
     values: [128]
   dropout:
