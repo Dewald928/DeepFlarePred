@@ -556,23 +556,33 @@ def test(model, device, test_loader, criterion):
 
 
 def interpret_model(model, device, test_loader):
-    print("Interpreting Model...")
+    print("\n Interpreting Model...")
     model.eval()
+    data = []
+    target = []
+    attr = []
+    delta = []
+    attr_avg = []
+    delta_avg = []
+    i = 1
     with torch.no_grad():
         for data, target in test_loader:
             model.to(device)
             data, target = data.to(device), target.to(device)
-            try:
-                data = data.view(len(data), n_features, args.layer_dim)
-            except:
-                print("woah the cowboy")
-            # todo don't do it in testing
+            data = data.view(len(data), n_features, args.layer_dim)
+
             ig = IntegratedGradients(model.to('cpu'))
             temp_data = torch.clone(data).to('cpu')
-            attr, delta = ig.attribute(temp_data, target=1, return_convergence_delta=True)
+            attr = ig.attribute(temp_data, target=1)
+            attr_avg = attr if i==1 else (attr_avg + attr)/(i)
+            # delta_avg = delta if i==1 else (delta_avg+delta)/(i)
             attr = attr.detach().numpy()
 
-    return attr, delta
+            if i == 30: break
+            i += 1
+    attr_avg = attr_avg.detach().numpy()
+
+    return attr, delta, attr_avg, delta_avg
 
 
 # Helper method to print importance and visualize distribution
@@ -582,7 +592,7 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         print(feature_names[i], ": ", '%.3f'%(importances[i]))
     x_pos = (np.arange(len(feature_names)))
     if plot:
-        plt.figure(figsize=(12,6))
+        plt.figure(figsize=(12, 6))
         plt.bar(x_pos, importances.reshape(n_features), align='center')
         plt.xticks(x_pos, feature_names, wrap=True)
         plt.xlabel(axis_title)
@@ -650,7 +660,7 @@ if __name__ == '__main__':
     num_of_fold = 10
     n_features = 0
     if args.flare_label == 'M5':
-        n_features = 20
+        n_features = 40  # 20 original
     elif args.flare_label == 'M':
         n_features = 22
     elif args.flare_label == 'C':
@@ -760,8 +770,7 @@ if __name__ == '__main__':
     test(model, device, test_loader, criterion)
 
     # Model interpretation
-    attr = []
-    attr, delta = interpret_model(model, device, test_loader)
-    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr, axis=0))
+    attr, delta, attr_avg, delta_avg = interpret_model(model, device, test_loader)
+    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_avg, axis=0))
 
     print('Finished')
