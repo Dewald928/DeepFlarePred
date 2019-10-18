@@ -575,11 +575,15 @@ def interpret_model(model, device, test_loader):
             ig = IntegratedGradients(model.to('cpu'))
             temp_data = torch.clone(data).to('cpu')
             attr = ig.attribute(temp_data, target=1)
-            attr_avg = attr if i==1 else (attr_avg + attr)/(i)
+            try:
+                attr_avg = attr if i==1 else (attr_avg + attr)/(i)
+            except:
+                print("hmmmm???")
+                pass
             # delta_avg = delta if i==1 else (delta_avg+delta)/(i)
             attr = attr.detach().numpy()
 
-            if i == 2: break
+            if i == 50: break
             i += 1
     attr_avg = attr_avg.detach().numpy()
 
@@ -598,7 +602,7 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         plt.xticks(x_pos, feature_names, wrap=True)
         plt.xlabel(axis_title)
         plt.title(title)
-        wandb.log({"chart": plt})
+        wandb.log({title: plt})
         plt.show()
 
 
@@ -608,7 +612,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=2,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
