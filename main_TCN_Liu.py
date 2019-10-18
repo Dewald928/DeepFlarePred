@@ -27,10 +27,13 @@ from utils import early_stopping
 import wandb
 
 from captum.attr import IntegratedGradients
+import matplotlib.pyplot as plt
+
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
     df = pd.read_csv(datafile)
     df_values = df.values
+    feature_names = list(df.columns)
     X = []
     y = []
     tmp = []
@@ -245,6 +248,10 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features, mask
     print(X_arr.shape)
     return X_arr, y_arr
 
+def get_feature_names(datafile):
+    df = pd.read_csv(datafile)
+    feature_names = list(df.columns)
+    return feature_names
 
 def label_transform(data):
     encoder = LabelEncoder()
@@ -509,12 +516,13 @@ def test(model, device, test_loader, criterion):
     example_images = []
     with torch.no_grad():
         for data, target in test_loader:
+            model.to(device)
             data, target = data.to(device), target.to(device)
             try:
                 data = data.view(len(data), n_features, args.layer_dim)
             except:
                 print("woah the cowboy")
-            output = model(data)
+            output = model(data).to(device)
             # sum up batch loss
             test_loss += criterion(output, target).item()
             # get the index of the max log-probability
@@ -524,9 +532,11 @@ def test(model, device, test_loader, criterion):
             for t, p in zip(target.view(-1), predicted.view(-1)):
                 confusion_matrix[t.long(), p.long()] += 1
 
+            # todo don't do it in testing
             ig = IntegratedGradients(model.to('cpu'))
-            attr, delta = ig.attribute(data.to('cpu'), target=1, return_convergence_delta=True)
-
+            temp_data = torch.clone(data).to('cpu')
+            attr, delta = ig.attribute(temp_data, target=1, return_convergence_delta=True)
+            attr = attr.detach().numpy()
 
     test_loss /= len(test_loader.dataset)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
@@ -550,6 +560,8 @@ def test(model, device, test_loader, criterion):
         "Test_Recall": recall[0],
         "Test_Loss": test_loss})
 
+    return attr, delta
+
 
 def interpret_model(test_data):
     model.eval()
@@ -561,6 +573,21 @@ def interpret_model(test_data):
         attr, delta = ig.attribute(test_data, target=target, return_convergence_delta=True, n_steps=50)
 
 
+# Helper method to print importance and visualize distribution
+def visualize_importance(feature_names, importances, title="Average Feature Importance", plot=True, axis_title="Features"):
+    print(title)
+    for i in range(len(feature_names)):
+        print(feature_names[i], ": ", '%.3f'%(importances[i]))
+    x_pos = (np.arange(len(feature_names)))
+    if plot:
+        plt.figure(figsize=(12,6))
+        plt.bar(x_pos, importances.reshape(n_features), align='center')
+        plt.xticks(x_pos, feature_names, wrap=True)
+        plt.xlabel(axis_title)
+        plt.title(title)
+
+
+
 if __name__ == '__main__':
     wandb.init(project='Liu_pytorch', notes='no reg')
 
@@ -570,7 +597,7 @@ if __name__ == '__main__':
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=32, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=64, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=1e-3,
                         help='initial learning rate (default: 1e-3)')
@@ -625,6 +652,8 @@ if __name__ == '__main__':
         n_features = 22
     elif args.flare_label == 'C':
         n_features = 14
+    feature_names = get_feature_names(filepath + 'normalized_training.csv')
+
 
     # initialize parameters
     start_feature = 5
@@ -682,7 +711,6 @@ if __name__ == '__main__':
                                               shuffle=False, drop_last=False)
 
     # make model
-
     channel_sizes = [args.nhid] * args.levels
     kernel_size = args.ksize
     dropout = args.dropout
@@ -725,10 +753,13 @@ if __name__ == '__main__':
         model.load_state_dict(torch.load(os.path.join(wandb.run.dir, 'model.pt')))
     except:
         print('No model loaded...')
-    test(model, device, test_loader, criterion)
+
+    attr = []
+    attr, delta = test(model, device, test_loader, criterion)
 
     # Model interpretation
-    interpret_model(X_test_data)
+    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr, axis=0))
+    # interpret_model(X_test_data)
 
 
     print('Finished')
