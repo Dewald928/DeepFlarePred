@@ -26,6 +26,8 @@ from data_loader import CustomDataset
 from utils import early_stopping
 import wandb
 
+from captum.attr import IntegratedGradients
+
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
     df = pd.read_csv(datafile)
     df_values = df.values
@@ -522,6 +524,10 @@ def test(model, device, test_loader, criterion):
             for t, p in zip(target.view(-1), predicted.view(-1)):
                 confusion_matrix[t.long(), p.long()] += 1
 
+            ig = IntegratedGradients(model.to('cpu'))
+            attr, delta = ig.attribute(data.to('cpu'), target=1, return_convergence_delta=True)
+
+
     test_loss /= len(test_loader.dataset)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
@@ -544,16 +550,27 @@ def test(model, device, test_loader, criterion):
         "Test_Recall": recall[0],
         "Test_Loss": test_loss})
 
+
+def interpret_model(test_data):
+    model.eval()
+    with torch.no_grad():
+        ig = IntegratedGradients(model.to('cpu'))
+        test_data = torch.tensor(test_data, dtype=torch.float).to(device)
+        test_data = test_data.view(len(test_data), n_features, args.layer_dim)
+        target = torch.tensor(1).to(device)
+        attr, delta = ig.attribute(test_data, target=target, return_convergence_delta=True, n_steps=50)
+
+
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', notes='now with early stopping :D')
+    wandb.init(project='Liu_pytorch', notes='no reg')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=32, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=1e-3,
                         help='initial learning rate (default: 1e-3)')
@@ -561,19 +578,19 @@ if __name__ == '__main__':
                         help='how many hidden layers (default: 5)')
 
 
-    parser.add_argument('--levels', type=int, default=7,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=128,
+    parser.add_argument('--nhid', type=int, default=32,
                         help='number of hidden units per layer (default: 128)')
 
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
 
-    parser.add_argument('--dropout', type=float, default=0.72,
+    parser.add_argument('--dropout', type=float, default=0.0,
                         help='dropout applied to layers (default: 0.25)')
-    parser.add_argument('--weight_decay', type=float, default=0.0001, metavar='LR',
+    parser.add_argument('--weight_decay', type=float, default=0.0, metavar='LR',
                         help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
@@ -589,7 +606,7 @@ if __name__ == '__main__':
                         help='report interval (default: 100')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
-    parser.add_argument('--early_stop', action='store_true', default=False,
+    parser.add_argument('--early_stop', action='store_true', default=True,
                         help='Stops training if overfitting')
     parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')
@@ -709,5 +726,9 @@ if __name__ == '__main__':
     except:
         print('No model loaded...')
     test(model, device, test_loader, criterion)
+
+    # Model interpretation
+    interpret_model(X_test_data)
+
 
     print('Finished')

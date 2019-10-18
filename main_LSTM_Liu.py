@@ -581,7 +581,7 @@ if __name__ == '__main__':
                         help='learning rate (default: 0.001)')
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
-    parser.add_argument('--hidden_dim', type=int, default=24, metavar='N',
+    parser.add_argument('--hidden_dim', type=int, default=32, metavar='N',
                         help='how many nodes in layers (default: 64)')
     parser.add_argument('--dropout', type=float, default=0.0, metavar='M',
                         help='percentage dropout (default: 0.5)')
