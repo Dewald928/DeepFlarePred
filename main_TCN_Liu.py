@@ -567,6 +567,7 @@ def interpret_model(model, device, test_loader):
     i = 1
     with torch.no_grad():
         for data, target in test_loader:
+            print("Batch#"+str(i))
             model.to(device)
             data, target = data.to(device), target.to(device)
             data = data.view(len(data), n_features, args.layer_dim)
@@ -578,7 +579,7 @@ def interpret_model(model, device, test_loader):
             # delta_avg = delta if i==1 else (delta_avg+delta)/(i)
             attr = attr.detach().numpy()
 
-            if i == 30: break
+            if i == 2: break
             i += 1
     attr_avg = attr_avg.detach().numpy()
 
@@ -597,6 +598,7 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         plt.xticks(x_pos, feature_names, wrap=True)
         plt.xlabel(axis_title)
         plt.title(title)
+        wandb.log({"chart": plt})
         plt.show()
 
 
