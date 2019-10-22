@@ -28,6 +28,7 @@ import wandb
 
 from captum.attr import IntegratedGradients
 import matplotlib.pyplot as plt
+import plotly
 
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
@@ -583,7 +584,7 @@ def interpret_model(model, device, test_loader):
             # delta_avg = delta if i==1 else (delta_avg+delta)/(i)
             attr = attr.detach().numpy()
 
-            if i == 50: break
+            if i == 88: break
             i += 1
     attr_avg = attr_avg.detach().numpy()
 
@@ -602,8 +603,9 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         plt.xticks(x_pos, feature_names, wrap=True)
         plt.xlabel(axis_title)
         plt.title(title)
-        wandb.log({title: plt})
-        plt.show()
+        fig = plt.show()
+        wandb.log({title: fig})
+
 
 
 
@@ -616,7 +618,7 @@ if __name__ == '__main__':
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=512, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=1e-3,
                         help='initial learning rate (default: 1e-3)')
@@ -628,7 +630,7 @@ if __name__ == '__main__':
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=32,
+    parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 128)')
 
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
