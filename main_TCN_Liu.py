@@ -610,13 +610,9 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         fig_sorted = plt.figure(figsize=(12,6))
         df_sorted = pd.DataFrame({'Features':feature_names,"Importances":importances.reshape((n_features))})
         df_sorted = df_sorted.sort_values('Importances')
-        df_sorted.plot(kind='bar',y='Importances',x='Features')
-        fig_sorted = plt.show()
+        fig_sorted=df_sorted.plot(kind='bar',y='Importances',x='Features')
+        plt.show()
         wandb.log({'Feature Ranking': wandb.Image(fig_sorted)})
-
-
-
-
 
 
 if __name__ == '__main__':
@@ -624,13 +620,13 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=2,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=512, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--learning_rate', type=float, default=1e-3,
+    parser.add_argument('--learning_rate', type=float, default=1e-4,
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
@@ -664,7 +660,7 @@ if __name__ == '__main__':
                         help='report interval (default: 100')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
-    parser.add_argument('--early_stop', action='store_true', default=True,
+    parser.add_argument('--early_stop', action='store_true', default=False,
                         help='Stops training if overfitting')
     parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')
