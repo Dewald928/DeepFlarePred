@@ -573,8 +573,8 @@ def interpret_model(model, device, test_loader):
             data, target = data.to(device), target.to(device)
             data = data.view(len(data), n_features, args.layer_dim)
 
-            ig = IntegratedGradients(model.to('cpu'))
-            temp_data = torch.clone(data).to('cpu')
+            ig = IntegratedGradients(model.to(device))
+            temp_data = torch.clone(data).to(device)
             attr = ig.attribute(temp_data, target=1)
             try:
                 attr_avg = attr if i==1 else (attr_avg + attr)/(i)
@@ -582,11 +582,11 @@ def interpret_model(model, device, test_loader):
                 print("hmmmm???")
                 pass
             # delta_avg = delta if i==1 else (delta_avg+delta)/(i)
-            attr = attr.detach().numpy()
+            attr = attr.cpu().numpy()
 
-            if i == 88: break
+            if i == len(test_loader)-1: break
             i += 1
-    attr_avg = attr_avg.detach().numpy()
+    attr_avg = attr_avg.cpu().numpy()
 
     return attr, delta, attr_avg, delta_avg
 
