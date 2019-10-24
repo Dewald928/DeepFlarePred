@@ -598,13 +598,15 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         print(feature_names[i], ": ", '%.3f'%(importances[i]))
     x_pos = (np.arange(len(feature_names)))
     if plot:
-        plt.figure(figsize=(12, 6))
+        fig = plt.figure(figsize=(12, 6))
         plt.bar(x_pos, importances.reshape(n_features), align='center')
-        plt.xticks(x_pos, feature_names, wrap=True)
+        plt.xticks(x_pos, feature_names, wrap=False, rotation=60)
         plt.xlabel(axis_title)
         plt.title(title)
-        fig = plt.show()
+        plt.show()
         wandb.log({title: fig})
+        wandb.log({title: wandb.Image(fig)})
+
 
 
 
