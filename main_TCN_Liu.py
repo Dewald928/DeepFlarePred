@@ -603,16 +603,24 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         plt.xticks(x_pos, feature_names, wrap=False, rotation=60)
         plt.xlabel(axis_title)
         plt.title(title)
-        plt.show()
+        fig.show()
+        wandb.log({'Image of features': wandb.Image(fig)})
         wandb.log({title: fig})
-        wandb.log({title: wandb.Image(fig)})
+        # plot ranked
+        fig_sorted = plt.figure(figsize=(12,6))
+        df_sorted = pd.DataFrame({'Features':feature_names,"Importances":importances.reshape((n_features))})
+        df_sorted = df_sorted.sort_values('Importances')
+        df_sorted.plot(kind='bar',y='Importances',x='Features')
+        fig_sorted = plt.show()
+        wandb.log({'Feature Ranking': wandb.Image(fig_sorted)})
+
 
 
 
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', notes='no reg')
+    wandb.init(project='Liu_pytorch', notes='with captum')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
