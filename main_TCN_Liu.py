@@ -27,9 +27,13 @@ from utils import early_stopping
 import wandb
 
 from captum.attr import IntegratedGradients
-import matplotlib.pyplot as plt
-import plotly
+from captum.attr import DeepLift
+from captum.attr import DeepLiftShap
+from captum.attr import Saliency
+from captum.attr import GradientAttribution
 
+import matplotlib.pyplot as plt
+from scipy import stats
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
     df = pd.read_csv(datafile)
@@ -558,13 +562,11 @@ def test(model, device, test_loader, criterion):
 
 def interpret_model(model, device, test_loader):
     print("\n Interpreting Model...")
+    attr_ig = []
+    attr_ig_avg = []
+    attr_sal = []
+    attr_sal_avg = []
     model.eval()
-    data = []
-    target = []
-    attr = []
-    delta = []
-    attr_avg = []
-    delta_avg = []
     i = 1
     with torch.no_grad():
         for data, target in test_loader:
@@ -574,22 +576,25 @@ def interpret_model(model, device, test_loader):
             data = data.view(len(data), n_features, args.layer_dim)
 
             ig = IntegratedGradients(model.to(device))
+            sal = Saliency(model.to(device))  # todo deeplift not working
             temp_data = torch.clone(data).to(device)
-            attr = ig.attribute(temp_data, target=1)
+            attr_ig = ig.attribute(temp_data, target=1)
+            attr_sal = sal.attribute(inputs=temp_data, target=1)
             try:
-                attr_avg = attr if i==1 else (attr_avg + attr)/(i)
+                attr_ig_avg = attr_ig if i==1 else (attr_ig_avg + attr_ig)/i
+                attr_sal_avg = attr_sal if i == 1 else (attr_sal_avg + attr_sal) / i
             except:
                 print("hmmmm???")
                 pass
-            # delta_avg = delta if i==1 else (delta_avg+delta)/(i)
-            attr = attr.cpu().numpy()
+            attr_ig = attr_ig.cpu().detach().numpy()
+            attr_sal = attr_sal.cpu().detach().numpy()
 
             if i == len(test_loader)-1: break
             i += 1
-    attr_avg = attr_avg.cpu().numpy()
+    attr_ig_avg = attr_ig_avg.cpu().detach().numpy()
+    attr_sal_avg = attr_sal_avg.cpu().detach().numpy()
 
-    return attr, delta, attr_avg, delta_avg
-
+    return attr_ig, attr_sal, attr_ig_avg, attr_sal_avg
 
 # Helper method to print importance and visualize distribution
 def visualize_importance(feature_names, importances, title="Average Feature Importance", plot=True, axis_title="Features"):
@@ -607,12 +612,28 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         wandb.log({'Image of features': wandb.Image(fig)})
         # wandb.log({title: fig})
         # plot ranked
-        fig_sorted = plt.figure(figsize=(12,6))
-        df_sorted = pd.DataFrame({'Features':feature_names,"Importances":importances.reshape((n_features))})
+        fig_sorted = plt.figure(figsize=(12, 6))
+        df_sorted = pd.DataFrame({'Features': feature_names, "Importances": importances.reshape(n_features)})
         df_sorted = df_sorted.sort_values('Importances')
-        fig_sorted=df_sorted.plot(kind='bar',y='Importances',x='Features')
+        fig_sorted=df_sorted.plot(kind='bar', y='Importances', x='Features', title=title)
         plt.show()
         wandb.log({'Feature Ranking': wandb.Image(fig_sorted)})
+
+def check_significance(attr, test_features, feature_num=1):
+    fig = plt.hist(attr[:, feature_num], 100)
+    plt.title("Distribution of Attribution Values")
+    plt.show()
+
+    bin_means, bin_edges, _ = stats.binned_statistic(test_features[:, 1], attr[:, 1], statistic='mean', bins=6)
+    bin_count, _, _ = stats.binned_statistic(test_features[:, 1], attr[:, 1], statistic='count', bins=6)
+
+    bin_width = (bin_edges[1] - bin_edges[0])
+    bin_centers = bin_edges[1:] - bin_width / 2
+    plt.scatter(bin_centers, bin_means, s=bin_count)
+    plt.xlabel("Average Sibsp Feature Value")
+    plt.ylabel("Average Attribution")
+
+
 
 
 if __name__ == '__main__':
@@ -620,7 +641,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=3,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -632,7 +653,7 @@ if __name__ == '__main__':
                         help='how many hidden layers (default: 5)')
 
 
-    parser.add_argument('--levels', type=int, default=7,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
@@ -784,7 +805,9 @@ if __name__ == '__main__':
     test(model, device, test_loader, criterion)
 
     # Model interpretation
-    attr, delta, attr_avg, delta_avg = interpret_model(model, device, test_loader)
-    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_avg, axis=0))
+    attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpret_model(model, device, test_loader)
+    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_ig_avg, axis=0))
+    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_sal_avg, axis=0),
+                         title="Saliency Features")
 
     print('Finished')
