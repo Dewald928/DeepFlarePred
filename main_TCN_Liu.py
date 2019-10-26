@@ -605,7 +605,7 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         plt.title(title)
         fig.show()
         wandb.log({'Image of features': wandb.Image(fig)})
-        wandb.log({title: fig})
+        # wandb.log({title: fig})
         # plot ranked
         fig_sorted = plt.figure(figsize=(12,6))
         df_sorted = pd.DataFrame({'Features':feature_names,"Importances":importances.reshape((n_features))})
@@ -620,19 +620,19 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--learning_rate', type=float, default=1e-4,
+    parser.add_argument('--learning_rate', type=float, default=1e-3,
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
 
-    parser.add_argument('--levels', type=int, default=1,
+    parser.add_argument('--levels', type=int, default=7,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
@@ -654,7 +654,7 @@ if __name__ == '__main__':
                         help='gradient clip, -1 means no clip (default: 0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=10,
+    parser.add_argument('--seed', type=int, default=1,
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
@@ -759,7 +759,7 @@ if __name__ == '__main__':
         print(list(model.parameters())[i].size())
 
     # early stopping check
-    early_stop = early_stopping.EarlyStopping(mode='max', patience=15)
+    early_stop = early_stopping.EarlyStopping(mode='max', patience=20)
     best_tss = 0.0
     best_epoch = 0
 
