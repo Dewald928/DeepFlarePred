@@ -660,7 +660,7 @@ if __name__ == '__main__':
                         help='report interval (default: 100')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
-    parser.add_argument('--early_stop', action='store_true', default=False,
+    parser.add_argument('--early_stop', action='store_true', default=True,
                         help='Stops training if overfitting')
     parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')
@@ -759,7 +759,7 @@ if __name__ == '__main__':
         print(list(model.parameters())[i].size())
 
     # early stopping check
-    early_stop = early_stopping.EarlyStopping(mode='max', patience=20)
+    early_stop = early_stopping.EarlyStopping(mode='max', patience=30)
     best_tss = 0.0
     best_epoch = 0
 

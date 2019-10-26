@@ -1,4 +1,4 @@
-description: TCN sweep for learning rates
+description: TCN huge sweep, all 40 features, with early stopping 30 patience.
 
 # Training script to run
 program: main_TCN_Liu.py
