@@ -9,6 +9,8 @@ RUN conda config --add channels conda-forge \
 # Pull the environment name out of the environment.yml
 RUN echo "source activate $(head -1 deepflarepred.yaml | cut -d' ' -f2)" > ~/.bashrc
 ENV PATH ~/local/miniconda3/envs/$(head -1 deepflarepred.yaml | cut -d' ' -f2)/bin:$PATH
-#RUN conda init bash
-#RUN echo ". ~/local/miniconda3/etc/profile.d/conda.sh" >> ~/.bashrc
-#RUN echo "conda activate $(head -1 deepflarepred.yaml | cut -d' ' -f2)" >> ~/.bashrc
+CMD source activate DeepFlarePred
+CMD source ~/.bashrc
+
+COPY init.sh /init.sh
+CMD ["/init.sh"]
