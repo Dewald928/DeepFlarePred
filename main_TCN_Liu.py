@@ -19,8 +19,8 @@ import torch.nn.functional as F
 from Test_Scripts.tcn import TemporalConvNet
 
 # import skorch
-from skorch import NeuralNetClassifier
-from sklearn.model_selection import cross_val_predict
+# from skorch import NeuralNetClassifier
+# from sklearn.model_selection import cross_val_predict
 
 from data_loader import CustomDataset
 from utils import early_stopping
