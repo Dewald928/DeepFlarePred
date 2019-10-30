@@ -806,7 +806,8 @@ if __name__ == '__main__':
 
     # Model interpretation
     attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpret_model(model, device, test_loader)
-    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_ig_avg, axis=0))
+    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_ig_avg, axis=0),
+                         title="Integrated Gradient Features")
     visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_sal_avg, axis=0),
                          title="Saliency Features")
 
