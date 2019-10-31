@@ -49,7 +49,7 @@ The default args can be changed or passed inline e.g.
 * [x] Pytorch bottleneck test: ***Inconclusive, revisit***
 * [x] [Attention models](https://medium.com/intel-student-ambassadors/implementing-attention-models-in-pytorch-f947034b3e66)
 Tested, but not sweeped
-* [ ] Understand LSTM + TCN better
+* [x] Understand LSTM + TCN better
 * [x] GRU, LSTM and RNN switchable between
 * [x] hdf5 test script: Chen data uses hdf5, but unable to read the data
 * [x] MLP skorch test: RNN and custom logs not well supported
@@ -60,7 +60,7 @@ Tested, but not sweeped
 ### Main Objectives
 * [ ] Create MLP that is equivalent to Nishzuka et al paper
 * [ ] Establish a baseline MLP
-* [ ] Find best features out of the 40.
+* [ ] Find best features out of the 40. ([captum](https://captum.ai/))
 * [ ] LSTM vs. TCN?
 
 

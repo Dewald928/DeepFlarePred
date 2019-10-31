@@ -35,6 +35,7 @@ from captum.attr import GradientAttribution
 import matplotlib.pyplot as plt
 from scipy import stats
 
+
 def load_data(datafile, flare_label, series_len, start_feature, n_features, mask_value):
     df = pd.read_csv(datafile)
     df_values = df.values
@@ -253,10 +254,12 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features, mask
     print(X_arr.shape)
     return X_arr, y_arr
 
+
 def get_feature_names(datafile):
     df = pd.read_csv(datafile)
     feature_names = list(df.columns)
     return feature_names
+
 
 def label_transform(data):
     encoder = LabelEncoder()
@@ -395,8 +398,8 @@ class LSTMModel(nn.Module):
 
         elif self.rnn_module == "GRU":
             h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
-            out, (hn) = self.rnn(x, (h0.detach())) #-> [batch, layers, hiddendim]
-            att = self.fc_att(out).squeeze(-1) # -> [batch, layers]
+            out, (hn) = self.rnn(x, (h0.detach()))  # -> [batch, layers, hiddendim]
+            att = self.fc_att(out).squeeze(-1)  # -> [batch, layers]
             att = F.softmax(att, dim=-1)
             r_att = torch.sum(att.unsqueeze(-1) * out, dim=1)  # -> [batch, hiddendim]
             f = self.drop(self.act(self.fc0(out)))  # -> [batch, layers, hiddendim]
@@ -407,12 +410,10 @@ class LSTMModel(nn.Module):
     def initHidden(self, batch_size):
         # initialize hidden state to zeros
         if self.rnn_module == "LSTM":
-            return torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(device),\
+            return torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(device), \
                    torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(device)
         else:
             return torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(device)
-
-
 
 
 def train(model, device, train_loader, optimizer, epoch, criterion):
@@ -570,7 +571,7 @@ def interpret_model(model, device, test_loader):
     i = 1
     with torch.no_grad():
         for data, target in test_loader:
-            print("Batch#"+str(i))
+            print("Batch#" + str(i))
             model.to(device)
             data, target = data.to(device), target.to(device)
             data = data.view(len(data), n_features, args.layer_dim)
@@ -581,7 +582,7 @@ def interpret_model(model, device, test_loader):
             attr_ig = ig.attribute(temp_data, target=1)
             attr_sal = sal.attribute(inputs=temp_data, target=1)
             try:
-                attr_ig_avg = attr_ig if i==1 else (attr_ig_avg + attr_ig)/i
+                attr_ig_avg = attr_ig if i == 1 else (attr_ig_avg + attr_ig) / i
                 attr_sal_avg = attr_sal if i == 1 else (attr_sal_avg + attr_sal) / i
             except:
                 print("hmmmm???")
@@ -589,21 +590,23 @@ def interpret_model(model, device, test_loader):
             attr_ig = attr_ig.cpu().detach().numpy()
             attr_sal = attr_sal.cpu().detach().numpy()
 
-            if i == len(test_loader)-1: break
+            if i == len(test_loader) - 1: break
             i += 1
     attr_ig_avg = attr_ig_avg.cpu().detach().numpy()
     attr_sal_avg = attr_sal_avg.cpu().detach().numpy()
 
     return attr_ig, attr_sal, attr_ig_avg, attr_sal_avg
 
+
 # Helper method to print importance and visualize distribution
-def visualize_importance(feature_names, importances, title="Average Feature Importance", plot=True, axis_title="Features"):
+def visualize_importance(feature_names, importances, title="Average Feature Importance", plot=True,
+                         axis_title="Features"):
     print(title)
     for i in range(len(feature_names)):
-        print(feature_names[i], ": ", '%.3f'%(importances[i]))
+        print(feature_names[i], ": ", '%.3f' % (importances[i]))
     x_pos = (np.arange(len(feature_names)))
     if plot:
-        fig = plt.figure(figsize=(12, 6))
+        fig = plt.figure(figsize=(12, 5))
         plt.bar(x_pos, importances.reshape(n_features), align='center')
         plt.xticks(x_pos, feature_names, wrap=False, rotation=60)
         plt.xlabel(axis_title)
@@ -612,12 +615,13 @@ def visualize_importance(feature_names, importances, title="Average Feature Impo
         wandb.log({'Image of features': wandb.Image(fig)})
         # wandb.log({title: fig})
         # plot ranked
-        fig_sorted = plt.figure(figsize=(12, 6))
+        fig_sorted = plt.figure(figsize=(12, 5))
         df_sorted = pd.DataFrame({'Features': feature_names, "Importances": importances.reshape(n_features)})
         df_sorted = df_sorted.sort_values('Importances')
-        fig_sorted=df_sorted.plot(kind='bar', y='Importances', x='Features', title=title)
+        fig_sorted = df_sorted.plot(kind='bar', y='Importances', x='Features', title=title)
         plt.show()
         wandb.log({'Feature Ranking': wandb.Image(fig_sorted)})
+
 
 def check_significance(attr, test_features, feature_num=1):
     fig = plt.hist(attr[:, feature_num], 100)
@@ -634,10 +638,8 @@ def check_significance(attr, test_features, feature_num=1):
     plt.ylabel("Average Attribution")
 
 
-
-
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', notes='with captum')
+    wandb.init(project='Liu_pytorch', notes='TCN')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
@@ -651,7 +653,6 @@ if __name__ == '__main__':
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
-
 
     parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
@@ -669,7 +670,6 @@ if __name__ == '__main__':
                         help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
-
 
     parser.add_argument('--clip', type=float, default=0.2,
                         help='gradient clip, -1 means no clip (default: 0.2)')
@@ -701,7 +701,6 @@ if __name__ == '__main__':
     elif args.flare_label == 'C':
         n_features = 14
     feature_names = get_feature_names(filepath + 'normalized_training.csv')
-
 
     # initialize parameters
     start_feature = 5
@@ -806,9 +805,11 @@ if __name__ == '__main__':
 
     # Model interpretation
     attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpret_model(model, device, test_loader)
-    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_ig_avg, axis=0),
+    visualize_importance(np.array(feature_names[start_feature:start_feature + n_features]),
+                         np.mean(attr_ig_avg, axis=0),
                          title="Integrated Gradient Features")
-    visualize_importance(np.array(feature_names[start_feature:start_feature+n_features]), np.mean(attr_sal_avg, axis=0),
+    visualize_importance(np.array(feature_names[start_feature:start_feature + n_features]),
+                         np.mean(attr_sal_avg, axis=0),
                          title="Saliency Features")
 
     print('Finished')
