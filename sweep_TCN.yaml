@@ -18,7 +18,7 @@ metric:
 # Parameters to search over
 parameters:
   seed:
-    values: [1,5,10]
+    values: [1]
   batch_size:
     values: [128,256,512,1024]
   flare_label:
