@@ -323,11 +323,11 @@ def calculate_metrics(confusion_matrix):
         precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
         accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
         bacc[p] = round(0.5 * (
-                    float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-                tn[p] + fp[p])), 3)
+                float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
+            tn[p] + fp[p])), 3)
         hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
             (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
-                        fp[p] + tn[p])), 3)
+                    fp[p] + tn[p])), 3)
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
             fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
 
@@ -474,8 +474,13 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         if batch_idx % args.log_interval == 0:
             print(
                 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
-                    batch_idx * len(data), len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader), loss.item()))
+                                                                         batch_idx * len(
+                                                                             data),
+                                                                         len(
+                                                                             train_loader.dataset),
+                                                                         100. * batch_idx / len(
+                                                                             train_loader),
+                                                                         loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
@@ -484,9 +489,10 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         confusion_matrix)
 
     wandb.log({"Training_Accuracy": accuracy[0], "Training_TSS": tss[0],
-        "Training_HSS": hss[0], "Training_BACC": bacc[0],
-        "Training_Precision": precision[0], "Training_Recall": recall[0],
-        "Training_Loss": loss_epoch}, step=epoch)
+               "Training_HSS": hss[0], "Training_BACC": bacc[0],
+               "Training_Precision": precision[0],
+               "Training_Recall": recall[0], "Training_Loss": loss_epoch},
+              step=epoch)
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -515,11 +521,9 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                 confusion_matrix[t.long(), p.long()] += 1
 
     valid_loss /= len(valid_loader.dataset)
-    print(
-        '\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({'
-        ':.0f}%)\n'.format(
-            valid_loss, correct, len(valid_loader.dataset),
-            100. * correct / len(valid_loader.dataset)))
+    print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({'
+          ':.0f}%)\n'.format(valid_loss, correct, len(valid_loader.dataset),
+                             100. * correct / len(valid_loader.dataset)))
 
     # # validation conf matrix
     # print(confusion_matrix)
@@ -532,9 +536,10 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         confusion_matrix)
 
     wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
-        "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
-        "Validation_Precision": precision[0], "Validation_Recall": recall[0],
-        "Validation_Loss": valid_loss}, step=epoch)
+               "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
+               "Validation_Precision": precision[0],
+               "Validation_Recall": recall[0], "Validation_Loss": valid_loss},
+              step=epoch)
 
     # checkpoint on best tss
     if tss[0] >= best_tss:
@@ -589,8 +594,8 @@ def test(model, device, test_loader, criterion):
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
-            "Test_BACC": bacc[0], "Test_Precision": precision[0],
-            "Test_Recall": recall[0], "Test_Loss": test_loss})
+         "Test_BACC": bacc[0], "Test_Precision": precision[0],
+         "Test_Recall": recall[0], "Test_Loss": test_loss})
 
 
 def interpret_model(model, device, test_loader):
@@ -614,11 +619,10 @@ def interpret_model(model, device, test_loader):
             attr_ig = ig.attribute(temp_data, target=1)
             attr_sal = sal.attribute(inputs=temp_data, target=1)
             try:
-                attr_ig_avg = attr_ig if i == 1 else (
-                                                                 attr_ig_avg
-                                                                 + attr_ig) / i
-                attr_sal_avg = attr_sal if i == 1 else (
-                                                                   attr_sal_avg + attr_sal) / i
+                attr_ig_avg = attr_ig if i == 1 else (attr_ig_avg
+                                                      + attr_ig) / i
+                attr_sal_avg = attr_sal if i == 1 else (attr_sal_avg
+                                                        + attr_sal) / i
             except:
                 print("hmmmm???")
                 pass

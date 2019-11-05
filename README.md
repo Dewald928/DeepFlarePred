@@ -7,7 +7,7 @@ By using the [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction)
 ### Create virtual environment
 Install conda and install environment:
 
-```conda env create --file deepflarepred.yaml```
+```conda env create --name DeepFlarePred --file requirements.txt```
 
 Activate environment:
 
