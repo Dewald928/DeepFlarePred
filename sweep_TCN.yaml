@@ -20,7 +20,7 @@ parameters:
   seed:
     values: [1]
   batch_size:
-    values: [128,256,512,1024]
+    values: [512,1024,2048]
   flare_label:
     values: ['M5']
 ##    values: ["C", "M", "M5"]
