@@ -638,12 +638,12 @@ def interpret_model(model, device, test_loader):
 def visualize_importance(feature_names, importances,
                          title="Average Feature Importance", plot=True,
                          axis_title="Features"):
-    print(title)
-    for i in range(len(feature_names)):
-        print(feature_names[i], ": ", '%.3f' % (importances[i]))
+    # print(title)
+    # for i in range(len(feature_names)):
+    #     print(feature_names[i], ": ", '%.3f' % (importances[i]))
     x_pos = (np.arange(len(feature_names)))
     if plot:
-        fig = plt.figure(figsize=(10, 5))
+        fig = plt.figure(figsize=(8, 4))
         plt.bar(x_pos, importances.reshape(n_features), align='center')
         plt.xticks(x_pos, feature_names, wrap=False, rotation=60)
         plt.xlabel(axis_title)
@@ -657,7 +657,7 @@ def visualize_importance(feature_names, importances,
                                       n_features)})
         df_sorted = df_sorted.sort_values('Importances')
         fig_sorted = df_sorted.plot(kind='bar', y='Importances', x='Features',
-                                    title=title, figsize=(10, 5))
+                                    title=title, figsize=(8, 4))
         plt.show()
         wandb.log({'Feature Ranking': wandb.Image(fig_sorted)})
 
@@ -685,11 +685,11 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=3,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=512, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=1e-3,
                         help='initial learning rate (default: 1e-3)')
