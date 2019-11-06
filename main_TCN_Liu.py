@@ -472,15 +472,9 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
             confusion_matrix[t.long(), p.long()] += 1
 
         if batch_idx % args.log_interval == 0:
-            print(
-                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
-                                                                         batch_idx * len(
-                                                                             data),
-                                                                         len(
-                                                                             train_loader.dataset),
-                                                                         100. * batch_idx / len(
-                                                                             train_loader),
-                                                                         loss.item()))
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                100. * batch_idx / len(train_loader), loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
@@ -493,6 +487,9 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
                "Training_Precision": precision[0],
                "Training_Recall": recall[0], "Training_Loss": loss_epoch},
               step=epoch)
+    # todo paperspace test log
+    print(str({"chart": "Training_TSS", "axis": "epoch"}))
+    print(str({"chart": "Training_TSS", "y": tss[0], "x": epoch}))
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -531,15 +528,17 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     print("Validation Scores:")
-    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
-    tn = calculate_metrics(
-        confusion_matrix)
+    recall, precision, accuracy, bacc,\
+    tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
 
     wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
                "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
                "Validation_Precision": precision[0],
                "Validation_Recall": recall[0], "Validation_Loss": valid_loss},
               step=epoch)
+    # todo paperspace test log
+    print(str({"chart": "Validation_TSS", "axis": "epoch"}))
+    print(str({"chart": "Validation_TSS", "y": tss[0], "x": epoch}))
 
     # checkpoint on best tss
     if tss[0] >= best_tss:
@@ -589,13 +588,16 @@ def test(model, device, test_loader, criterion):
 
     print("Test Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
-    tn = calculate_metrics(
-        confusion_matrix)
+    tn = calculate_metrics(confusion_matrix)
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
          "Test_BACC": bacc[0], "Test_Precision": precision[0],
          "Test_Recall": recall[0], "Test_Loss": test_loss})
+
+    # todo paperspace test log
+    print(str({"chart": "Test_TSS", "axis": "epoch"}))
+    print(str({"chart": "Test_TSS", "y": tss[0], "x": epoch}))
 
 
 def interpret_model(model, device, test_loader):
@@ -619,10 +621,12 @@ def interpret_model(model, device, test_loader):
             attr_ig = ig.attribute(temp_data, target=1)
             attr_sal = sal.attribute(inputs=temp_data, target=1)
             try:
-                attr_ig_avg = attr_ig if i == 1 else (attr_ig_avg
-                                                      + attr_ig) / i
-                attr_sal_avg = attr_sal if i == 1 else (attr_sal_avg
-                                                        + attr_sal) / i
+                attr_ig_avg = attr_ig if i == 1 else (
+                                                             attr_ig_avg +
+                                                             attr_ig) / i
+                attr_sal_avg = attr_sal if i == 1 else (
+                                                               attr_sal_avg
+                                                               + attr_sal) / i
             except:
                 print("hmmmm???")
                 pass
