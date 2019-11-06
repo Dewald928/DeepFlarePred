@@ -487,9 +487,6 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
                "Training_Precision": precision[0],
                "Training_Recall": recall[0], "Training_Loss": loss_epoch},
               step=epoch)
-    # todo paperspace test log
-    print(str({"chart": "Training_TSS", "axis": "epoch"}))
-    print(str({"chart": "Training_TSS", "y": tss[0], "x": epoch}))
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -536,9 +533,6 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                "Validation_Precision": precision[0],
                "Validation_Recall": recall[0], "Validation_Loss": valid_loss},
               step=epoch)
-    # todo paperspace test log
-    print(str({"chart": "Validation_TSS", "axis": "epoch"}))
-    print(str({"chart": "Validation_TSS", "y": tss[0], "x": epoch}))
 
     # checkpoint on best tss
     if tss[0] >= best_tss:
@@ -594,10 +588,6 @@ def test(model, device, test_loader, criterion):
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
          "Test_BACC": bacc[0], "Test_Precision": precision[0],
          "Test_Recall": recall[0], "Test_Loss": test_loss})
-
-    # todo paperspace test log
-    print(str({"chart": "Test_TSS", "axis": "epoch"}))
-    print(str({"chart": "Test_TSS", "y": tss[0], "x": epoch}))
 
 
 def interpret_model(model, device, test_loader):
