@@ -1,4 +1,4 @@
-description: TCN huge sweep, all 40 features, with early stopping 30 patience.
+description: TCN level 1, all 40 features, with early stopping 30 patience.
 
 # Training script to run
 program: main_TCN_Liu.py
@@ -18,7 +18,7 @@ metric:
 # Parameters to search over
 parameters:
   seed:
-    values: [1]
+    values: [1,5,10]
   batch_size:
     values: [512,1024,2048]
   flare_label:
@@ -35,7 +35,7 @@ parameters:
   ksize:
     values: [2,3,4,5] #maak die 3
   levels:
-    values: [1,3,5,7] #maak die 5
+    values: [1] #maak die 5
   nhid:
     values: [40]
 #  dropout:
