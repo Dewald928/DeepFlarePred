@@ -35,6 +35,8 @@ from captum.attr import GradientAttribution
 import matplotlib.pyplot as plt
 from scipy import stats
 
+import shap
+
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features,
               mask_value):
@@ -472,9 +474,15 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
             confusion_matrix[t.long(), p.long()] += 1
 
         if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+            print(
+                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
+                                                                         batch_idx * len(
+                                                                             data),
+                                                                         len(
+                                                                             train_loader.dataset),
+                                                                         100. * batch_idx / len(
+                                                                             train_loader),
+                                                                         loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
@@ -525,8 +533,9 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     print("Validation Scores:")
-    recall, precision, accuracy, bacc,\
-    tss, hss, tp, fn, fp, tn = calculate_metrics(confusion_matrix)
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
+    tn = calculate_metrics(
+        confusion_matrix)
 
     wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
                "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
@@ -582,7 +591,8 @@ def test(model, device, test_loader, criterion):
 
     print("Test Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
-    tn = calculate_metrics(confusion_matrix)
+    tn = calculate_metrics(
+        confusion_matrix)
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
@@ -633,7 +643,7 @@ def interpret_model(model, device, test_loader):
 
 
 # Helper method to print importance and visualize distribution
-def visualize_importance(feature_names, importances,
+def visualize_importance(feature_names, importances, std,
                          title="Average Feature Importance", plot=True,
                          axis_title="Features"):
     # print(title)
@@ -642,20 +652,22 @@ def visualize_importance(feature_names, importances,
     x_pos = (np.arange(len(feature_names)))
     if plot:
         fig = plt.figure(figsize=(8, 4))
-        plt.bar(x_pos, importances.reshape(n_features), align='center')
+        plt.bar(x_pos, importances.reshape(n_features),
+                yerr=std.reshape(n_features), align='center')
         plt.xticks(x_pos, feature_names, wrap=False, rotation=60)
         plt.xlabel(axis_title)
         plt.title(title)
         fig.show()
         wandb.log({'Image of features': wandb.Image(fig)})
-        # wandb.log({title: fig})
+
         # plot ranked
         df_sorted = pd.DataFrame({'Features': feature_names,
                                   "Importances": importances.reshape(
                                       n_features)})
         df_sorted = df_sorted.sort_values('Importances')
         fig_sorted = df_sorted.plot(kind='bar', y='Importances', x='Features',
-                                    title=title, figsize=(8, 4))
+                                    title=title, figsize=(8, 4),
+                                    yerr=std.reshape(n_features))
         plt.show()
         wandb.log({'Feature Ranking': wandb.Image(fig_sorted)})
 
@@ -683,20 +695,20 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--learning_rate', type=float, default=1e-3,
+    parser.add_argument('--learning_rate', type=float, default=1e-2,
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
     parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=2,
+    parser.add_argument('--ksize', type=int, default=5,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 128)')
@@ -862,9 +874,11 @@ if __name__ == '__main__':
                                                                    test_loader)
     visualize_importance(
         np.array(feature_names[start_feature:start_feature + n_features]),
-        np.mean(attr_ig_avg, axis=0), title="Integrated Gradient Features")
+        np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
+        title="Integrated Gradient Features")
     visualize_importance(
         np.array(feature_names[start_feature:start_feature + n_features]),
-        np.mean(attr_sal_avg, axis=0), title="Saliency Features")
+        np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
+        title="Saliency Features")
 
     print('Finished')
