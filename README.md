@@ -7,7 +7,7 @@ By using the [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction)
 ### Create virtual environment
 Install conda and install environment:
 
-```conda env create --name DeepFlarePred --file requirements.txt```
+```conda env create -f deepflarepred.yml```
 
 Activate environment:
 
@@ -32,6 +32,18 @@ To run the script, you can either do a Weight & Biases sweep, or just simply run
 The default args can be changed or passed inline e.g.
 
 ```python main_LSTM_Liu.py --learning_rate 0.001```
+
+
+## Docker cloud gpu setup
+### Build container
+Follow instructions [here](https://docs.paperspace.com/gradient/notebooks/notebook-containers/building-a-custom-container)
+* Install docker
+* Install nvidia docker
+* Install GPU drivers
+* Then build dockerfile and push image to hub
+
+### Example of runstring
+paperspace jobs create --container dvd928/deep_flare_pred:2 --machineType P4000 --command wandb agent 5ks0xbql --ports 5000:5000 --project Liu_pytorch
 
 
 ## Plans for the Project
