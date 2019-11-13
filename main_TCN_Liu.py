@@ -35,7 +35,7 @@ from captum.attr import GradientAttribution
 import matplotlib.pyplot as plt
 from scipy import stats
 
-import shap
+# import shap
 
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features,
