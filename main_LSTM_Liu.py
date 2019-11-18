@@ -22,11 +22,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # import skorch
-from skorch import NeuralNetClassifier
-from skorch.callbacks import EpochScoring
-from skorch.callbacks import *
-from skorch.helper import predefined_split
-from skorch.dataset import Dataset
+# from skorch import NeuralNetClassifier
+# from skorch.callbacks import EpochScoring
+# from skorch.callbacks import *
+# from skorch.helper import predefined_split
+# from skorch.dataset import Dataset
 
 from data_loader import CustomDataset
 from utils import early_stopping
