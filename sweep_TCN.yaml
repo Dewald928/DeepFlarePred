@@ -35,9 +35,9 @@ parameters:
   ksize:
     values: [2,3,4,5] #maak die 3
   levels:
-    values: [1] #maak die 5
+    values: [1,3,5,7] #maak die 5
   nhid:
-    values: [40]
+    values: [20]
 #  dropout:
 #    values: [0.7]
 #  weight_decay:

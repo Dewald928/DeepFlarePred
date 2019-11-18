@@ -695,13 +695,13 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--learning_rate', type=float, default=1e-2,
+    parser.add_argument('--learning_rate', type=float, default=1e-3,
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
@@ -710,7 +710,7 @@ if __name__ == '__main__':
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=40,
+    parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 128)')
 
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -747,7 +747,7 @@ if __name__ == '__main__':
     num_of_fold = 10
     n_features = 0
     if args.flare_label == 'M5':
-        n_features = 40  # 20 original
+        n_features = 20  # 20 original
     elif args.flare_label == 'M':
         n_features = 22
     elif args.flare_label == 'C':
@@ -869,16 +869,16 @@ if __name__ == '__main__':
     test(model, device, test_loader, criterion)
 
     # Model interpretation
-    attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpret_model(model,
-                                                                   device,
-                                                                   test_loader)
-    visualize_importance(
-        np.array(feature_names[start_feature:start_feature + n_features]),
-        np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
-        title="Integrated Gradient Features")
-    visualize_importance(
-        np.array(feature_names[start_feature:start_feature + n_features]),
-        np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-        title="Saliency Features")
+    # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpret_model(model,
+    #                                                                device,
+    #                                                                test_loader)
+    # visualize_importance(
+    #     np.array(feature_names[start_feature:start_feature + n_features]),
+    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
+    #     title="Integrated Gradient Features")
+    # visualize_importance(
+    #     np.array(feature_names[start_feature:start_feature + n_features]),
+    #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
+    #     title="Saliency Features")
 
     print('Finished')
