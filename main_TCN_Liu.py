@@ -841,7 +841,7 @@ if __name__ == '__main__':
         print(list(model.parameters())[i].size())
 
     # early stopping check
-    early_stop = early_stopping.EarlyStopping(mode='max', patience=30)
+    early_stop = early_stopping.EarlyStopping(mode='max', patience=40)
     best_tss = 0.0
     best_epoch = 0
 

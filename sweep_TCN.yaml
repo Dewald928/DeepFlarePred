@@ -35,7 +35,7 @@ parameters:
   ksize:
     values: [2,3,4,5] #maak die 3
   levels:
-    values: [1,3,5,7] #maak die 5
+    values: [1,2,3,4] #maak die 5
   nhid:
     values: [20]
 #  dropout:
