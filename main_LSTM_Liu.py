@@ -387,6 +387,9 @@ def get_metric(y_true, y_pred, metric_name='tss'):
 def get_tss(y_true, y_pred):
     return get_metric(y_true, y_pred, metric_name='tss')
 
+def get_hss(y_true, y_pred):
+    return get_metric(y_true, y_pred, metric_name='hss')
+
 
 class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim,
@@ -799,6 +802,9 @@ if __name__ == '__main__':
     # Metrics
     tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False,
                        name='tss', use_caching=True)
+    hss = EpochScoring(scoring=make_scorer(get_hss), lower_is_better=False,
+                       name='hss', use_caching=True)
+
 
     earlystop = EarlyStopping(monitor='tss', lower_is_better=False,
                               patience=30)
@@ -814,7 +820,7 @@ if __name__ == '__main__':
                               optimizer__amsgrad=False, device=device,
                               # train_split=None, #die breek die logs
                               train_split=predefined_split(valid_ds),
-                              callbacks=[tss, earlystop, checkpoint],
+                              callbacks=[tss, hss, earlystop, checkpoint],
                               # iterator_train__shuffle=True, # batches shuffle
                               # warm_start=False
                               )
