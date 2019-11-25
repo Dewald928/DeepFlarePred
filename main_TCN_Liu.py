@@ -35,6 +35,7 @@ from captum.attr import GradientAttribution
 import matplotlib.pyplot as plt
 from scipy import stats
 
+
 # import shap
 
 
@@ -474,27 +475,23 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
             confusion_matrix[t.long(), p.long()] += 1
 
         if batch_idx % args.log_interval == 0:
-            print(
-                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
-                                                                         batch_idx * len(
-                                                                             data),
-                                                                         len(
-                                                                             train_loader.dataset),
-                                                                         100. * batch_idx / len(
-                                                                             train_loader),
-                                                                         loss.item()))
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                       100. * batch_idx / len(train_loader), loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
-    tn = calculate_metrics(
-        confusion_matrix)
+    tn = calculate_metrics(confusion_matrix)
 
-    wandb.log({"Training_Accuracy": accuracy[0], "Training_TSS": tss[0],
-               "Training_HSS": hss[0], "Training_BACC": bacc[0],
-               "Training_Precision": precision[0],
-               "Training_Recall": recall[0], "Training_Loss": loss_epoch},
-              step=epoch)
+    wandb.log({
+        "Training_Accuracy": accuracy[0],
+        "Training_TSS": tss[0],
+        "Training_HSS": hss[0],
+        "Training_BACC": bacc[0],
+        "Training_Precision": precision[0],
+        "Training_Recall": recall[0],
+        "Training_Loss": loss_epoch}, step=epoch)
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -537,11 +534,14 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     tn = calculate_metrics(
         confusion_matrix)
 
-    wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
-               "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
-               "Validation_Precision": precision[0],
-               "Validation_Recall": recall[0], "Validation_Loss": valid_loss},
-              step=epoch)
+    wandb.log({
+        "Validation_Accuracy": accuracy[0],
+        "Validation_TSS": tss[0],
+        "Validation_HSS": hss[0],
+        "Validation_BACC": bacc[0],
+        "Validation_Precision": precision[0],
+        "Validation_Recall": recall[0],
+        "Validation_Loss": valid_loss}, step=epoch)
 
     # checkpoint on best tss
     if tss[0] >= best_tss:
@@ -562,13 +562,12 @@ def test(model, device, test_loader, criterion):
     example_images = []
     with torch.no_grad():
         for data, target in test_loader:
-            model.to(device)
             data, target = data.to(device), target.to(device)
             try:
                 data = data.view(len(data), n_features, args.layer_dim)
             except:
                 print("woah the cowboy")
-            output = model(data).to(device)
+            output = model(data)
             # sum up batch loss
             test_loss += criterion(output, target).item()
             # get the index of the max log-probability
@@ -596,8 +595,8 @@ def test(model, device, test_loader, criterion):
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
-         "Test_BACC": bacc[0], "Test_Precision": precision[0],
-         "Test_Recall": recall[0], "Test_Loss": test_loss})
+            "Test_BACC": bacc[0], "Test_Precision": precision[0],
+            "Test_Recall": recall[0], "Test_Loss": test_loss})
 
 
 def interpret_model(model, device, test_loader):
@@ -691,17 +690,17 @@ def check_significance(attr, test_features, feature_num=1):
 
 
 if __name__ == '__main__':
-    wandb.init(project='Liu_pytorch', notes='TCN')
+    wandb.init(project='', notes='TCN')
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--learning_rate', type=float, default=1e-3,
+    parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
@@ -733,7 +732,7 @@ if __name__ == '__main__':
                         help='report interval (default: 100')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
-    parser.add_argument('--early_stop', action='store_true', default=True,
+    parser.add_argument('--early_stop', action='store_true', default=False,
                         help='Stops training if overfitting')
     parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')
@@ -767,6 +766,7 @@ if __name__ == '__main__':
         print("Cuda enabled not not available, CPU used.")
     elif args.cuda == False:
         print("Cuda disabled")
+    device = torch.device("cuda" if use_cuda else "cpu")
 
     # set seed
     torch.manual_seed(args.seed)
@@ -805,22 +805,25 @@ if __name__ == '__main__':
     datasets['valid'] = preprocess_customdataset(X_valid_data, y_valid_tr)
     datasets['test'] = preprocess_customdataset(X_test_data, y_test_tr)
 
+
     train_loader = torch.utils.data.DataLoader(datasets['train'],
                                                args.batch_size, shuffle=False,
-                                               drop_last=False)
+                                               drop_last=False,
+                                               pin_memory=True, num_workers=4)
     valid_loader = torch.utils.data.DataLoader(datasets['valid'],
                                                args.batch_size, shuffle=False,
-                                               drop_last=False)
+                                               drop_last=False,
+                                               pin_memory=True, num_workers=4)
     test_loader = torch.utils.data.DataLoader(datasets['test'],
                                               args.batch_size, shuffle=False,
-                                              drop_last=False)
+                                              drop_last=False,
+                                              pin_memory=True, num_workers=4)
 
     # make model
     channel_sizes = [args.nhid] * args.levels
     kernel_size = args.ksize
     dropout = args.dropout
 
-    device = torch.device("cuda" if use_cuda else "cpu")
     model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
                 dropout=dropout).to(device)
     wandb.watch(model, log='all')
@@ -881,4 +884,6 @@ if __name__ == '__main__':
     #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
     #     title="Saliency Features")
 
+    # Save model to W&B
+    torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
     print('Finished')
