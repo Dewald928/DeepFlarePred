@@ -7,6 +7,8 @@ But the abundance of the rich will not permit him to sleep.
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
+from sklearn.metrics import make_scorer
+import sklearn.metrics
 
 import sys
 import os
@@ -18,9 +20,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from Test_Scripts.tcn import TemporalConvNet
 
-# import skorch
-# from skorch import NeuralNetClassifier
-# from sklearn.model_selection import cross_val_predict
+import skorch
+from skorch import NeuralNetClassifier
+from skorch.callbacks import *
+from skorch.helper import predefined_split
+from skorch.dataset import Dataset
 
 from data_loader import CustomDataset
 from utils import early_stopping
@@ -342,6 +346,83 @@ def calculate_metrics(confusion_matrix):
     print("recall: " + str(recall))
 
     return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
+
+def get_metric(y_true, y_pred, metric_name='tss'):
+    # print('Calculating skill scores: ')
+    confusion_matrix = []
+    confusion_matrix = sklearn.metrics.confusion_matrix(y_true, y_pred)
+    N = np.sum(confusion_matrix)
+
+    recall = np.zeros(nclass)
+    precision = np.zeros(nclass)
+    accuracy = np.zeros(nclass)
+    bacc = np.zeros(nclass)
+    tss = np.zeros(nclass)
+    hss = np.zeros(nclass)
+    tp = np.zeros(nclass)
+    fn = np.zeros(nclass)
+    fp = np.zeros(nclass)
+    tn = np.zeros(nclass)
+    for p in range(nclass):
+        tp[p] = confusion_matrix[p][p]
+        for q in range(nclass):
+            if q != p:
+                fn[p] += confusion_matrix[p][q]
+                fp[p] += confusion_matrix[q][p]
+        tn[p] = N - tp[p] - fn[p] - fp[p]
+
+        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
+        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
+        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
+        bacc[p] = round(0.5 * (
+                float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
+            tn[p] + fp[p])), 3)
+        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
+            (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
+                    fp[p] + tn[p])), 3)
+        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
+            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
+
+    if metric_name == 'recall':
+        return recall[0]
+    if metric_name == 'precision':
+        return precision[0]
+    if metric_name == 'accuracy':
+        return accuracy[0]
+    if metric_name == 'bacc':
+        return bacc[0]
+    if metric_name == 'tss':
+        return tss[0]
+    if metric_name == 'hss':
+        return hss[0]
+    else:
+        return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
+
+
+def get_tss(y_true, y_pred):
+    tss = get_metric(y_true, y_pred, metric_name='tss')
+    return tss
+
+def get_hss(y_true, y_pred):
+    return get_metric(y_true, y_pred, metric_name='hss')
+
+
+class LoggingCallback(Callback):
+    def __init__(self, ):
+        super(LoggingCallback, self).__init__()
+
+    def initialize(self):
+        wandb.log(step=0)
+
+    def on_train_begin(self, net, X=None, y=None, **kwargs):
+        wandb.log(step=0)
+
+    def on_epoch_end(self, net, dataset_trn=None, dataset_vld=None, **kwargs):
+        h = net.history[-1]
+        wandb.log({'Train_Loss': h['train_loss'],
+                   'Validation_TSS': h['tss'],
+                   'Validation_HSS': h['hss'],
+                   'Validation_Loss': h['valid_loss']})
 
 
 class TCN(nn.Module):
@@ -808,16 +889,13 @@ if __name__ == '__main__':
 
     train_loader = torch.utils.data.DataLoader(datasets['train'],
                                                args.batch_size, shuffle=False,
-                                               drop_last=False,
-                                               pin_memory=True, num_workers=4)
+                                               drop_last=False)
     valid_loader = torch.utils.data.DataLoader(datasets['valid'],
                                                args.batch_size, shuffle=False,
-                                               drop_last=False,
-                                               pin_memory=True, num_workers=4)
+                                               drop_last=False)
     test_loader = torch.utils.data.DataLoader(datasets['test'],
                                               args.batch_size, shuffle=False,
-                                              drop_last=False,
-                                              pin_memory=True, num_workers=4)
+                                              drop_last=False)
 
     # make model
     channel_sizes = [args.nhid] * args.levels
@@ -848,28 +926,28 @@ if __name__ == '__main__':
     best_tss = 0.0
     best_epoch = 0
 
-    print("Training Network...")
-    if args.training:
-        for epoch in range(args.epochs):
-            train(model, device, train_loader, optimizer, epoch, criterion)
-            tss, best_tss, best_epoch = validate(model, device, valid_loader,
-                                                 criterion, epoch, best_tss,
-                                                 best_epoch)
-            if early_stop.step(tss) and args.early_stop:
-                break
-
-    wandb.log(
-        {"Best_Validation_TSS": best_tss, "Best_Validation_epoch": best_epoch})
-
-    # reload best tss checkpoint and test
-    print("[INFO] Loading model at epoch:" + str(best_epoch))
-    try:
-        model.load_state_dict(
-            torch.load(os.path.join(wandb.run.dir, 'model.pt')))
-    except:
-        print('No model loaded...')
-
-    test(model, device, test_loader, criterion)
+    # print("Training Network...")
+    # if args.training:
+    #     for epoch in range(args.epochs):
+    #         train(model, device, train_loader, optimizer, epoch, criterion)
+    #         tss, best_tss, best_epoch = validate(model, device, valid_loader,
+    #                                              criterion, epoch, best_tss,
+    #                                              best_epoch)
+    #         if early_stop.step(tss) and args.early_stop:
+    #             break
+    #
+    # wandb.log(
+    #     {"Best_Validation_TSS": best_tss, "Best_Validation_epoch": best_epoch})
+    #
+    # # reload best tss checkpoint and test
+    # print("[INFO] Loading model at epoch:" + str(best_epoch))
+    # try:
+    #     model.load_state_dict(
+    #         torch.load(os.path.join(wandb.run.dir, 'model.pt')))
+    # except:
+    #     print('No model loaded...')
+    #
+    # test(model, device, test_loader, criterion)
 
     # Model interpretation
     # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpret_model(model,
@@ -883,6 +961,75 @@ if __name__ == '__main__':
     #     np.array(feature_names[start_feature:start_feature + n_features]),
     #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
     #     title="Saliency Features")
+
+    '''
+        Skorch training
+        '''
+    print("Do K-Fold cross validation in skorch wrapper")
+
+    inputs = torch.tensor(X_train_data).float()
+    inputs = inputs.view(len(inputs), n_features, args.layer_dim) #todo shape e
+    labels = torch.tensor(y_train_tr).long()
+    X_valid_data = torch.tensor(X_valid_data).float()
+    X_valid_data = X_valid_data.view(len(X_valid_data), n_features, args.layer_dim)
+    y_valid_tr = torch.tensor(y_valid_tr).long()
+
+    inputs = inputs.numpy()
+    labels = labels.numpy()
+    X_valid_data = X_valid_data.numpy()
+    y_valid_tr = y_valid_tr.numpy()
+
+    valid_ds = Dataset(X_valid_data, y_valid_tr)
+
+    # Metrics + Callbacks
+    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False,
+                       name='tss', use_caching=True)
+    hss = EpochScoring(scoring=make_scorer(get_hss), lower_is_better=False,
+                       name='hss', use_caching=True)
+
+    earlystop = EarlyStopping(monitor='tss', lower_is_better=False,
+                              patience=30)
+    checkpoint = Checkpoint(monitor='tss_best', dirname='./saved/models/exp1')
+
+    net = NeuralNetClassifier(model, max_epochs=args.epochs,
+                              batch_size=args.batch_size,
+                              criterion=nn.CrossEntropyLoss,
+                              criterion__weight=torch.FloatTensor(
+                                  class_weights).to(device),
+                              optimizer=torch.optim.Adam,
+                              optimizer__lr=args.learning_rate,
+                              optimizer__weight_decay=args.weight_decay,
+                              optimizer__amsgrad=False,
+                              device=device,
+                              # train_split=None, #die breek die logs
+                              train_split=predefined_split(valid_ds),
+                              callbacks=[tss, hss, earlystop, checkpoint,
+                                         LoggingCallback],
+                              # iterator_train__shuffle=True, # batches shuffle
+                              # warm_start=False
+                              )
+
+    net.fit(inputs, labels)
+
+
+    '''
+    Test Results
+    '''
+    net.initialize()
+    net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+
+    # inputs = torch.tensor(X_valid_data).float()
+    # labels = torch.tensor(y_valid_tr).long()
+    inputs = torch.tensor(X_test_data).float()
+    labels = torch.tensor(y_test_tr).long()
+
+    inputs = inputs.numpy()
+    labels = labels.numpy()
+
+    y_test = net.predict(inputs)
+    tss_test_score = get_tss(labels, y_test)
+    wandb.log({'Test_TSS': tss_test_score})
+    print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))

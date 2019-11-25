@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
 from sklearn.metrics import make_scorer
+import sklearn.metrics
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_validate
@@ -332,7 +333,6 @@ def calculate_metrics(confusion_matrix):
 
 
 def get_metric(y_true, y_pred, metric_name='tss'):
-    import sklearn.metrics
     # print('Calculating skill scores: ')
     confusion_matrix = []
     confusion_matrix = sklearn.metrics.confusion_matrix(y_true, y_pred)
