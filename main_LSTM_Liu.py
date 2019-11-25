@@ -285,15 +285,10 @@ def preprocess_customdataset(x_val, y_val):
     return datasets
 
 
-def calculate_metrics(net, x, y_true, metric_name='tss'):
+def calculate_metrics(confusion_matrix):
     # determine skill scores
     print('Calculating skill scores: ')
-    import sklearn.metrics
-    # print('Calculating skill scores: ')
-    confusion_matrix = []
-    y_pred = net.predict(x)
-    confusion_matrix = sklearn.metrics.confusion_matrix(y_true, y_pred)
-
+    confusion_matrix = confusion_matrix.numpy()
     N = np.sum(confusion_matrix)
 
     recall = np.zeros(nclass)
@@ -318,11 +313,11 @@ def calculate_metrics(net, x, y_true, metric_name='tss'):
         precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
         accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
         bacc[p] = round(0.5 * (
-                    float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-                tn[p] + fp[p])), 3)
+                float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
+            tn[p] + fp[p])), 3)
         hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
             (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
-                        fp[p] + tn[p])), 3)
+                    fp[p] + tn[p])), 3)
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
             fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
 
@@ -332,6 +327,46 @@ def calculate_metrics(net, x, y_true, metric_name='tss'):
     print("accuracy: " + str(accuracy))
     print("precision: " + str(precision))
     print("recall: " + str(recall))
+
+    return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
+
+
+def get_metric(y_true, y_pred, metric_name='tss'):
+    import sklearn.metrics
+    # print('Calculating skill scores: ')
+    confusion_matrix = []
+    confusion_matrix = sklearn.metrics.confusion_matrix(y_true, y_pred)
+    N = np.sum(confusion_matrix)
+
+    recall = np.zeros(nclass)
+    precision = np.zeros(nclass)
+    accuracy = np.zeros(nclass)
+    bacc = np.zeros(nclass)
+    tss = np.zeros(nclass)
+    hss = np.zeros(nclass)
+    tp = np.zeros(nclass)
+    fn = np.zeros(nclass)
+    fp = np.zeros(nclass)
+    tn = np.zeros(nclass)
+    for p in range(nclass):
+        tp[p] = confusion_matrix[p][p]
+        for q in range(nclass):
+            if q != p:
+                fn[p] += confusion_matrix[p][q]
+                fp[p] += confusion_matrix[q][p]
+        tn[p] = N - tp[p] - fn[p] - fp[p]
+
+        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
+        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
+        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
+        bacc[p] = round(0.5 * (
+                float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
+            tn[p] + fp[p])), 3)
+        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
+            (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
+                    fp[p] + tn[p])), 3)
+        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
+            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
 
     if metric_name == 'recall':
         return recall[0]
@@ -350,52 +385,7 @@ def calculate_metrics(net, x, y_true, metric_name='tss'):
 
 
 def get_tss(y_true, y_pred):
-    # determine skill scores
-    import sklearn.metrics
-    # print('Calculating skill scores: ')
-    confusion_matrix = []
-    confusion_matrix = sklearn.metrics.confusion_matrix(y_true, y_pred)
-    N = np.sum(confusion_matrix)
-
-    recall = np.zeros(nclass)
-    precision = np.zeros(nclass)
-    accuracy = np.zeros(nclass)
-    bacc = np.zeros(nclass)
-    tss = np.zeros(nclass)
-    hss = np.zeros(nclass)
-    tp = np.zeros(nclass)
-    fn = np.zeros(nclass)
-    fp = np.zeros(nclass)
-    tn = np.zeros(nclass)
-    for p in range(nclass):
-        tp[p] = confusion_matrix[p][p]
-        for q in range(nclass):
-            if q != p:
-                fn[p] += confusion_matrix[p][q]
-                fp[p] += confusion_matrix[q][p]
-        tn[p] = N - tp[p] - fn[p] - fp[p]
-
-        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
-        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
-        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
-        bacc[p] = round(0.5 * (
-                    float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-                tn[p] + fp[p])), 3)
-        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
-            (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
-                        fp[p] + tn[p])), 3)
-        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
-            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
-
-    # print("tss: " + str(tss))
-    # print("hss: " + str(hss))
-    # print("bacc: " + str(bacc))
-    # print("accuracy: " + str(accuracy))
-    # print("precision: " + str(precision))
-    # print("recall: " + str(recall))
-
-    return tss[0]  # return recall, precision, accuracy, bacc, tss, hss, tp, fn,
-    # fp, tn
+    return get_metric(y_true, y_pred, metric_name='tss')
 
 
 class LSTMModel(nn.Module):
@@ -510,8 +500,13 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         if batch_idx % args.log_interval == 0:
             print(
                 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
-                    batch_idx * len(data), len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader), loss.item()))
+                                                                         batch_idx * len(
+                                                                             data),
+                                                                         len(
+                                                                             train_loader.dataset),
+                                                                         100. * batch_idx / len(
+                                                                             train_loader),
+                                                                         loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
@@ -520,9 +515,10 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         confusion_matrix)
 
     wandb.log({"Training_Accuracy": accuracy[0], "Training_TSS": tss[0],
-        "Training_HSS": hss[0], "Training_BACC": bacc[0],
-        "Training_Precision": precision[0], "Training_Recall": recall[0],
-        "Training_Loss": loss_epoch}, step=epoch)
+               "Training_HSS": hss[0], "Training_BACC": bacc[0],
+               "Training_Precision": precision[0],
+               "Training_Recall": recall[0], "Training_Loss": loss_epoch},
+              step=epoch)
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -547,11 +543,9 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                 confusion_matrix[t.long(), p.long()] += 1
 
     valid_loss /= len(valid_loader.dataset)
-    print(
-        '\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({'
-        ':.0f}%)\n'.format(
-            valid_loss, correct, len(valid_loader.dataset),
-            100. * correct / len(valid_loader.dataset)))
+    print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({'
+          ':.0f}%)\n'.format(valid_loss, correct, len(valid_loader.dataset),
+                             100. * correct / len(valid_loader.dataset)))
 
     # # validation conf matrix
     # print(confusion_matrix)
@@ -564,9 +558,10 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         confusion_matrix)
 
     wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
-        "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
-        "Validation_Precision": precision[0], "Validation_Recall": recall[0],
-        "Validation_Loss": valid_loss}, step=epoch)
+               "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
+               "Validation_Precision": precision[0],
+               "Validation_Recall": recall[0], "Validation_Loss": valid_loss},
+              step=epoch)
 
     # checkpoint on best tss
     if tss[0] >= best_tss:
@@ -611,8 +606,8 @@ def test(model, device, test_loader, criterion):
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
-            "Test_BACC": bacc[0], "Test_Precision": precision[0],
-            "Test_Recall": recall[0], "Test_Loss": test_loss})
+         "Test_BACC": bacc[0], "Test_Precision": precision[0],
+         "Test_Recall": recall[0], "Test_Loss": test_loss})
 
 
 if __name__ == '__main__':
@@ -775,11 +770,13 @@ if __name__ == '__main__':
     #             break
     #
     # wandb.log(
-    #     {"Best_Validation_TSS": best_tss, "Best_Validation_epoch": best_epoch})
+    #     {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
+    #     best_epoch})
     #
     # # reload best tss checkpoint and test
     # print("[INFO] Reverting to checkpoint at epoch:" + str(best_epoch))
-    # model.load_state_dict(torch.load(os.path.join(wandb.run.dir, 'model.pt')))
+    # model.load_state_dict(torch.load(os.path.join(wandb.run.dir,
+    # 'model.pt')))
     # test(model, device, test_loader, criterion)
 
     '''
@@ -800,35 +797,29 @@ if __name__ == '__main__':
     valid_ds = Dataset(X_valid_data, y_valid_tr)
 
     # Metrics
-    tss = EpochScoring(scoring=calculate_metrics,
-    lower_is_better=False, name='tss', use_caching=True)
-
+    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False,
+                       name='tss', use_caching=True)
 
     earlystop = EarlyStopping(monitor='tss', lower_is_better=False,
-    patience=30)
-    checkpoint = Checkpoint(monitor='tss_best',
-    dirname='./saved/models/exp1')
+                              patience=30)
+    checkpoint = Checkpoint(monitor='tss_best', dirname='./saved/models/exp1')
 
-    net = NeuralNetClassifier(
-        model,
-        max_epochs=args.epochs,
-        batch_size=args.batch_size,
-        criterion=nn.CrossEntropyLoss,
-        criterion__weight=torch.FloatTensor(class_weights).to(device),
-        optimizer=torch.optim.Adam,
-        optimizer__lr=args.learning_rate,
-        optimizer__weight_decay=args.weight_decay,
-        optimizer__amsgrad=False,
-        device=device,
-        # train_split=None, #die breek die logs
-        train_split=predefined_split(valid_ds),
-        callbacks=[tss, earlystop, checkpoint],
-        # iterator_train__shuffle=True,  # batches shuffle
-        # warm_start=False
-    )
+    net = NeuralNetClassifier(model, max_epochs=args.epochs,
+                              batch_size=args.batch_size,
+                              criterion=nn.CrossEntropyLoss,
+                              criterion__weight=torch.FloatTensor(class_weights).to(device),
+                              optimizer=torch.optim.Adam,
+                              optimizer__lr=args.learning_rate,
+                              optimizer__weight_decay=args.weight_decay,
+                              optimizer__amsgrad=False, device=device,
+                              # train_split=None, #die breek die logs
+                              train_split=predefined_split(valid_ds),
+                              callbacks=[tss, earlystop, checkpoint],
+                              # iterator_train__shuffle=True, # batches shuffle
+                              # warm_start=False
+                              )
 
     net.fit(inputs, labels)
-
 
     '''
     K-fold cross val
@@ -843,7 +834,8 @@ if __name__ == '__main__':
     # labels = labels.numpy()
 
     # net.max_epochs = 0
-    # score = cross_val_score(net, inputs, labels, cv=2, scoring=make_scorer(get_tss))
+    # score = cross_val_score(net, inputs, labels, cv=2,
+    # scoring=make_scorer(get_tss))
     # print(score)
     # y_pred = cross_val_predict(net, inputs, labels, cv=2)
     # print(y_pred)
