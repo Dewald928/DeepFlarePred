@@ -5,6 +5,7 @@ Whether he eats little or much;
 But the abundance of the rich will not permit him to sleep.
 '''
 import pandas as pd
+
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
 from sklearn.metrics import make_scorer
@@ -23,7 +24,6 @@ import torch.nn.functional as F
 
 import skorch
 from skorch import NeuralNetClassifier
-from skorch.callbacks import EpochScoring
 from skorch.callbacks import *
 from skorch.helper import predefined_split
 from skorch.dataset import Dataset
@@ -385,10 +385,30 @@ def get_metric(y_true, y_pred, metric_name='tss'):
 
 
 def get_tss(y_true, y_pred):
-    return get_metric(y_true, y_pred, metric_name='tss')
+    tss = get_metric(y_true, y_pred, metric_name='tss')
+    return tss
 
 def get_hss(y_true, y_pred):
     return get_metric(y_true, y_pred, metric_name='hss')
+
+
+class LoggingCallback(Callback):
+    def __init__(self, ):
+        super(LoggingCallback, self).__init__()
+
+    def initialize(self):
+        wandb.log(step=0)
+
+    def on_train_begin(self, net, X=None, y=None, **kwargs):
+        wandb.log(step=0)
+
+    def on_epoch_end(self, net, dataset_trn=None, dataset_vld=None, **kwargs):
+        h = net.history[-1]
+        wandb.log({'epoch': h['epoch'],
+                   'Train_Loss': h['train_loss'],
+                   'Validation_TSS': h['tss'],
+                   'Validation_HSS': h['hss'],
+                   'Validation_Loss': h['valid_loss']})
 
 
 class LSTMModel(nn.Module):
@@ -799,7 +819,7 @@ if __name__ == '__main__':
 
     valid_ds = Dataset(X_valid_data, y_valid_tr)
 
-    # Metrics
+    # Metrics + Callbacks
     tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False,
                        name='tss', use_caching=True)
     hss = EpochScoring(scoring=make_scorer(get_hss), lower_is_better=False,
@@ -820,7 +840,8 @@ if __name__ == '__main__':
                               optimizer__amsgrad=False, device=device,
                               # train_split=None, #die breek die logs
                               train_split=predefined_split(valid_ds),
-                              callbacks=[tss, hss, earlystop, checkpoint],
+                              callbacks=[tss, hss, earlystop,
+                                         checkpoint, LoggingCallback],
                               # iterator_train__shuffle=True, # batches shuffle
                               # warm_start=False
                               )
@@ -862,6 +883,7 @@ if __name__ == '__main__':
 
     y_test = net.predict(inputs)
     tss_test_score = get_tss(labels, y_test)
+    wandb.log({'Test_TSS': tss_test_score})
     print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
