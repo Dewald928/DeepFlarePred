@@ -420,6 +420,13 @@ class LoggingCallback(Callback):
     def on_train_begin(self, net, X=None, y=None, **kwargs):
         wandb.log(step=0)
 
+    def on_train_end(self, net, X=None, y=None, **kwargs):
+        h = net.history
+        best_tss_epoch = np.argmax(h[:, 'valid_tss'])
+        best_tss = np.max(h[:, 'valid_tss'])
+        wandb.log({'Best_Validation_TSS': best_tss,
+                   'Best_Validation_epoch': best_tss_epoch})
+
     def on_epoch_end(self, net, dataset_trn=None, dataset_vld=None, **kwargs):
         h = net.history[-1]
         wandb.log(
@@ -676,7 +683,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -937,8 +944,6 @@ if __name__ == '__main__':
     net.initialize()
     net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
-    inputs = torch.tensor(X_valid_data).float()
-    labels = torch.tensor(y_valid_tr).long()
     inputs = torch.tensor(X_test_data).float()
     inputs = inputs.view(len(inputs), n_features, args.layer_dim)
     labels = torch.tensor(y_test_tr).long()
