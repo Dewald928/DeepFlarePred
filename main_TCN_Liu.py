@@ -292,12 +292,13 @@ def label_transform(data):
 
 def preprocess_customdataset(x_val, y_val):
     # change format to tensors and create data set
-    x_tensor = torch.tensor(x_val).type(torch.FloatTensor)
-    y_tensor = torch.tensor(y_val).type(torch.LongTensor)
+    # x_tensor = torch.tensor(x_val).type(torch.FloatTensor)
+    # y_tensor = torch.tensor(y_val).type(torch.LongTensor)
     # y_tensor = torch.nn.functional.one_hot(torch.LongTensor(y_val), 2)
 
     datasets = {}
-    datasets = CustomDataset.CustomDataset(x_tensor, y_tensor)
+    # datasets = CustomDataset.CustomDataset(x_tensor, y_tensor)
+    datasets = CustomDataset.CustomDataset(x_val, y_val)
 
     return datasets
 
@@ -346,6 +347,7 @@ def calculate_metrics(confusion_matrix):
     print("recall: " + str(recall))
 
     return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
+
 
 def get_metric(y_true, y_pred, metric_name='tss'):
     # print('Calculating skill scores: ')
@@ -403,6 +405,7 @@ def get_tss(y_true, y_pred):
     tss = get_metric(y_true, y_pred, metric_name='tss')
     return tss
 
+
 def get_hss(y_true, y_pred):
     return get_metric(y_true, y_pred, metric_name='hss')
 
@@ -411,18 +414,18 @@ class LoggingCallback(Callback):
     def __init__(self, ):
         super(LoggingCallback, self).__init__()
 
-    def initialize(self):
-        wandb.log(step=0)
+    # def initialize(self):
+    #     wandb.log(step=0)
 
     def on_train_begin(self, net, X=None, y=None, **kwargs):
         wandb.log(step=0)
 
     def on_epoch_end(self, net, dataset_trn=None, dataset_vld=None, **kwargs):
         h = net.history[-1]
-        wandb.log({'Train_Loss': h['train_loss'],
-                   'Validation_TSS': h['tss'],
-                   'Validation_HSS': h['hss'],
-                   'Validation_Loss': h['valid_loss']})
+        wandb.log(
+            {'Train_Loss': h['train_loss'], 'Validation_TSS': h['valid_tss'],
+             'Validation_HSS': h['valid_hss'],
+             'Validation_Loss': h['valid_loss']}, step=h['epoch'])
 
 
 class TCN(nn.Module):
@@ -442,97 +445,6 @@ class TCN(nn.Module):
         return self.linear(y1[:, :, -1])
 
 
-class LSTMModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim,
-                 rnn_module='LSTM'):
-        super(LSTMModel, self).__init__()
-        self.input_dim = input_dim
-        self.rnn_module = rnn_module
-        # Hidden dimensions
-        self.hidden_dim = hidden_dim
-
-        # Number of hidden layers
-        self.layer_dim = layer_dim
-
-        # Building your LSTM
-        # batch_first=True causes input/output tensors to be of shape
-        # (batch_dim, seq_dim, feature_dim)
-        if rnn_module == "RNN":
-            self.rnn = nn.RNN(input_size=input_dim, hidden_size=hidden_dim,
-                              num_layers=layer_dim, dropout=args.dropout,
-                              batch_first=True)
-        elif rnn_module == "LSTM":
-            self.rnn = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim,
-                               num_layers=layer_dim, dropout=args.dropout,
-                               batch_first=True)
-        elif rnn_module == "GRU":
-            self.rnn = nn.GRU(input_size=input_dim, hidden_size=hidden_dim,
-                              num_layers=layer_dim, dropout=args.dropout,
-                              batch_first=True)
-
-        # rough attention layer
-        self.fc_att = nn.Linear(hidden_dim, 1).to(device)
-        self.fc0 = nn.Linear(hidden_dim, hidden_dim).to(device)
-        self.act = nn.ReLU()
-        self.drop = nn.Dropout(args.dropout)
-        # Readout layer
-        self.fc = nn.Linear(hidden_dim, output_dim)
-
-    def forward(self, x):
-        # # 28 time steps
-        # # We need to detach as we are doing truncated backpropagation
-        # through time (BPTT)
-        # # If we don't, we'll backprop all the way to the start even after
-        # going through another batch
-        # # shape of lstm_out: [input_size, batch_size, hidden_dim]
-        # out, (hn, cn) = self.rnn(x, (h0.detach(), c0.detach()))
-        #
-        # # Index hidden state of last time step
-        # # out.size() --> 100, 28, 100
-        # # out[:, -1, :] --> 100, 100 --> just want last time step hidden
-        # states!
-        # out = self.fc(out[:, -1, :])
-        # # out.size() --> 100, 10
-
-        if self.rnn_module == "RNN":
-            h0 = torch.zeros(self.layer_dim, x.size(0),
-                             self.hidden_dim).requires_grad_().to(device)
-            out, (hn) = self.rnn(x, (h0.detach()))
-            out = self.fc(out[:, -1, :])
-        elif self.rnn_module == "LSTM":
-            h0 = torch.zeros(self.layer_dim, x.size(0),
-                             self.hidden_dim).requires_grad_().to(device)
-            c0 = torch.zeros(self.layer_dim, x.size(0),
-                             self.hidden_dim).requires_grad_().to(device)
-            out, (hn, cn) = self.rnn(x, (h0.detach(), c0.detach()))
-            out = self.fc(out[:, -1, :])
-
-        elif self.rnn_module == "GRU":
-            h0 = torch.zeros(self.layer_dim, x.size(0),
-                             self.hidden_dim).requires_grad_().to(device)
-            out, (hn) = self.rnn(x, (
-                h0.detach()))  # -> [batch, layers, hiddendim]
-            att = self.fc_att(out).squeeze(-1)  # -> [batch, layers]
-            att = F.softmax(att, dim=-1)
-            r_att = torch.sum(att.unsqueeze(-1) * out,
-                              dim=1)  # -> [batch, hiddendim]
-            f = self.drop(
-                self.act(self.fc0(out)))  # -> [batch, layers, hiddendim]
-            out = self.fc(out[:, -1, :])
-
-        return out
-
-    def initHidden(self, batch_size):
-        # initialize hidden state to zeros
-        if self.rnn_module == "LSTM":
-            return torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(
-                device), torch.zeros(self.layer_dim, batch_size,
-                                     self.hidden_dim).to(device)
-        else:
-            return torch.zeros(self.layer_dim, batch_size, self.hidden_dim).to(
-                device)
-
-
 def train(model, device, train_loader, optimizer, epoch, criterion):
     model.train()
     confusion_matrix = torch.zeros(nclass, nclass)
@@ -540,10 +452,6 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
 
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
-        try:
-            data = data.view(len(data), n_features, args.layer_dim)
-        except:
-            print("woah the cowboy")
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
@@ -556,23 +464,27 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
             confusion_matrix[t.long(), p.long()] += 1
 
         if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                       100. * batch_idx / len(train_loader), loss.item()))
+            print(
+                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
+                                                                         batch_idx * len(
+                                                                             data),
+                                                                         len(
+                                                                             train_loader.dataset),
+                                                                         100. * batch_idx / len(
+                                                                             train_loader),
+                                                                         loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
-    tn = calculate_metrics(confusion_matrix)
+    tn = calculate_metrics(
+        confusion_matrix)
 
-    wandb.log({
-        "Training_Accuracy": accuracy[0],
-        "Training_TSS": tss[0],
-        "Training_HSS": hss[0],
-        "Training_BACC": bacc[0],
-        "Training_Precision": precision[0],
-        "Training_Recall": recall[0],
-        "Training_Loss": loss_epoch}, step=epoch)
+    wandb.log({"Training_Accuracy": accuracy[0], "Training_TSS": tss[0],
+               "Training_HSS": hss[0], "Training_BACC": bacc[0],
+               "Training_Precision": precision[0],
+               "Training_Recall": recall[0], "Training_Loss": loss_epoch},
+              step=epoch)
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -586,10 +498,6 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     with torch.no_grad():
         for data, target in valid_loader:
             data, target = data.to(device), target.to(device)
-            try:
-                data = data.view(len(data), n_features, args.layer_dim)
-            except:
-                print("woah the cowboy")
             output = model(data)
             # sum up batch loss
             valid_loss += criterion(output, target).item()
@@ -615,14 +523,11 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     tn = calculate_metrics(
         confusion_matrix)
 
-    wandb.log({
-        "Validation_Accuracy": accuracy[0],
-        "Validation_TSS": tss[0],
-        "Validation_HSS": hss[0],
-        "Validation_BACC": bacc[0],
-        "Validation_Precision": precision[0],
-        "Validation_Recall": recall[0],
-        "Validation_Loss": valid_loss}, step=epoch)
+    wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
+               "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
+               "Validation_Precision": precision[0],
+               "Validation_Recall": recall[0], "Validation_Loss": valid_loss},
+              step=epoch)
 
     # checkpoint on best tss
     if tss[0] >= best_tss:
@@ -644,10 +549,6 @@ def test(model, device, test_loader, criterion):
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
-            try:
-                data = data.view(len(data), n_features, args.layer_dim)
-            except:
-                print("woah the cowboy")
             output = model(data)
             # sum up batch loss
             test_loss += criterion(output, target).item()
@@ -676,8 +577,8 @@ def test(model, device, test_loader, criterion):
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
-            "Test_BACC": bacc[0], "Test_Precision": precision[0],
-            "Test_Recall": recall[0], "Test_Loss": test_loss})
+         "Test_BACC": bacc[0], "Test_Precision": precision[0],
+         "Test_Recall": recall[0], "Test_Loss": test_loss})
 
 
 def interpret_model(model, device, test_loader):
@@ -689,9 +590,9 @@ def interpret_model(model, device, test_loader):
     model.eval()
     i = 1
     with torch.no_grad():
+        model.to(device)
         for data, target in test_loader:
             print("Batch#" + str(i))
-            model.to(device)
             data, target = data.to(device), target.to(device)
             data = data.view(len(data), n_features, args.layer_dim)
 
@@ -807,7 +708,7 @@ if __name__ == '__main__':
                         help='gradient clip, -1 means no clip (default: 0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=1,
+    parser.add_argument('--seed', type=int, default=10,
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
@@ -880,12 +781,29 @@ if __name__ == '__main__':
     y_valid_tr = label_transform(y_valid_data)
     y_test_tr = label_transform(y_test_data)
 
+    X_train_data_tensor = torch.tensor(X_train_data).float()
+    X_train_data_tensor = X_train_data_tensor.view(len(X_train_data_tensor),
+                                                   n_features, args.layer_dim)
+    y_train_tr_tensor = torch.tensor(y_train_tr).long()
+
+    X_valid_data_tensor = torch.tensor(X_valid_data).float()
+    X_valid_data_tensor = X_valid_data_tensor.view(len(X_valid_data_tensor),
+                                                   n_features, args.layer_dim)
+    y_valid_tr_tensor = torch.tensor(y_valid_tr).long()
+
+    X_test_data_tensor = torch.tensor(X_test_data).float()
+    X_test_data_tensor = X_test_data_tensor.view(len(X_test_data_tensor),
+                                                 n_features, args.layer_dim)
+    y_test_tr_tensor = torch.tensor(y_test_tr).long()
+
     # ready custom dataset
     datasets = {}
-    datasets['train'] = preprocess_customdataset(X_train_data, y_train_tr)
-    datasets['valid'] = preprocess_customdataset(X_valid_data, y_valid_tr)
-    datasets['test'] = preprocess_customdataset(X_test_data, y_test_tr)
-
+    datasets['train'] = preprocess_customdataset(X_train_data_tensor,
+                                                 y_train_tr_tensor)
+    datasets['valid'] = preprocess_customdataset(X_valid_data_tensor,
+                                                 y_valid_tr_tensor)
+    datasets['test'] = preprocess_customdataset(X_test_data_tensor,
+                                                y_test_tr_tensor)
 
     train_loader = torch.utils.data.DataLoader(datasets['train'],
                                                args.batch_size, shuffle=False,
@@ -937,7 +855,8 @@ if __name__ == '__main__':
     #             break
     #
     # wandb.log(
-    #     {"Best_Validation_TSS": best_tss, "Best_Validation_epoch": best_epoch})
+    #     {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
+    #     best_epoch})
     #
     # # reload best tss checkpoint and test
     # print("[INFO] Loading model at epoch:" + str(best_epoch))
@@ -964,32 +883,34 @@ if __name__ == '__main__':
 
     '''
         Skorch training
-        '''
-    print("Do K-Fold cross validation in skorch wrapper")
-
+    '''
     inputs = torch.tensor(X_train_data).float()
-    inputs = inputs.view(len(inputs), n_features, args.layer_dim) #todo shape e
+    inputs = inputs.view(len(inputs), n_features, args.layer_dim)
     labels = torch.tensor(y_train_tr).long()
     X_valid_data = torch.tensor(X_valid_data).float()
-    X_valid_data = X_valid_data.view(len(X_valid_data), n_features, args.layer_dim)
+    X_valid_data = X_valid_data.view(len(X_valid_data), n_features,
+                                     args.layer_dim)
     y_valid_tr = torch.tensor(y_valid_tr).long()
 
     inputs = inputs.numpy()
     labels = labels.numpy()
+
     X_valid_data = X_valid_data.numpy()
     y_valid_tr = y_valid_tr.numpy()
-
     valid_ds = Dataset(X_valid_data, y_valid_tr)
 
     # Metrics + Callbacks
-    tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False,
-                       name='tss', use_caching=True)
-    hss = EpochScoring(scoring=make_scorer(get_hss), lower_is_better=False,
-                       name='hss', use_caching=True)
+    valid_tss = EpochScoring(scoring=make_scorer(get_tss),
+                             lower_is_better=False, name='valid_tss',
+                             use_caching=True)
+    valid_hss = EpochScoring(scoring=make_scorer(get_hss),
+                             lower_is_better=False, name='valid_hss',
+                             use_caching=True)
 
-    earlystop = EarlyStopping(monitor='tss', lower_is_better=False,
+    earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
                               patience=30)
-    checkpoint = Checkpoint(monitor='tss_best', dirname='./saved/models/exp1')
+    checkpoint = Checkpoint(monitor='valid_tss_best',
+                            dirname='./saved/models/exp1')
 
     net = NeuralNetClassifier(model, max_epochs=args.epochs,
                               batch_size=args.batch_size,
@@ -999,18 +920,16 @@ if __name__ == '__main__':
                               optimizer=torch.optim.Adam,
                               optimizer__lr=args.learning_rate,
                               optimizer__weight_decay=args.weight_decay,
-                              optimizer__amsgrad=False,
-                              device=device,
+                              optimizer__amsgrad=False, device=device,
                               # train_split=None, #die breek die logs
                               train_split=predefined_split(valid_ds),
-                              callbacks=[tss, hss, earlystop, checkpoint,
-                                         LoggingCallback],
+                              callbacks=[valid_tss, valid_hss, earlystop,
+                                         checkpoint, LoggingCallback],
                               # iterator_train__shuffle=True, # batches shuffle
                               # warm_start=False
                               )
 
     net.fit(inputs, labels)
-
 
     '''
     Test Results
@@ -1018,9 +937,10 @@ if __name__ == '__main__':
     net.initialize()
     net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
-    # inputs = torch.tensor(X_valid_data).float()
-    # labels = torch.tensor(y_valid_tr).long()
+    inputs = torch.tensor(X_valid_data).float()
+    labels = torch.tensor(y_valid_tr).long()
     inputs = torch.tensor(X_test_data).float()
+    inputs = inputs.view(len(inputs), n_features, args.layer_dim)
     labels = torch.tensor(y_test_tr).long()
 
     inputs = inputs.numpy()

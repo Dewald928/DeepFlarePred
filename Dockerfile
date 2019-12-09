@@ -27,7 +27,8 @@ RUN pip install pandas && \
     pip install wandb && \
     pip install matplotlib && \
     pip install torch torchvision && \
-    pip install captum
+    pip install captum && \
+    pip install -U skorch
 
 ENV WANDB_API_KEY=07796e7d3a148a6feceafdfef8c37e21a3f4e7c2
 
