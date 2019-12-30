@@ -30,17 +30,22 @@ from data_loader import CustomDataset
 from utils import early_stopping
 import wandb
 
-from captum.attr import IntegratedGradients
-from captum.attr import DeepLift
-from captum.attr import DeepLiftShap
-from captum.attr import Saliency
-from captum.attr import GradientAttribution
+# from captum.attr import IntegratedGradients
+# from captum.attr import DeepLift
+# from captum.attr import DeepLiftShap
+# from captum.attr import Saliency
+# from captum.attr import GradientAttribution
 
 import matplotlib.pyplot as plt
 from scipy import stats
 
 
 # import shap
+
+'''
+TCN with n residual blocks will have a receptive field of
+1 + 2*(kernel_size-1)*(2^n-1)
+'''
 
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features,
@@ -440,15 +445,16 @@ class TCN(nn.Module):
                  dropout):
         super(TCN, self).__init__()
         self.tcn = TemporalConvNet(input_size, num_channels,
-                                   kernel_size=kernel_size, dropout=dropout)
-        self.linear = nn.Linear(num_channels[-1], output_size).to(device)
+                                   kernel_size=kernel_size,
+                                   dropout=dropout)
+        self.linear = nn.Linear(num_channels[-1], output_size)
         self.init_weights()
 
     def init_weights(self):
         self.linear.weight.data.normal_(0, 0.01)
 
     def forward(self, x):
-        y1 = self.tcn(x)
+        y1 = self.tcn(x)    # input should have dimension (N, C, L)
         return self.linear(y1[:, :, -1])
 
 
@@ -683,7 +689,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -694,11 +700,11 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--levels', type=int, default=1,
+    parser.add_argument('--levels', type=int, default=5,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=2,
+    parser.add_argument('--ksize', type=int, default=3,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=20,
+    parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 128)')
 
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -715,7 +721,7 @@ if __name__ == '__main__':
                         help='gradient clip, -1 means no clip (default: 0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=10,
+    parser.add_argument('--seed', type=int, default=5,
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
@@ -735,7 +741,7 @@ if __name__ == '__main__':
     num_of_fold = 10
     n_features = 0
     if args.flare_label == 'M5':
-        n_features = 20  # 20 original
+        n_features = 40  # 20 original
     elif args.flare_label == 'M':
         n_features = 22
     elif args.flare_label == 'C':
@@ -927,7 +933,8 @@ if __name__ == '__main__':
                               optimizer=torch.optim.Adam,
                               optimizer__lr=args.learning_rate,
                               optimizer__weight_decay=args.weight_decay,
-                              optimizer__amsgrad=False, device=device,
+                              optimizer__amsgrad=True,
+                              device=device,
                               # train_split=None, #die breek die logs
                               train_split=predefined_split(valid_ds),
                               callbacks=[valid_tss, valid_hss, earlystop,

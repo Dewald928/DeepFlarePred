@@ -42,7 +42,7 @@ class TemporalBlock(nn.Module):
     def forward(self, x):
         out = self.net(x)
         res = x if self.downsample is None else self.downsample(x)
-        return self.relu(out) + res
+        return self.relu(out + res)
 
 
 class TemporalConvNet(nn.Module):
