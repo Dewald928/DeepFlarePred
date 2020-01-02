@@ -5,11 +5,11 @@ import pandas as pd
 
 import torch
 
-from captum.attr import IntegratedGradients
-from captum.attr import DeepLift
-from captum.attr import DeepLiftShap
-from captum.attr import Saliency
-from captum.attr import GradientAttribution
+# from captum.attr import IntegratedGradients
+# from captum.attr import DeepLift
+# from captum.attr import DeepLiftShap
+# from captum.attr import Saliency
+# from captum.attr import GradientAttribution
 
 import wandb
 
