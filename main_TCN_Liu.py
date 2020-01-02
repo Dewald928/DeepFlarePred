@@ -115,7 +115,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
     print("Training Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
     tn = metric.calculate_metrics(
-        confusion_matrix)
+        confusion_matrix, nclass)
 
     wandb.log({"Training_Accuracy": accuracy[0], "Training_TSS": tss[0],
                "Training_HSS": hss[0], "Training_BACC": bacc[0],
@@ -158,7 +158,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     print("Validation Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
     tn = metric.calculate_metrics(
-        confusion_matrix)
+        confusion_matrix, nclass)
 
     wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
                "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
@@ -210,7 +210,7 @@ def test(model, device, test_loader, criterion):
     print("Test Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
     tn = metric.calculate_metrics(
-        confusion_matrix)
+        confusion_matrix, nclass)
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
@@ -226,7 +226,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -237,9 +237,9 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--levels', type=int, default=2,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=3,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 128)')
@@ -402,6 +402,12 @@ if __name__ == '__main__':
             tss, best_tss, best_epoch = validate(model, device, valid_loader,
                                                  criterion, epoch, best_tss,
                                                  best_epoch)
+
+            # if still improving
+            if (not early_stop.step(tss)) and epoch == args.epochs - 1:
+                args.epochs += 1
+                print('[INFO] extending max epochs')
+
             if early_stop.step(tss) and args.early_stop:
                 break
 
@@ -421,12 +427,10 @@ if __name__ == '__main__':
 
     # Model interpretation
     attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-        model,
-                                                                   device,
-                                                                   test_loader, n_features, args)
+        model, device, test_loader, n_features, args)
     interpreter.visualize_importance(
         np.array(feature_names[start_feature:start_feature + n_features]),
-        np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
+        np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), n_features,
         title="Integrated Gradient Features")
     interpreter.visualize_importance(
         np.array(feature_names[start_feature:start_feature + n_features]),
