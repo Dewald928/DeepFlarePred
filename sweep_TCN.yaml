@@ -1,4 +1,4 @@
-description: TCN level 1, all 40 features, with early stopping 30 patience.
+description: TCN level 2, all 40 features, with early stopping 30 patience.
 
 # Training script to run
 program: main_TCN_Liu.py
@@ -18,7 +18,7 @@ metric:
 # Parameters to search over
 parameters:
   seed:
-    values: [1,5,10]
+    values: [1,5,10,15]
   batch_size:
     values: [2048]
   flare_label:
@@ -33,11 +33,11 @@ parameters:
     values: [1]
 ##    values: [1,5,10]
   ksize:
-    values: [2,3,4,5] #maak die 3
+    values: [2] #maak die 3
   levels:
-    values: [1,2,3,4] #maak die 5
+    values: [3] #maak die 5
   nhid:
-    values: [20]
+    values: [40]
 #  dropout:
 #    values: [0.7]
 #  weight_decay:

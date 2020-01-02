@@ -805,7 +805,7 @@ if __name__ == '__main__':
     '''
     Skorch training
     '''
-    print("Do K-Fold cross validation in skorch wrapper")
+    print("Do K-Fold cross validation in skorch_tools wrapper")
 
     inputs = torch.tensor(X_train_data).float()
     labels = torch.tensor(y_train_tr).long()

@@ -1,5 +1,6 @@
 # Our base image
-FROM pytorch/pytorch:1.1.0-cuda10.0-cudnn7.5-devel
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+#FROM pytorch/pytorch:1.1.0-cuda10.0-cudnn7.5-devel
 
 WORKDIR /home/fuzzy/work/DeepFlarePred
 ENV CUDA_HOME=/usr/local/cuda
@@ -15,9 +16,8 @@ RUN apt-get update && apt-get install -y \
     git \
     bzip2 \
     libx11-6 \
+    python3-pip \
  && rm -rf /var/lib/apt/lists/*
-
-
 
 #RUN apt-get update -y
 #RUN apt-get install -y git curl ca-certificates bzip2 cmake tree htop bmon iotop sox libsox-dev libsox-fmt-all vim
@@ -36,16 +36,16 @@ RUN apt-get update && apt-get install -y \
 
 # Install a specific version of TensorFlow
 # You may also install anything else from pip like this
-RUN pip install pandas && \
-    pip install numpy && \
-    pip install scipy && \
-    pip install scikit-learn && \
-    pip install argparse && \
-    pip install wandb && \
-    pip install matplotlib && \
-    pip install torch==1.2.0 torchvision==0.4.0 -f https://download.pytorch.org/whl/torch_stable.html && \
-    pip install captum && \
-    pip install -U skorch
+RUN pip3 install pandas && \
+    pip3 install numpy && \
+    pip3 install scipy && \
+    pip3 install scikit-learn && \
+    pip3 install argparse && \
+    pip3 install wandb && \
+    pip3 install matplotlib && \
+    pip3 install torch==1.3.1+cu100 torchvision==0.4.2+cu100 -f https://download.pytorch.org/whl/torch_stable.html && \
+    pip3 install captum && \
+    pip3 install -U skorch
 
 ENV WANDB_API_KEY=07796e7d3a148a6feceafdfef8c37e21a3f4e7c2
 
