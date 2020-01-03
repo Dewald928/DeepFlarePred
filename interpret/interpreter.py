@@ -5,11 +5,11 @@ import pandas as pd
 
 import torch
 
-# from captum.attr import IntegratedGradients
-# from captum.attr import DeepLift
-# from captum.attr import DeepLiftShap
-# from captum.attr import Saliency
-# from captum.attr import GradientAttribution
+from captum.attr import IntegratedGradients
+from captum.attr import DeepLift
+from captum.attr import DeepLiftShap
+from captum.attr import Saliency
+from captum.attr import GradientAttribution
 
 import wandb
 
@@ -27,7 +27,6 @@ def interpret_model(model, device, test_loader, n_features, args):
         for data, target in test_loader:
             print("Batch#" + str(i))
             data, target = data.to(device), target.to(device)
-            data = data.view(len(data), n_features, args.layer_dim)
 
             ig = IntegratedGradients(model.to(device))
             sal = Saliency(model.to(device))  # todo deeplift not working

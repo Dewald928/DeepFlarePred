@@ -309,7 +309,7 @@ if __name__ == '__main__':
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
-    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.deterministic = False
     torch.backends.cudnn.benchmark = True
     np.random.seed(args.seed)
 
@@ -411,7 +411,8 @@ if __name__ == '__main__':
             if early_stop.step(tss) and args.early_stop:
                 break
 
-            if epoch == args.epochs-1 and early_stop.num_bad_epochs == 0:
+            # Continue training if recently improved
+            if epoch == args.epochs-1 and early_stop.num_bad_epochs < 2:
                 args.epochs += 5
                 print("[INFO] not finished training...")
             epoch += 1
@@ -431,17 +432,17 @@ if __name__ == '__main__':
     test(model, device, test_loader, criterion)
 
     # Model interpretation
-    # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-    #     model, device, test_loader, n_features, args)
-    # interpreter.visualize_importance(
-    #     np.array(feature_names[start_feature:start_feature + n_features]),
-    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), n_features,
-    #     title="Integrated Gradient Features")
-    # interpreter.visualize_importance(
-    #     np.array(feature_names[start_feature:start_feature + n_features]),
-    #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-    #     n_features,
-    #     title="Saliency Features")
+    attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
+        model, device, test_loader, n_features, args)
+    interpreter.visualize_importance(
+        np.array(feature_names[start_feature:start_feature + n_features]),
+        np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), n_features,
+        title="Integrated Gradient Features")
+    interpreter.visualize_importance(
+        np.array(feature_names[start_feature:start_feature + n_features]),
+        np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
+        n_features,
+        title="Saliency Features")
 
     '''
         Skorch training
