@@ -1,7 +1,7 @@
 import numpy as np
 import sklearn
 import torch
-from matplotlib import pyplot
+import wandb
 
 # precision-recall curve and f1
 from sklearn.datasets import make_classification
@@ -10,7 +10,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import f1_score
 from sklearn.metrics import auc
-from matplotlib import pyplot
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
+from matplotlib import pyplot as plt
 
 
 def calculate_metrics(confusion_matrix, nclass):
@@ -59,59 +61,77 @@ def calculate_metrics(confusion_matrix, nclass):
     return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
 
 
-def get_roc(model, dataloader, ytrue, device):
-    # calculate roc curve
-    yhat = model(dataloader.dataset.data.to(device))
-    # retrieve just the probabilities for the positive class
-    pos_probs = yhat[:, 1]
-    # get predictied labels
-    _, ypred = torch.max(yhat.data, 1)
-    # plot no skill roc curve
-    pyplot.plot([0, 1], [0, 1], linestyle='--', label='No Skill')
-    # calculate roc curve for model
-    fpr, tpr, _ = sklearn.metrics.roc_curve(
-        ytrue.cpu().detach().numpy(),
-        pos_probs.cpu().detach().numpy())
-    # calculate roc auc
-    roc_auc = sklearn.metrics.roc_auc_score(ytrue.cpu().detach().numpy(),
-                                            pos_probs.cpu().detach().numpy())
-    print('Model ROC AUC %.3f' % roc_auc)
-    # plot model roc curve
-    pyplot.plot(fpr, tpr, marker='.', label='TCN')
-    # axis labels
-    pyplot.xlabel('False Positive Rate')
-    pyplot.ylabel('True Positive Rate')
-    # show the legend
-    pyplot.legend()
-    # show the plot
-    pyplot.show()
-
-
-def get_precision_recall(model, dataloader, ytrue, device):
-    # calculate roc curve
+def get_roc(model, yhat, ytrue, device):
+    model.eval()
+    fig = plt.figure()
     ytrue = ytrue.cpu().detach().numpy()
-    yhat = model(dataloader.dataset.data.to(device))
-    # yhat = yhat.cpu().detach().numpy()
-    # retrieve just the probabilities for the positive class
-    pos_probs = yhat[:, 1]
-    pos_probs = pos_probs.cpu().detach().numpy()
-    # get predictied labels
-    _, ypred = torch.max(yhat.data, 1)
-    ypred = ypred.cpu().detach().numpy()
-    # predict class values
-    lr_precision, lr_recall, _ = precision_recall_curve(ytrue, pos_probs)
-    lr_f1, lr_auc = f1_score(ytrue, ypred), auc(lr_recall, lr_precision)
-    # summarize scores
-    print('TCN: f1=%.3f auc=%.3f' % (lr_f1, lr_auc))
-    # plot the precision-recall curves
-    no_skill = len(ytrue[ytrue == 1]) / len(ytrue)
-    pyplot.plot([0, 1], [no_skill, no_skill], linestyle='--', label='No Skill')
-    pyplot.plot(lr_recall, lr_precision, marker='.', label='Logistic')
-    # axis labels
-    pyplot.xlabel('Recall')
-    pyplot.ylabel('Precision')
-    # show the legend
-    pyplot.legend()
-    # show the plot
-    pyplot.show()
+    with torch.no_grad():
+        # calculate roc curve
+        # retrieve just the probabilities for the positive class
+        pos_probs = yhat[:, 1]
+        # get predictied labels
+        _, ypred = torch.max(torch.tensor(yhat), 1)
+        ypred = ypred.cpu().detach().numpy()
+        # plot no skill roc curve
+        plt.plot([0, 1], [0, 1], linestyle='--', label='No Skill')
+        # calculate roc curve for model
+        fpr, tpr, _ = roc_curve(ytrue, pos_probs)
+        # calculate roc auc
+        roc_auc = roc_auc_score(ytrue, pos_probs)
+        print('Model ROC AUC %.3f' % roc_auc)
+
+        # plot model roc curve
+        plt.plot(fpr, tpr, marker='.', label='TCN')
+        # axis labels
+        plt.title('ROC curve')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        # show the legend
+        plt.legend()
+        # show the plot
+        fig.show()
+        wandb.log({'ROC curve': fig, 'ROC_AUC': roc_auc})
+
+        return roc_auc
+
+
+def get_precision_recall(model, yhat, ytrue, device):
+    model.eval()
+    with torch.no_grad():
+        # calculate roc curve
+        ytrue = ytrue.cpu().detach().numpy()
+        # retrieve just the probabilities for the positive class
+        pos_probs = yhat[:, 1]
+        # get predictied labels
+        _, ypred = torch.max(torch.tensor(yhat), 1)
+        ypred = ypred.cpu().detach().numpy()
+        # predict class values
+        precision, recall, _ = precision_recall_curve(ytrue, pos_probs)
+        f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
+        # summarize scores
+        print('TCN: f1=%.3f pr_auc=%.3f' % (f1, pr_auc))
+        wandb.log({'PR_AUC': pr_auc})
+
+        '''
+            Plot PR Curve
+        '''
+        fig = plt.figure()
+        # plot the precision-recall curves
+        no_skill = len(ytrue[ytrue == 1]) / len(ytrue)
+        plt.plot([0, 1], [no_skill, no_skill], linestyle='--',
+                 label='No Skill')
+        plt.plot(recall, precision, marker='.', label='Model')
+        # axis labels
+        plt.title('Precision-Recall Curve')
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        # show the legend
+        plt.legend()
+        # show the plot
+        fig.show()
+        wandb.log({'PR Curve': fig})
+
+        return precision, recall, f1, pr_auc
+
+
 

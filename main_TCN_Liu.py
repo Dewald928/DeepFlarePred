@@ -18,8 +18,8 @@ import time
 
 import torch
 import torch.nn as nn
+import torch.utils.data
 import torch.nn.functional as F
-
 
 import skorch
 from skorch import NeuralNetClassifier
@@ -27,7 +27,6 @@ from skorch.callbacks import *
 from skorch.helper import predefined_split
 from skorch.dataset import Dataset
 from skorch_tools import skorch_utils
-
 
 from data_loader import CustomDataset
 from data_loader import data_loader
@@ -37,7 +36,6 @@ from model import metric
 from interpret import interpreter
 
 import wandb
-
 
 '''
 TCN with n residual blocks will have a receptive field of
@@ -63,8 +61,7 @@ class TCN(nn.Module):
                  dropout):
         super(TCN, self).__init__()
         self.tcn = TemporalConvNet(input_size, num_channels,
-                                   kernel_size=kernel_size,
-                                   dropout=dropout)
+                                   kernel_size=kernel_size, dropout=dropout)
         self.linear = nn.Linear(num_channels[-1], output_size)
         self.init_weights()
 
@@ -72,7 +69,7 @@ class TCN(nn.Module):
         self.linear.weight.data.normal_(0, 0.01)
 
     def forward(self, x):
-        y1 = self.tcn(x)    # input should have dimension (N, C, L)
+        y1 = self.tcn(x)  # input should have dimension (N, C, L)
         return self.linear(y1[:, :, -1])
 
 
@@ -217,13 +214,16 @@ def test(model, device, test_loader, criterion):
 
 
 def infer_model(model, device, data_loader):
+    model.eval()
+    output_arr = []
     with torch.no_grad():
-        model.eval()
-        data = data_loader.dataset.data.to(device)
-        output = model(data)
-        return output
+        # output = model(data_loader.dataset.data.to(device))
+        for data, target in data_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            output_arr.append(output.cpu().detach().numpy())
 
-
+    return np.vstack(output_arr)
 
 
 if __name__ == '__main__':
@@ -242,7 +242,7 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--levels', type=int, default=2,
+    parser.add_argument('--levels', type=int, default=7,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
@@ -260,7 +260,8 @@ if __name__ == '__main__':
                         help='Types of rnn (default: LSTM')
 
     # parser.add_argument('--clip', type=float, default=0.2,
-    #                     help='gradient clip, -1 means no clip (default: 0.2)')
+    #                     help='gradient clip, -1 means no clip (default:
+    #                     0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
     parser.add_argument('--seed', type=int, default=5,
@@ -288,8 +289,8 @@ if __name__ == '__main__':
         n_features = 22
     elif args.flare_label == 'C':
         n_features = 14
-    feature_names = data_loader.get_feature_names(filepath +
-                                                  'normalized_training.csv')
+    feature_names = data_loader.get_feature_names(
+        filepath + 'normalized_training.csv')
 
     # initialize parameters
     start_feature = 5
@@ -376,8 +377,6 @@ if __name__ == '__main__':
     kernel_size = args.ksize
     dropout = args.dropout
 
-
-
     model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
                 dropout=dropout).to(device)
     wandb.watch(model, log='all')
@@ -422,8 +421,7 @@ if __name__ == '__main__':
             epoch += 1
 
     wandb.log(
-        {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
-        best_epoch})
+        {"Best_Validation_TSS": best_tss, "Best_Validation_epoch": best_epoch})
 
     # reload best tss checkpoint and test
     print("[INFO] Loading model at epoch:" + str(best_epoch))
@@ -435,13 +433,25 @@ if __name__ == '__main__':
 
     test(model, device, test_loader, criterion)
 
-    test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
-                                              512, shuffle=False,
-                                              drop_last=False)
+    # get predicted output probabilities => numpy array
+    yhat = infer_model(model, device, test_loader)
+
+    # PR curves on test set
+    precision, recall, f1, pr_auc = metric.get_precision_recall(model,
+                                                                yhat,
+                                                                y_test_tr_tensor,
+                                                                device)
+    roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device)
+
 
     # Model interpretation
+    test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
+                                                        int(args.batch_size/6),
+                                                        shuffle=False,
+                                                        drop_last=False)
+
     attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-        model, device, test_loader, n_features, args)
+        model, device, test_loader_interpret, n_features, args)
 
     interpreter.visualize_importance(
         np.array(feature_names[start_feature:start_feature + n_features]),
@@ -451,11 +461,7 @@ if __name__ == '__main__':
     interpreter.visualize_importance(
         np.array(feature_names[start_feature:start_feature + n_features]),
         np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-        n_features,
-        title="Saliency Features")
-
-    metric.get_precision_recall(model, test_loader, y_test_tr_tensor, device)
-    metric.get_roc(model, test_loader, y_test_tr_tensor, device)
+        n_features, title="Saliency Features")
 
     '''
         Skorch training
@@ -502,7 +508,8 @@ if __name__ == '__main__':
     #                           train_split=predefined_split(valid_ds),
     #                           callbacks=[valid_tss, valid_hss, earlystop,
     #                                      checkpoint, LoggingCallback],
-    #                           # iterator_train__shuffle=True, # batches shuffle
+    #                           # iterator_train__shuffle=True, # batches
+    #                           shuffle
     #                           # warm_start=False
     #                           )
     #
@@ -529,5 +536,3 @@ if __name__ == '__main__':
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
     print('Finished')
-
-

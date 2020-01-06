@@ -30,9 +30,9 @@ def interpret_model(model, device, test_loader, n_features, args):
 
             ig = IntegratedGradients(model.to(device))
             sal = Saliency(model.to(device))  # todo deeplift not working
-            temp_data = torch.clone(data).to(device)
-            attr_ig = ig.attribute(temp_data, target=1)
-            attr_sal = sal.attribute(inputs=temp_data, target=1)
+            # temp_data = torch.clone(data).to(device)
+            attr_ig = ig.attribute(data, target=1)
+            attr_sal = sal.attribute(inputs=data, target=1)
             try:
                 attr_ig_avg = attr_ig if i == 1 else (
                                                              attr_ig_avg +
