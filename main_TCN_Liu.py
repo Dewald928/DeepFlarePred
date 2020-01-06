@@ -5,6 +5,7 @@ Whether he eats little or much;
 But the abundance of the rich will not permit him to sleep.
 '''
 import pandas as pd
+from matplotlib import pyplot
 from sklearn.utils import class_weight
 from sklearn.metrics import make_scorer
 import sklearn.metrics
@@ -13,6 +14,7 @@ import sys
 import os
 import numpy as np
 import argparse
+import time
 
 import torch
 import torch.nn as nn
@@ -35,14 +37,6 @@ from model import metric
 from interpret import interpreter
 
 import wandb
-
-# from captum.attr import IntegratedGradients
-# from captum.attr import DeepLift
-# from captum.attr import DeepLiftShap
-# from captum.attr import Saliency
-# from captum.attr import GradientAttribution
-
-import time
 
 
 '''
@@ -222,6 +216,13 @@ def test(model, device, test_loader, criterion):
          "Test_Recall": recall[0], "Test_Loss": test_loss})
 
 
+def infer_model(model, device, data_loader):
+    with torch.no_grad():
+        model.eval()
+        data = data_loader.dataset.data.to(device)
+        output = model(data)
+        return output
+
 
 
 
@@ -230,7 +231,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -243,7 +244,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--levels', type=int, default=2,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=3,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 128)')
@@ -262,7 +263,7 @@ if __name__ == '__main__':
     #                     help='gradient clip, -1 means no clip (default: 0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=10,
+    parser.add_argument('--seed', type=int, default=5,
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
@@ -375,6 +376,8 @@ if __name__ == '__main__':
     kernel_size = args.ksize
     dropout = args.dropout
 
+
+
     model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
                 dropout=dropout).to(device)
     wandb.watch(model, log='all')
@@ -409,12 +412,13 @@ if __name__ == '__main__':
                                                  best_epoch)
 
             if early_stop.step(tss) and args.early_stop:
+                print('Early Stopping')
                 break
 
-            # Continue training if recently improved
-            if epoch == args.epochs-1 and early_stop.num_bad_epochs < 2:
-                args.epochs += 5
-                print("[INFO] not finished training...")
+            # # Continue training if recently improved
+            # if epoch == args.epochs-1 and early_stop.num_bad_epochs < 2:
+            #     args.epochs += 5
+            #     print("[INFO] not finished training...")
             epoch += 1
 
     wandb.log(
@@ -431,18 +435,27 @@ if __name__ == '__main__':
 
     test(model, device, test_loader, criterion)
 
+    test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
+                                              512, shuffle=False,
+                                              drop_last=False)
+
     # Model interpretation
     attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
         model, device, test_loader, n_features, args)
+
     interpreter.visualize_importance(
         np.array(feature_names[start_feature:start_feature + n_features]),
         np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), n_features,
         title="Integrated Gradient Features")
+
     interpreter.visualize_importance(
         np.array(feature_names[start_feature:start_feature + n_features]),
         np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
         n_features,
         title="Saliency Features")
+
+    metric.get_precision_recall(model, test_loader, y_test_tr_tensor, device)
+    metric.get_roc(model, test_loader, y_test_tr_tensor, device)
 
     '''
         Skorch training
@@ -516,3 +529,5 @@ if __name__ == '__main__':
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
     print('Finished')
+
+
