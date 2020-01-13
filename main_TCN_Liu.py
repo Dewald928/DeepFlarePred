@@ -114,8 +114,8 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
 
     wandb.log({"Training_Accuracy": accuracy[0], "Training_TSS": tss[0],
                "Training_HSS": hss[0], "Training_BACC": bacc[0],
-               "Training_Precision": precision[0],
-               "Training_Recall": recall[0], "Training_Loss": loss_epoch},
+               "Training_Precision": precision[1],
+               "Training_Recall": recall[1], "Training_Loss": loss_epoch},
               step=epoch)
 
 
@@ -157,8 +157,8 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
 
     wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
                "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
-               "Validation_Precision": precision[0],
-               "Validation_Recall": recall[0], "Validation_Loss": valid_loss},
+               "Validation_Precision": precision[1],
+               "Validation_Recall": recall[1], "Validation_Loss": valid_loss},
               step=epoch)
 
     # checkpoint on best tss
@@ -209,8 +209,8 @@ def test(model, device, test_loader, criterion):
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
-         "Test_BACC": bacc[0], "Test_Precision": precision[0],
-         "Test_Recall": recall[0], "Test_Loss": test_loss})
+         "Test_BACC": bacc[0], "Test_Precision": precision[1],
+         "Test_Recall": recall[1], "Test_Loss": test_loss})
 
 
 def infer_model(model, device, data_loader):
@@ -227,11 +227,12 @@ def infer_model(model, device, data_loader):
 
 
 if __name__ == '__main__':
-    wandb.init(project='', notes='TCN')
+    wandb.init(project="liu_pytorch_tcn", notes='TCN')
+
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -253,7 +254,7 @@ if __name__ == '__main__':
     #                     help='SGD momentum (default: 0.5)')
 
     parser.add_argument('--dropout', type=float, default=0.0,
-                        help='dropout applied to layers (default: 0.25)')
+                        help='dropout applied to layers (default: 0.7)')
     parser.add_argument('--weight_decay', type=float, default=0.0,
                         metavar='LR', help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="TCN",
@@ -433,6 +434,28 @@ if __name__ == '__main__':
 
     test(model, device, test_loader, criterion)
 
+    '''
+    PR Curves
+    '''
+    # get predicted output probabilities => numpy array
+    yhat = infer_model(model, device, train_loader)
+
+    # PR curves on test set
+    precision, recall, f1, pr_auc = metric.get_precision_recall(model,
+                                                                yhat,
+                                                                y_train_tr_tensor,
+                                                                device,
+                                                                'Train')
+
+    # get predicted output probabilities => numpy array
+    yhat = infer_model(model, device, valid_loader)
+
+    # PR curves on test set
+    precision, recall, f1, pr_auc = metric.get_precision_recall(model,
+                                                                yhat,
+                                                                y_valid_tr_tensor,
+                                                                device,
+                                                                'Validation')
     # get predicted output probabilities => numpy array
     yhat = infer_model(model, device, test_loader)
 
@@ -440,11 +463,15 @@ if __name__ == '__main__':
     precision, recall, f1, pr_auc = metric.get_precision_recall(model,
                                                                 yhat,
                                                                 y_test_tr_tensor,
-                                                                device)
+                                                                device,
+                                                                'Test')
+
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device)
 
+    '''
+    Model interpretation    
+    '''
 
-    # Model interpretation
     test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
                                                         int(args.batch_size/6),
                                                         shuffle=False,

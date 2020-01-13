@@ -81,7 +81,7 @@ def get_roc(model, yhat, ytrue, device):
         print('Model ROC AUC %.3f' % roc_auc)
 
         # plot model roc curve
-        plt.plot(fpr, tpr, marker='.', label='TCN')
+        plt.plot(fpr, tpr, marker='.', label='AUC'+str(round(roc_auc, 3)))
         # axis labels
         plt.title('ROC curve')
         plt.xlabel('False Positive Rate')
@@ -90,12 +90,12 @@ def get_roc(model, yhat, ytrue, device):
         plt.legend()
         # show the plot
         fig.show()
-        wandb.log({'ROC curve': fig, 'ROC_AUC': roc_auc})
+        wandb.log({'ROC curve': fig, 'ROC_AUC': wandb.Image(fig)})
 
         return roc_auc
 
 
-def get_precision_recall(model, yhat, ytrue, device):
+def get_precision_recall(model, yhat, ytrue, device, dataset='Test'):
     model.eval()
     with torch.no_grad():
         # calculate roc curve
@@ -109,8 +109,8 @@ def get_precision_recall(model, yhat, ytrue, device):
         precision, recall, _ = precision_recall_curve(ytrue, pos_probs)
         f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
         # summarize scores
-        print('TCN: f1=%.3f pr_auc=%.3f' % (f1, pr_auc))
-        wandb.log({'PR_AUC': pr_auc})
+        print(dataset + ' TCN: f1=%.3f pr_auc=%.3f' % (f1, pr_auc))
+        wandb.log({dataset+'_PR_AUC': pr_auc})
 
         '''
             Plot PR Curve
@@ -120,16 +120,17 @@ def get_precision_recall(model, yhat, ytrue, device):
         no_skill = len(ytrue[ytrue == 1]) / len(ytrue)
         plt.plot([0, 1], [no_skill, no_skill], linestyle='--',
                  label='No Skill')
-        plt.plot(recall, precision, marker='.', label='Model')
+        plt.plot(recall, precision, marker='.', label='AUC:'+str(round(
+            pr_auc, 3)))
         # axis labels
-        plt.title('Precision-Recall Curve')
+        plt.title(dataset+' Precision-Recall Curve')
         plt.xlabel('Recall')
         plt.ylabel('Precision')
         # show the legend
         plt.legend()
         # show the plot
         fig.show()
-        wandb.log({'PR Curve': fig})
+        wandb.log({dataset+' PR Curve': wandb.Image(fig)})
 
         return precision, recall, f1, pr_auc
 
