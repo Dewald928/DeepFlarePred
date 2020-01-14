@@ -4,10 +4,6 @@ metric:
   name: Validation_TSS
   goal: maximize
 parameters:
-  cuda:
-    distribution: categorical
-    values:
-      - "true"
   nhid:
     distribution: constant
     value: 40
