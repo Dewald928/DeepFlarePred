@@ -243,7 +243,7 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--levels', type=int, default=7,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
@@ -253,9 +253,9 @@ if __name__ == '__main__':
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
     #                     help='SGD momentum (default: 0.5)')
 
-    parser.add_argument('--dropout', type=float, default=0.0,
+    parser.add_argument('--dropout', type=float, default=0.7,
                         help='dropout applied to layers (default: 0.7)')
-    parser.add_argument('--weight_decay', type=float, default=0.0,
+    parser.add_argument('--weight_decay', type=float, default=0.0001,
                         metavar='LR', help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
@@ -271,7 +271,7 @@ if __name__ == '__main__':
                         help='report interval (default: 100')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
-    parser.add_argument('--early_stop', action='store_true', default=False,
+    parser.add_argument('--early_stop', action='store_true', default=True,
                         help='Stops training if overfitting')
     parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')
@@ -412,13 +412,13 @@ if __name__ == '__main__':
                                                  best_epoch)
 
             if early_stop.step(tss) and args.early_stop:
-                print('Early Stopping')
+                print('[INFO] Early Stopping')
                 break
 
-            # # Continue training if recently improved
-            # if epoch == args.epochs-1 and early_stop.num_bad_epochs < 2:
-            #     args.epochs += 5
-            #     print("[INFO] not finished training...")
+            # Continue training if recently improved
+            if epoch == args.epochs-1 and early_stop.num_bad_epochs < 2:
+                args.epochs += 5
+                print("[INFO] not finished training...")
             epoch += 1
 
     wandb.log(

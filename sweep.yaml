@@ -1,35 +1,67 @@
-description: sweep for l2 norm and dropout
-
-# Training script to run
-program: main_LSTM_Liu.py
-
-# Method can be bayes, random, grid
-method: grid
-
-# Metric to optimize
+program: main_TCN_Liu.py
+method: bayes
 metric:
   name: Validation_TSS
   goal: maximize
-
-# Should we early terminate runs
-#early_terminate:
-#  type: envelope
-
-# Parameters to search over
 parameters:
+  cuda:
+    distribution: categorical
+    values:
+      - "true"
+  nhid:
+    distribution: constant
+    value: 40
   seed:
-    values: [1,5,10]
-  batch_size:
-    values: [512,1024,2048]
-  flare_label:
-    values: ["M5"]
-  learning_rate:
-    values: [0.001,0.0001]
+    distribution: int_uniform
+    min: 0
+    max: 10
+  ksize:
+    distribution: int_uniform
+    min: 2
+    max: 4
+  optim:
+    distribution: categorical
+    values:
+      - '"Adam"'
   epochs:
-    values: [50]
-  layer_dim:
-    values: [1,5,10]
+    distribution: constant
+    value: 100
+  levels:
+    distribution: int_uniform
+    min: 1
+    max: 7
   dropout:
-    values: [0]
+    distribution: uniform
+    min: 0
+    max: 1
+  training:
+    distribution: categorical
+    values:
+      - "true"
+  batch_size:
+    distribution: constant
+    value: 2048
+  early_stop:
+    distribution: categorical
+    values:
+      - "true"
+  rnn_module:
+    distribution: categorical
+    values:
+      - '"TCN"'
+  flare_label:
+    distribution: categorical
+    values:
+      - '"M5"'
   weight_decay:
-    values: [0]
+    distribution: uniform
+    max: 0.001
+    min: 0
+  learning_rate:
+    distribution: uniform
+    min: 0.0001
+    max: 0.01
+early_terminate:
+  type: hyperband
+  eta: 3
+  min_iter: 30
