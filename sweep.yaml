@@ -18,7 +18,7 @@ parameters:
   optim:
     distribution: categorical
     values:
-      - '"Adam"'
+      - "Adam"
   epochs:
     distribution: constant
     value: 100
@@ -36,11 +36,11 @@ parameters:
   rnn_module:
     distribution: categorical
     values:
-      - '"TCN"'
+      - "TCN"
   flare_label:
     distribution: categorical
     values:
-      - '"M5"'
+      - "M5"
   weight_decay:
     distribution: uniform
     max: 0.001
