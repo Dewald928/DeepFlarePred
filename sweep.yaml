@@ -30,17 +30,9 @@ parameters:
     distribution: uniform
     min: 0
     max: 1
-  training:
-    distribution: categorical
-    values:
-      - "true"
   batch_size:
     distribution: constant
     value: 2048
-  early_stop:
-    distribution: categorical
-    values:
-      - "true"
   rnn_module:
     distribution: categorical
     values:
