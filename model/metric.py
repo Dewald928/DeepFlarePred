@@ -90,7 +90,7 @@ def get_roc(model, yhat, ytrue, device):
         plt.legend()
         # show the plot
         fig.show()
-        wandb.log({'ROC curve': fig, 'ROC_AUC': wandb.Image(fig)})
+        wandb.log({'ROC curve': wandb.Image(fig), 'ROC_AUC': roc_auc})
 
         return roc_auc
 

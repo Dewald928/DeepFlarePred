@@ -232,13 +232,13 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
                         help='input batch size for training (default: 256)')
-    parser.add_argument('--learning_rate', type=float, default=1e-4,
+    parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
@@ -471,6 +471,7 @@ if __name__ == '__main__':
     '''
     Model interpretation    
     '''
+    # todo interpret on test set?
 
     test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
                                                         int(args.batch_size/6),
