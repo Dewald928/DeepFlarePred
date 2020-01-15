@@ -27,23 +27,24 @@ For the ```main_LSTM_Liu.py``` and ```main_TCN_Liu.py``` the Liu dataset needs t
 ### Run script
 To run the script, you can either do a Weight & Biases sweep, or just simply run:
 
-```python main_LSTM_Liu.py```
+```python main_TCN_Liu.py```
 
 The default args can be changed or passed inline e.g.
 
-```python main_LSTM_Liu.py --learning_rate 0.001```
+```python main_TCN_Liu.py --learning_rate 0.001```
 
 
 ## Docker cloud gpu setup
 ### Build container
 Follow instructions [here](https://docs.paperspace.com/gradient/notebooks/notebook-containers/building-a-custom-container)
 * Install docker
-* Install nvidia docker
-* Install GPU drivers
+* Install GPU drivers 
+* Install nvidia docker [Quickstart](https://github.com/NVIDIA/nvidia-docker)
 * Then build dockerfile and push image to hub
 
 ### Example of runstring
-paperspace jobs create --container dvd928/deep_flare_pred:2 --machineType P4000 --command wandb agent 5ks0xbql --ports 5000:5000 --project Liu_pytorch
+paperspace jobs create --container dvd928/deep_flare_pred:1 --machineType
+ P4000 --command wandb agent 5ks0xbql --ports 5000:5000 --project Liu_pytorch
 
 
 ## Plans for the Project
@@ -68,15 +69,24 @@ Tested, but not sweeped
 * [x] [TCN networks](https://github.com/locuslab/TCN) : better so far, slightly
 * [x] Early stopping and checkpointing on best validation TSS (LSTM only, so far)
 * [ ] Test data? best wat to test network?
+* [ ] LR scheduler
 
 ### Main Objectives
-* [ ] Create MLP that is equivalent to Nishzuka et al paper
-* [ ] Establish a baseline MLP
+* [ ] ~~Create MLP that is equivalent to Nishzuka et al paper~~
+* [ ] ~~Establish a baseline MLP~~
+* [x] LSTM vs. TCN?
+* [ ] TCN baseline (Liu dataset (20/40 features?))
+* [x] ROC + Precision Recall curves, with AUC (train, val & test set)
 * [ ] Find best features out of the 40. ([captum](https://captum.ai/))
-* [ ] LSTM vs. TCN?
+* [ ] What do these best features mean? (fits with other literature?)
+* [ ] SHARP only TCN
+* [ ] Case studies
+* [ ] What does TSS mean in this context?
+
 
 
 ### Future plans
+* [ ] SHARP query and infer model pipeline
 * [ ] Incorporate SHARP magnetogram images like Chen article
 * [ ] Use GAN for detecting anomalies
 * [ ] MLP/LSTM attention models
@@ -89,4 +99,6 @@ Tested, but not sweeped
 ### Data sets
 * [Chen et al. 2019 data (some of it)](https://deepblue.lib.umich.edu/data/concern/data_sets/0r967377q?locale=en)
 * [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction)
+
+
 

@@ -67,7 +67,7 @@ def visualize_importance(feature_names, importances, std, n_features,
         fig = plt.figure(figsize=(8, 4))
         plt.bar(x_pos, importances.reshape(n_features),
                 yerr=std.reshape(n_features), align='center')
-        plt.xticks(x_pos, feature_names, wrap=False, rotation=60)
+        # plt.xticks(x_pos, feature_names, wrap=False, rotation=60)
         plt.xlabel(axis_title)
         plt.title(title)
         plt.tight_layout()

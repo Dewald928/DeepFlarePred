@@ -1,4 +1,6 @@
 # Our base image
+# docker run -it --gpus all dvd928/deep_flare_pred:1
+
 FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
 #FROM pytorch/pytorch:1.1.0-cuda10.0-cudnn7.5-devel
 
@@ -10,6 +12,8 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 # Install lower level dependencies
 RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
     curl \
     ca-certificates \
     sudo \
@@ -17,6 +21,8 @@ RUN apt-get update && apt-get install -y \
     bzip2 \
     libx11-6 \
     python3-pip \
+    libjpeg-dev \
+    libpng-dev \
  && rm -rf /var/lib/apt/lists/*
 
 #RUN apt-get update -y
