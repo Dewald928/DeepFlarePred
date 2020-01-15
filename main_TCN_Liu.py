@@ -249,6 +249,8 @@ if __name__ == '__main__':
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 128)')
+    parser.add_argument('--n_features', type=int, default=20,
+                        help='number of features (default: 20)')
 
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
     #                     help='SGD momentum (default: 0.5)')
@@ -285,7 +287,7 @@ if __name__ == '__main__':
     num_of_fold = 10
     n_features = 0
     if args.flare_label == 'M5':
-        n_features = 40  # 20 original
+        n_features = args.n_features  # 20 original
     elif args.flare_label == 'M':
         n_features = 22
     elif args.flare_label == 'C':

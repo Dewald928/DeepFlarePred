@@ -1,24 +1,20 @@
 program: main_TCN_Liu.py
 method: bayes
 metric:
-  name: Validation_TSS
+  name: Validation_PR_AUC
   goal: maximize
 parameters:
   nhid:
     distribution: constant
-    value: 40
+    value: 20
   seed:
     distribution: int_uniform
-    min: 0
+    min: 1
     max: 10
   ksize:
     distribution: int_uniform
     min: 2
     max: 4
-  optim:
-    distribution: categorical
-    values:
-      - "Adam"
   epochs:
     distribution: constant
     value: 100
@@ -28,28 +24,23 @@ parameters:
     max: 7
   dropout:
     distribution: uniform
-    min: 0
-    max: 1
+    max: 0.8
+    min: 0.4
   batch_size:
     distribution: constant
     value: 2048
-  rnn_module:
-    distribution: categorical
-    values:
-      - "TCN"
-  flare_label:
-    distribution: categorical
-    values:
-      - "M5"
   weight_decay:
     distribution: uniform
-    max: 0.001
+    max: 0.002
     min: 0
   learning_rate:
     distribution: uniform
-    min: 0.0001
+    min: 0.00005
     max: 0.01
+  n_features:
+    distribution: constant
+    value: 20
 early_terminate:
   type: hyperband
   eta: 3
-  min_iter: 30
+  min_iter: 20
