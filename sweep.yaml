@@ -14,14 +14,14 @@ parameters:
   ksize:
     distribution: int_uniform
     min: 2
-    max: 4
+    max: 6
   epochs:
     distribution: constant
     value: 100
   levels:
     distribution: int_uniform
     min: 1
-    max: 7
+    max: 9
   dropout:
     distribution: uniform
     max: 0.8
@@ -30,13 +30,13 @@ parameters:
     distribution: constant
     value: 2048
   weight_decay:
-    distribution: uniform
-    max: 0.002
-    min: 0
-  learning_rate:
-    distribution: uniform
-    min: 0.00005
+    distribution: log_uniform
     max: 0.01
+    min: 0.00001
+  learning_rate:
+    distribution: log_uniform
+    min: 0.00001
+    max: 0.05
   n_features:
     distribution: constant
     value: 20

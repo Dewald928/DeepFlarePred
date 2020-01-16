@@ -82,6 +82,7 @@ Tested, but not sweeped
 * [ ] SHARP only TCN
 * [ ] Case studies
 * [ ] What does TSS mean in this context?
+* [ ] How to interpret W&B parameters?
 
 
 
