@@ -30,11 +30,11 @@ parameters:
     distribution: constant
     value: 2048
   weight_decay:
-    distribution: log_uniform
-    min: 0.00005
+    distribution: uniform
     max: 0.01
+    min: 0.00005
   learning_rate:
-    distribution: log_uniform
+    distribution: uniform
     min: 0.00005
     max: 0.01
 early_terminate:
