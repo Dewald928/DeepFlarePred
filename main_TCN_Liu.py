@@ -94,14 +94,11 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
 
         if batch_idx % args.log_interval == 0:
             print(
-                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
-                                                                         batch_idx * len(
-                                                                             data),
-                                                                         len(
-                                                                             train_loader.dataset),
-                                                                         100. * batch_idx / len(
-                                                                             train_loader),
-                                                                         loss.item()))
+                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    epoch,
+                    batch_idx * len(data),
+                    len(train_loader.dataset),
+                    100. * batch_idx / len(train_loader), loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
@@ -247,8 +244,8 @@ if __name__ == '__main__':
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=40,
-                        help='number of hidden units per layer (default: 128)')
+    parser.add_argument('--nhid', type=int, default=20,
+                        help='number of hidden units per layer (default: 20)')
     parser.add_argument('--n_features', type=int, default=20,
                         help='number of features (default: 20)')
 
