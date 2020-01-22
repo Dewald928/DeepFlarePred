@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -240,9 +240,9 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--levels', type=int, default=1,
+    parser.add_argument('--levels', type=int, default=7,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=2,
+    parser.add_argument('--ksize', type=int, default=7,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
@@ -392,7 +392,8 @@ if __name__ == '__main__':
                                  weight_decay=args.weight_decay, amsgrad=False)
 
     # print model parameters
-    print(len(list(model.parameters())))
+    print("Receptive Field: " + str(1+2*(args.ksize-1)*(2 ^ args.levels - 1)))
+    # print(len(list(model.parameters())))
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
 
@@ -468,7 +469,7 @@ if __name__ == '__main__':
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device)
 
     '''
-    Model interpretation    
+    Model interpretation
     '''
     # todo interpret on test set?
 
@@ -509,10 +510,10 @@ if __name__ == '__main__':
     # valid_ds = Dataset(X_valid_data, y_valid_tr)
     #
     # # Metrics + Callbacks
-    # valid_tss = EpochScoring(scoring=make_scorer(get_tss),
+    # valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
     #                          lower_is_better=False, name='valid_tss',
     #                          use_caching=True)
-    # valid_hss = EpochScoring(scoring=make_scorer(get_hss),
+    # valid_hss = EpochScoring(scoring=make_scorer(skorch_utils.get_hss),
     #                          lower_is_better=False, name='valid_hss',
     #                          use_caching=True)
     #
@@ -534,9 +535,10 @@ if __name__ == '__main__':
     #                           # train_split=None, #die breek die logs
     #                           train_split=predefined_split(valid_ds),
     #                           callbacks=[valid_tss, valid_hss, earlystop,
-    #                                      checkpoint, LoggingCallback],
+    #                                      checkpoint,
+    #                                      skorch_utils.LoggingCallback],
     #                           # iterator_train__shuffle=True, # batches
-    #                           shuffle
+    #                           # shuffle=False
     #                           # warm_start=False
     #                           )
     #
@@ -556,7 +558,7 @@ if __name__ == '__main__':
     # labels = labels.numpy()
     #
     # y_test = net.predict(inputs)
-    # tss_test_score = get_tss(labels, y_test)
+    # tss_test_score = skorch_utils.get_tss(labels, y_test)
     # wandb.log({'Test_TSS': tss_test_score})
     # print("Test TSS:" + str(tss_test_score))
 

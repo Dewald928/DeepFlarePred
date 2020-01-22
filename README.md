@@ -40,11 +40,17 @@ Follow instructions [here](https://docs.paperspace.com/gradient/notebooks/notebo
 * Install docker
 * Install GPU drivers 
 * Install nvidia docker [Quickstart](https://github.com/NVIDIA/nvidia-docker)
-* Then build dockerfile and push image to hub
+* Then build dockerfile and push image to hub (useful
+ [Link1](https://github.com/pytorch/pytorch/blob/master/docker/pytorch/Dockerfile)
+ [Link2](https://github.com/anibali/docker-pytorch/blob/master/cuda-10.0/Dockerfile))
 
-### Example of runstring
-paperspace jobs create --container dvd928/deep_flare_pred:1 --machineType
- P4000 --command wandb agent 5ks0xbql --ports 5000:5000 --project Liu_pytorch
+### Dockerhub container
+`dvd928/deep_flare_pred:1`
+
+### Example of runstring on paperspace
+`paperspace jobs create --container dvd928/deep_flare_pred:1 --machineType
+ P4000 --command wandb agent 5ks0xbql --ports 5000:5000 --project Liu_pytorch`
+ 
 
 
 ## Plans for the Project
