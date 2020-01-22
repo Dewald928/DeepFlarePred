@@ -6,7 +6,10 @@ metric:
 parameters:
   nhid:
     distribution: constant
-    value: 20
+    value: 40
+  n_features:
+    distribution: constant
+    value: 40
   seed:
     distribution: int_uniform
     min: 1
@@ -14,10 +17,10 @@ parameters:
   ksize:
     distribution: int_uniform
     min: 2
-    max: 6
+    max: 8
   epochs:
     distribution: constant
-    value: 150
+    value: 100
   levels:
     distribution: int_uniform
     min: 1
@@ -31,12 +34,12 @@ parameters:
     value: 2048
   weight_decay:
     distribution: uniform
-    max: 0.01
-    min: 0.00005
+    max: 0.02
+    min: 0
   learning_rate:
     distribution: uniform
-    min: 0.00005
-    max: 0.01
+    min: 0
+    max: 0.02
 early_terminate:
   type: hyperband
   eta: 3
