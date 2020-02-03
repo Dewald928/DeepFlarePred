@@ -110,7 +110,7 @@ def get_precision_recall(model, yhat, ytrue, device, dataset='Test'):
         f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
         # summarize scores
         print(dataset + ' TCN: f1=%.3f pr_auc=%.3f' % (f1, pr_auc))
-        wandb.log({dataset+'_PR_AUC': pr_auc})
+        wandb.log({dataset+'_PR_AUC': pr_auc, dataset+'_F1': f1})
 
         '''
             Plot PR Curve

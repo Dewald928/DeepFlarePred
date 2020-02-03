@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=3,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -240,9 +240,9 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--levels', type=int, default=1,
+    parser.add_argument('--levels', type=int, default=7,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=2,
+    parser.add_argument('--ksize', type=int, default=7,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
@@ -362,15 +362,17 @@ if __name__ == '__main__':
     datasets['test'] = preprocess_customdataset(X_test_data_tensor,
                                                 y_test_tr_tensor)
 
+    kwargs = {'num_workers': 8, 'pin_memory': True} if use_cuda else {}
+
     train_loader = torch.utils.data.DataLoader(datasets['train'],
                                                args.batch_size, shuffle=False,
-                                               drop_last=False)
+                                               drop_last=False, **kwargs)
     valid_loader = torch.utils.data.DataLoader(datasets['valid'],
                                                args.batch_size, shuffle=False,
-                                               drop_last=False)
+                                               drop_last=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(datasets['test'],
                                               args.batch_size, shuffle=False,
-                                              drop_last=False)
+                                              drop_last=False, **kwargs)
 
     # make model
     channel_sizes = [args.nhid] * args.levels
@@ -415,10 +417,10 @@ if __name__ == '__main__':
                 print('[INFO] Early Stopping')
                 break
 
-            # Continue training if recently improved
-            if epoch == args.epochs-1 and early_stop.num_bad_epochs < 2:
-                args.epochs += 5
-                print("[INFO] not finished training...")
+            # # Continue training if recently improved
+            # if epoch == args.epochs-1 and early_stop.num_bad_epochs < 2:
+            #     args.epochs += 5
+            #     print("[INFO] not finished training...")
             epoch += 1
 
     wandb.log(
