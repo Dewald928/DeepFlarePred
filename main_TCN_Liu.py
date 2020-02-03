@@ -362,7 +362,7 @@ if __name__ == '__main__':
     datasets['test'] = preprocess_customdataset(X_test_data_tensor,
                                                 y_test_tr_tensor)
 
-    kwargs = {'num_workers': 8, 'pin_memory': True} if use_cuda else {}
+    kwargs = {'num_workers': 4, 'pin_memory': True} if use_cuda else {}
 
     train_loader = torch.utils.data.DataLoader(datasets['train'],
                                                args.batch_size, shuffle=False,
