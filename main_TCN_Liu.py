@@ -21,6 +21,8 @@ import torch.nn as nn
 import torch.utils.data
 import torch.nn.functional as F
 
+import shap
+
 import skorch
 from skorch import NeuralNetClassifier
 from skorch.callbacks import *
@@ -230,7 +232,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -336,9 +338,9 @@ if __name__ == '__main__':
         mask_value=mask_value)
 
     '''Syth dataset'''
-    X_train_data = X_valid_data = X_test_data = np.array([[1,2,3],[1,2,3],
-                                                         [1,1,1],[1,1,1]])
-    y_train_data = y_valid_data = y_test_data = np.array([1,1,0,0])
+    # X_train_data = X_valid_data = X_test_data = np.array([[1,2,3],[1,2,3],
+    #                                                      [1,1,1],[1,1,1]])
+    # y_train_data = y_valid_data = y_test_data = np.array([1,1,0,0])
 
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
@@ -385,9 +387,9 @@ if __name__ == '__main__':
     kernel_size = args.ksize
     dropout = args.dropout
 
-    model = CNN_test(n_features, channel_sizes, kernel_size)
-    # model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
-    #             dropout=dropout).to(device)
+    # model = CNN_test(n_features, channel_sizes, kernel_size)
+    model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
+                dropout=dropout).to(device)
     wandb.watch(model, log='all')
 
     # optimizers
@@ -499,6 +501,22 @@ if __name__ == '__main__':
         np.array(feature_names[start_feature:start_feature + n_features]),
         np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
         n_features, title="Saliency Features")
+
+    '''SHAP'''
+    batch = next(iter(test_loader))
+    samples, _ = batch
+    print(samples.size())
+
+    background = samples[:100].to(device)
+    test_samples = samples[100:104].to(device)
+    e = shap.DeepExplainer(model, background)
+    shap_values = e.shap_values(test_samples)
+    shap_numpy = [np.swapaxes(np.swapaxes(s, 1, -1), 1, 2) for s in shap_values]
+    test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,2)
+    shap_numpy = []
+    for i in shap_values:
+        shap_numpy.append(i.squeeze(2))
+    shap.summary_plot(shap_numpy, test_numpy)
 
     '''
         Skorch training
