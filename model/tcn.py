@@ -61,3 +61,17 @@ class TemporalConvNet(nn.Module):
 
     def forward(self, x):
         return self.network(x)
+
+
+class CNN_test(nn.Module):
+    def __init__(self, num_inputs, num_channels, kernel_size=2):
+        super(CNN_test, self).__init__()
+        self.conv1 = nn.Conv1d(3,3,2)
+        self.relu = nn.ReLU()
+        self.linear = nn.Linear(num_channels[-1], 2)
+
+    def forward(self, x):
+        y = self.conv1(x)
+        y = self.relu(y)
+        out = self.linear(y)
+        return out

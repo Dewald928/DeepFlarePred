@@ -32,6 +32,7 @@ from data_loader import CustomDataset
 from data_loader import data_loader
 from utils import early_stopping
 from model.tcn import TemporalConvNet
+from model.tcn import CNN_test
 from model import metric
 from interpret import interpreter
 
@@ -229,7 +230,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=3,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -240,13 +241,13 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--levels', type=int, default=7,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=7,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
-    parser.add_argument('--n_features', type=int, default=20,
+    parser.add_argument('--n_features', type=int, default=3,
                         help='number of features (default: 20)')
 
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -334,6 +335,11 @@ if __name__ == '__main__':
         start_feature=start_feature, n_features=n_features,
         mask_value=mask_value)
 
+    '''Syth dataset'''
+    X_train_data = X_valid_data = X_test_data = np.array([[1,2,3],[1,2,3],
+                                                         [1,1,1],[1,1,1]])
+    y_train_data = y_valid_data = y_test_data = np.array([1,1,0,0])
+
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
     y_test_tr = data_loader.label_transform(y_test_data)
@@ -379,8 +385,9 @@ if __name__ == '__main__':
     kernel_size = args.ksize
     dropout = args.dropout
 
-    model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
-                dropout=dropout).to(device)
+    model = CNN_test(n_features, channel_sizes, kernel_size)
+    # model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
+    #             dropout=dropout).to(device)
     wandb.watch(model, log='all')
 
     # optimizers
