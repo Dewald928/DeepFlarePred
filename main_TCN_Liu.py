@@ -22,6 +22,7 @@ import torch.utils.data
 import torch.nn.functional as F
 
 import shap
+import matplotlib.pyplot as plt
 
 import skorch
 from skorch import NeuralNetClassifier
@@ -232,7 +233,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -249,7 +250,7 @@ if __name__ == '__main__':
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
-    parser.add_argument('--n_features', type=int, default=3,
+    parser.add_argument('--n_features', type=int, default=20,
                         help='number of features (default: 20)')
 
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -508,15 +509,20 @@ if __name__ == '__main__':
     print(samples.size())
 
     background = samples[:100].to(device)
-    test_samples = samples[100:104].to(device)
+    test_samples = samples[101:200].to(device)
     e = shap.DeepExplainer(model, background)
     shap_values = e.shap_values(test_samples)
-    shap_numpy = [np.swapaxes(np.swapaxes(s, 1, -1), 1, 2) for s in shap_values]
-    test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,2)
     shap_numpy = []
+    test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,2)
     for i in shap_values:
         shap_numpy.append(i.squeeze(2))
-    shap.summary_plot(shap_numpy, test_numpy)
+    fig_shap = plt.figure()
+    plt.title('SHAP Plot')
+    shap.summary_plot(shap_numpy, test_numpy,
+                      feature_names=feature_names[
+                                    start_feature:start_feature+n_features],
+                      max_display=args.n_features)
+    wandb.log({'SHAP Plot': wandb.Image(fig_shap)})
 
     '''
         Skorch training
