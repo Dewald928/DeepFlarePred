@@ -447,6 +447,12 @@ if __name__ == '__main__':
     test(model, device, test_loader, criterion)
 
     '''
+    Infer values
+    '''
+    test_sample_x = test_loader.dataset.data[4962:4996].to(device)
+    inferred = model(test_sample_x).cpu().detach().numpy()
+
+    '''
     PR Curves
     '''
     # get predicted output probabilities => numpy array
@@ -508,8 +514,10 @@ if __name__ == '__main__':
     samples, _ = batch
     print(samples.size())
 
+    test_sample_x = test_loader.dataset.data[4982:4996].to(device)  # 4940 - 5121
     background = samples[:100].to(device)
-    test_samples = samples[101:200].to(device)
+    # test_samples = samples[101:200].to(device)
+    test_samples = test_sample_x
     e = shap.DeepExplainer(model, background)
     shap_values = e.shap_values(test_samples)
     shap_numpy = []
@@ -518,18 +526,20 @@ if __name__ == '__main__':
     for i in shap_values:
         shap_numpy.append(i.squeeze(2))
     fig_shap = plt.figure()
-    plt.title('SHAP Plot')
+    plt.title('SHAP Summary Plot')
     shap.summary_plot(shap_numpy, test_numpy,
                       feature_names=feature_names[
                                     start_feature:start_feature+n_features],
                       max_display=args.n_features)
-    # shap.force_plot(e.expected_value, shap_numpy, test_numpy)
-    wandb.log({'SHAP Plot': wandb.Image(fig_shap)})
+    wandb.log({'SHAP Summary Plot': wandb.Image(fig_shap)})
 
     #for single sample
+    fig_shap = plt.figure()
+    plt.title('SHAP Force Plot')
     shap.force_plot(e.expected_value[0], shap_numpy[0][0], matplotlib=True,
                     feature_names=feature_names[
                                     start_feature:start_feature+n_features])
+    wandb.log({'SHAP Force Plot': wandb.Image(fig_shap)})
 
     '''
         Skorch training
