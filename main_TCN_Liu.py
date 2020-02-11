@@ -514,6 +514,7 @@ if __name__ == '__main__':
     shap_values = e.shap_values(test_samples)
     shap_numpy = []
     test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,2)
+    test_numpy = test_numpy.squeeze(2)
     for i in shap_values:
         shap_numpy.append(i.squeeze(2))
     fig_shap = plt.figure()
@@ -522,7 +523,13 @@ if __name__ == '__main__':
                       feature_names=feature_names[
                                     start_feature:start_feature+n_features],
                       max_display=args.n_features)
+    # shap.force_plot(e.expected_value, shap_numpy, test_numpy)
     wandb.log({'SHAP Plot': wandb.Image(fig_shap)})
+
+    #for single sample
+    shap.force_plot(e.expected_value[0], shap_numpy[0][0], matplotlib=True,
+                    feature_names=feature_names[
+                                    start_feature:start_feature+n_features])
 
     '''
         Skorch training
