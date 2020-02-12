@@ -233,7 +233,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -446,11 +446,7 @@ if __name__ == '__main__':
 
     test(model, device, test_loader, criterion)
 
-    '''
-    Infer values
-    '''
-    test_sample_x = test_loader.dataset.data[4962:4996].to(device)
-    inferred = model(test_sample_x).cpu().detach().numpy()
+
 
     '''
     PR Curves
@@ -484,7 +480,7 @@ if __name__ == '__main__':
                                                                 device,
                                                                 'Test')
 
-    roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device)
+    roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
 
     '''
     Model interpretation
@@ -525,21 +521,29 @@ if __name__ == '__main__':
     test_numpy = test_numpy.squeeze(2)
     for i in shap_values:
         shap_numpy.append(i.squeeze(2))
-    fig_shap = plt.figure()
+    fig_shap = plt.figure(1)
     plt.title('SHAP Summary Plot')
+    plt.tight_layout()
     shap.summary_plot(shap_numpy, test_numpy,
                       feature_names=feature_names[
                                     start_feature:start_feature+n_features],
                       max_display=args.n_features)
+    fig_shap.show()
     wandb.log({'SHAP Summary Plot': wandb.Image(fig_shap)})
+    # plt.close(fig_shap)
 
     #for single sample
-    fig_shap = plt.figure()
-    plt.title('SHAP Force Plot')
-    shap.force_plot(e.expected_value[0], shap_numpy[0][0], matplotlib=True,
+    fig = shap.force_plot(e.expected_value[0], shap_numpy[0][0],
+                         matplotlib=True,
                     feature_names=feature_names[
-                                    start_feature:start_feature+n_features])
-    wandb.log({'SHAP Force Plot': wandb.Image(fig_shap)})
+                                    start_feature:start_feature+n_features],
+                    link='logit', show=False
+                    )
+    fig_shap1 = plt.gcf()
+    plt.title('SHAP Force Plot')
+    plt.tight_layout()
+    fig_shap1.show()
+    wandb.log({'SHAP Force Plot': wandb.Image(fig_shap1)})
 
     '''
         Skorch training

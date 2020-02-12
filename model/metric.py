@@ -61,7 +61,7 @@ def calculate_metrics(confusion_matrix, nclass):
     return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
 
 
-def get_roc(model, yhat, ytrue, device):
+def get_roc(model, yhat, ytrue, device, dataset='Test'):
     model.eval()
     fig = plt.figure()
     ytrue = ytrue.cpu().detach().numpy()
@@ -83,14 +83,16 @@ def get_roc(model, yhat, ytrue, device):
         # plot model roc curve
         plt.plot(fpr, tpr, marker='.', label='AUC'+str(round(roc_auc, 3)))
         # axis labels
-        plt.title('ROC curve')
+        plt.title(dataset+ ' ROC curve')
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
         # show the legend
         plt.legend()
         # show the plot
         fig.show()
-        wandb.log({'ROC curve': wandb.Image(fig), 'ROC_AUC': roc_auc})
+        wandb.log({dataset + ' ROC curve': wandb.Image(fig), dataset +
+                                                            ' ROC_AUC':
+            roc_auc})
 
         return roc_auc
 
