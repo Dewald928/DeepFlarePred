@@ -268,6 +268,8 @@ if __name__ == '__main__':
                         help='restores model')
     parser.add_argument('--training', action='store_true', default=True,
                         help='trains and test model, if false only tests')
+    parser.add_argument('--num_workers', type=int, default=9,
+                        help='amount of gpu workers')
     args = parser.parse_args()
     wandb.config.update(args)
 
@@ -358,7 +360,8 @@ if __name__ == '__main__':
                 'test': preprocess_customdataset(X_test_data_tensor,
                                                  y_test_tr_tensor)}
 
-    kwargs = {'num_workers': 4, 'pin_memory': True} if use_cuda else {}
+    kwargs = {'num_workers': args.num_workers, 'pin_memory': True} if \
+        use_cuda else {}
 
     train_loader = torch.utils.data.DataLoader(datasets['train'],
                                                args.batch_size, shuffle=False,
