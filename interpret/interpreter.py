@@ -142,7 +142,7 @@ def get_shap(model, test_loader, device, args, feature_names, start_feature):
                                                          start_feature:start_feature + args.n_features],
                           link='logit', show=False)
     fig_shap1 = plt.gcf()
-    plt.title('SHAP Force Plot')
+    # plt.title('SHAP Force Plot')
     plt.tight_layout()
     fig_shap1.show()
     wandb.log({'SHAP Force Plot': wandb.Image(fig_shap1)})
