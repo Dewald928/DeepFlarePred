@@ -23,7 +23,7 @@ dependencies:
   - cloudpickle=1.2.2=py_1
   - contextlib2=0.6.0.post1=py_0
   - cryptography=2.8=py37h72c5cf5_1
-  - cudatoolkit=10.0.130=0
+  - cudatoolkit=10.1.243=h6bb024c_0
   - cycler=0.10.0=py_2
   - cytoolz=0.10.1=py37h516909a_0
   - dask-core=2.9.1=py_0
@@ -49,7 +49,7 @@ dependencies:
   - importlib_metadata=1.3.0=py37_0
   - intel-openmp=2019.4=243
   - ipykernel=5.1.3=py37h5ca1d4c_0
-  - ipython=7.11.0=py37h5ca1d4c_0
+  - ipython=7.11.1=py37h5ca1d4c_0
   - ipython_genutils=0.2.0=py_1
   - ipywidgets=7.5.1=py_0
   - isodate=0.6.0=py_1
@@ -91,7 +91,7 @@ dependencies:
   - mistune=0.8.4=py37h516909a_1000
   - mkl=2019.4=243
   - more-itertools=8.0.2=py_0
-  - multidict=4.6.1=py37h516909a_0
+  - multidict=4.7.3=py37h516909a_0
   - nbconvert=5.6.1=py37_0
   - nbformat=4.4.0=py_1
   - ncurses=6.1=hf484d3e_1002
@@ -139,7 +139,7 @@ dependencies:
   - pytest-remotedata=0.3.1=py_0
   - python=3.7.3=h5b0a415_0
   - python-dateutil=2.8.1=py_0
-  - pytorch=1.3.1=py3.7_cuda10.0.130_cudnn7.6.3_0
+  - pytorch=1.4.0=py3.7_cuda10.1.243_cudnn7.6.3_0
   - pytz=2019.3=py_0
   - pywavelets=1.1.1=py37hc1659b7_0
   - pyzmq=18.1.1=py37h1768529_0
@@ -153,7 +153,7 @@ dependencies:
   - scikit-learn=0.21.3=py37hcdab131_0
   - scipy=1.4.1=py37h921218d_0
   - send2trash=1.5.0=py_0
-  - setuptools=42.0.2=py37_0
+  - setuptools=44.0.0=py37_0
   - shap=0.31.0=py37hb3f55d8_0
   - six=1.13.0=py37_0
   - skorch=0.7.0=pyh5ca1d4c_0
@@ -167,9 +167,9 @@ dependencies:
   - testpath=0.4.4=py_0
   - tk=8.6.10=hed695b0_0
   - toolz=0.10.0=py_0
-  - torchvision=0.4.2=py37_cu100
+  - torchvision=0.5.0=py37_cu101
   - tornado=6.0.3=py37h516909a_0
-  - tqdm=4.41.0=py_0
+  - tqdm=4.41.1=py_0
   - traitlets=4.3.3=py37_0
   - urllib3=1.25.7=py37_0
   - wcwidth=0.1.7=py_1
@@ -203,11 +203,11 @@ dependencies:
     - gitdb==0.6.4
     - gitdb2==2.0.5
     - gitpython==3.0.0
-    - gql==0.1.0
+    - gql==0.2.0
     - gradient==0.4.0
     - gradient-sdk==0.0.4
     - gradient-statsd==1.0.1
-    - graphql-core==2.2.1
+    - graphql-core==1.1
     - halo==0.0.28
     - hyperopt==0.1.2
     - log-symbols==0.0.14
@@ -232,7 +232,7 @@ dependencies:
     - termcolor==1.1.0
     - terminaltables==3.1.0
     - torchsummary==1.5.1
-    - wandb==0.8.16
+    - wandb==0.8.27
     - watchdog==0.9.0
 prefix: /home/fuzzy/local/miniconda3/envs/DeepFlarePred
 
