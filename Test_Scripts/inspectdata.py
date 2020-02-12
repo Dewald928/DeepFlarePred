@@ -1,11 +1,17 @@
 import pandas as pd
 import torch
+import main_TCN_Liu
 
 filepath = './Data/Liu/' + args.flare_label+ '/'
 df = pd.read_csv(filepath + 'normalized_testing.csv')
 
 # get x flares
-m5_flares_test = df[df['flare'].str.match('M5') | df['flare'].str.match('X')]
+m5_flares_test = df[df['flare'].str.match('M5') |
+                    df['flare'].str.match('M6') |
+                    df['flare'].str.match('M7') |
+                    df['flare'].str.match('M8') |
+                    df['flare'].str.match('M9') |
+                    df['flare'].str.match('X')]
 m5_flared_NOAA = m5_flares_test['NOAA'].unique()
 
 '''

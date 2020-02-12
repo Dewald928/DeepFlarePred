@@ -11,6 +11,8 @@ from captum.attr import DeepLiftShap
 from captum.attr import Saliency
 from captum.attr import GradientAttribution
 
+import shap
+
 import wandb
 
 
@@ -103,3 +105,43 @@ def check_significance(attr, test_features, feature_num=1):
     plt.scatter(bin_centers, bin_means, s=bin_count)
     plt.xlabel("Average Sibsp Feature Value")
     plt.ylabel("Average Attribution")
+
+
+def get_shap(model, test_loader, device, args, feature_names, start_feature):
+    batch = next(iter(test_loader))
+    samples, _ = batch
+    print(samples.size())
+
+    test_sample_x = test_loader.dataset.data[4982:4996].to(
+        device)  # 4940 - 5121
+    background = samples[:100].to(device)
+    # test_samples = samples[101:200].to(device)
+    test_samples = test_sample_x
+    e = shap.DeepExplainer(model, background)
+    shap_values = e.shap_values(test_samples)
+    shap_numpy = []
+    test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,
+                             2)
+    test_numpy = test_numpy.squeeze(2)
+    for i in shap_values:
+        shap_numpy.append(i.squeeze(2))
+    fig_shap = plt.figure(1)
+    plt.title('SHAP Summary Plot')
+    plt.tight_layout()
+    shap.summary_plot(shap_numpy, test_numpy, feature_names=feature_names[
+                                                            start_feature:start_feature + args.n_features],
+                      max_display=args.n_features)
+    fig_shap.show()
+    wandb.log({'SHAP Summary Plot': wandb.Image(fig_shap)})
+    # plt.close(fig_shap)
+
+    # for single sample
+    fig = shap.force_plot(e.expected_value[0], shap_numpy[0][0],
+                          matplotlib=True, feature_names=feature_names[
+                                                         start_feature:start_feature + args.n_features],
+                          link='logit', show=False)
+    fig_shap1 = plt.gcf()
+    plt.title('SHAP Force Plot')
+    plt.tight_layout()
+    fig_shap1.show()
+    wandb.log({'SHAP Force Plot': wandb.Image(fig_shap1)})

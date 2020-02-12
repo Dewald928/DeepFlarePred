@@ -1,9 +1,9 @@
-'''
+"""
 Ecclesiastes 5:12 New King James Version (NKJV)
 12 The sleep of a laboring man is sweet,
 Whether he eats little or much;
 But the abundance of the rich will not permit him to sleep.
-'''
+"""
 import pandas as pd
 from matplotlib import pyplot
 from sklearn.utils import class_weight
@@ -21,14 +21,13 @@ import torch.nn as nn
 import torch.utils.data
 import torch.nn.functional as F
 
-import shap
-import matplotlib.pyplot as plt
-
 import skorch
 from skorch import NeuralNetClassifier
 from skorch.callbacks import *
 from skorch.helper import predefined_split
 from skorch.dataset import Dataset
+
+from interpret.interpreter import get_shap
 from skorch_tools import skorch_utils
 
 from data_loader import CustomDataset
@@ -48,13 +47,6 @@ TCN with n residual blocks will have a receptive field of
 
 
 def preprocess_customdataset(x_val, y_val):
-    # change format to tensors and create data set
-    # x_tensor = torch.tensor(x_val).type(torch.FloatTensor)
-    # y_tensor = torch.tensor(y_val).type(torch.LongTensor)
-    # y_tensor = torch.nn.functional.one_hot(torch.LongTensor(y_val), 2)
-
-    datasets = {}
-    # datasets = CustomDataset.CustomDataset(x_tensor, y_tensor)
     datasets = CustomDataset.CustomDataset(x_val, y_val)
 
     return datasets
@@ -98,10 +90,8 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
 
         if batch_idx % args.log_interval == 0:
             print(
-                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(train_loader.dataset),
+                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
+                    batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
@@ -142,6 +132,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                 confusion_matrix[t.long(), p.long()] += 1
 
     valid_loss /= len(valid_loader.dataset)
+    # noinspection PyStringFormat
     print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({'
           ':.0f}%)\n'.format(valid_loss, correct, len(valid_loader.dataset),
                              100. * correct / len(valid_loader.dataset)))
@@ -167,7 +158,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         best_tss = tss[0]
         best_epoch = epoch
         torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
-        print('[INFO] Checkpointing...')
+        print('[INFO] Checkpoint...')
 
     return tss[0], best_tss, best_epoch
 
@@ -178,7 +169,6 @@ def test(model, device, test_loader, criterion):
     correct = 0
     confusion_matrix = torch.zeros(nclass, nclass)
 
-    example_images = []
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
@@ -198,7 +188,6 @@ def test(model, device, test_loader, criterion):
             test_loss, correct, len(test_loader.dataset),
             100. * correct / len(test_loader.dataset)))
 
-    # # testation conf matrix
     # print(confusion_matrix)
     # # per class accuracy
     # print(confusion_matrix.diag() / confusion_matrix.sum(1))
@@ -229,7 +218,6 @@ def infer_model(model, device, data_loader):
 
 if __name__ == '__main__':
     wandb.init(project="liu_pytorch_tcn", notes='TCN')
-
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
@@ -303,11 +291,11 @@ if __name__ == '__main__':
 
     # GPU check
     use_cuda = args.cuda and torch.cuda.is_available()
-    if args.cuda == True and torch.cuda.is_available():
+    if args.cuda and torch.cuda.is_available():
         print("Cuda enabled and available")
-    elif args.cuda == True and torch.cuda.is_available() == False:
+    elif args.cuda and not torch.cuda.is_available():
         print("Cuda enabled not not available, CPU used.")
-    elif args.cuda == False:
+    elif not args.cuda:
         print("Cuda disabled")
     device = torch.device("cuda" if use_cuda else "cpu")
 
@@ -363,13 +351,12 @@ if __name__ == '__main__':
     y_test_tr_tensor = torch.tensor(y_test_tr).long()
 
     # ready custom dataset
-    datasets = {}
-    datasets['train'] = preprocess_customdataset(X_train_data_tensor,
-                                                 y_train_tr_tensor)
-    datasets['valid'] = preprocess_customdataset(X_valid_data_tensor,
-                                                 y_valid_tr_tensor)
-    datasets['test'] = preprocess_customdataset(X_test_data_tensor,
-                                                y_test_tr_tensor)
+    datasets = {'train': preprocess_customdataset(X_train_data_tensor,
+                                                  y_train_tr_tensor),
+                'valid': preprocess_customdataset(X_valid_data_tensor,
+                                                  y_valid_tr_tensor),
+                'test': preprocess_customdataset(X_test_data_tensor,
+                                                 y_test_tr_tensor)}
 
     kwargs = {'num_workers': 4, 'pin_memory': True} if use_cuda else {}
 
@@ -398,13 +385,15 @@ if __name__ == '__main__':
                                                       np.unique(y_train_data),
                                                       y_train_data)
 
+    # noinspection PyArgumentList
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(
         device))  # weighted cross entropy
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate,
                                  weight_decay=args.weight_decay, amsgrad=False)
 
     # print model parameters
-    print("Receptive Field: " + str(1+2*(args.ksize-1)*(2 ^ args.levels - 1)))
+    print("Receptive Field: " + str(
+        1 + 2 * (args.ksize - 1) * (2 ^ args.levels - 1)))
     # print(len(list(model.parameters())))
     for i in range(len(list(model.parameters()))):
         print(list(model.parameters())[i].size())
@@ -438,6 +427,7 @@ if __name__ == '__main__':
 
     # reload best tss checkpoint and test
     print("[INFO] Loading model at epoch:" + str(best_epoch))
+    # noinspection PyBroadException
     try:
         model.load_state_dict(
             torch.load(os.path.join(wandb.run.dir, 'model.pt')))
@@ -446,8 +436,6 @@ if __name__ == '__main__':
 
     test(model, device, test_loader, criterion)
 
-
-
     '''
     PR Curves
     '''
@@ -455,8 +443,7 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, train_loader)
 
     # PR curves on test set
-    precision, recall, f1, pr_auc = metric.get_precision_recall(model,
-                                                                yhat,
+    precision, recall, f1, pr_auc = metric.get_precision_recall(model, yhat,
                                                                 y_train_tr_tensor,
                                                                 device,
                                                                 'Train')
@@ -465,8 +452,7 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, valid_loader)
 
     # PR curves on test set
-    precision, recall, f1, pr_auc = metric.get_precision_recall(model,
-                                                                yhat,
+    precision, recall, f1, pr_auc = metric.get_precision_recall(model, yhat,
                                                                 y_valid_tr_tensor,
                                                                 device,
                                                                 'Validation')
@@ -474,11 +460,9 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, test_loader)
 
     # PR curves on test set
-    precision, recall, f1, pr_auc = metric.get_precision_recall(model,
-                                                                yhat,
+    precision, recall, f1, pr_auc = metric.get_precision_recall(model, yhat,
                                                                 y_test_tr_tensor,
-                                                                device,
-                                                                'Test')
+                                                                device, 'Test')
 
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
 
@@ -487,10 +471,8 @@ if __name__ == '__main__':
     '''
     # todo interpret on test set?
 
-    test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
-                                                        int(args.batch_size/6),
-                                                        shuffle=False,
-                                                        drop_last=False)
+    test_loader_interpret = torch.utils.data.DataLoader(datasets['test'], int(
+        args.batch_size / 6), shuffle=False, drop_last=False)
 
     attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
         model, device, test_loader_interpret, n_features, args)
@@ -506,44 +488,7 @@ if __name__ == '__main__':
         n_features, title="Saliency Features")
 
     '''SHAP'''
-    batch = next(iter(test_loader))
-    samples, _ = batch
-    print(samples.size())
-
-    test_sample_x = test_loader.dataset.data[4982:4996].to(device)  # 4940 - 5121
-    background = samples[:100].to(device)
-    # test_samples = samples[101:200].to(device)
-    test_samples = test_sample_x
-    e = shap.DeepExplainer(model, background)
-    shap_values = e.shap_values(test_samples)
-    shap_numpy = []
-    test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,2)
-    test_numpy = test_numpy.squeeze(2)
-    for i in shap_values:
-        shap_numpy.append(i.squeeze(2))
-    fig_shap = plt.figure(1)
-    plt.title('SHAP Summary Plot')
-    plt.tight_layout()
-    shap.summary_plot(shap_numpy, test_numpy,
-                      feature_names=feature_names[
-                                    start_feature:start_feature+n_features],
-                      max_display=args.n_features)
-    fig_shap.show()
-    wandb.log({'SHAP Summary Plot': wandb.Image(fig_shap)})
-    # plt.close(fig_shap)
-
-    #for single sample
-    fig = shap.force_plot(e.expected_value[0], shap_numpy[0][0],
-                         matplotlib=True,
-                    feature_names=feature_names[
-                                    start_feature:start_feature+n_features],
-                    link='logit', show=False
-                    )
-    fig_shap1 = plt.gcf()
-    plt.title('SHAP Force Plot')
-    plt.tight_layout()
-    fig_shap1.show()
-    wandb.log({'SHAP Force Plot': wandb.Image(fig_shap1)})
+    get_shap(model, test_loader, device, args, feature_names, start_feature)
 
     '''
         Skorch training
