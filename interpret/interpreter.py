@@ -125,11 +125,12 @@ def get_shap(model, test_loader, device, args, feature_names, start_feature):
     test_numpy = test_numpy.squeeze(2)
     for i in shap_values:
         shap_numpy.append(i.squeeze(2))
-    fig_shap = plt.figure(1)
+    fig_shap = plt.figure()
     plt.title('SHAP Summary Plot')
     plt.tight_layout()
-    shap.summary_plot(shap_numpy, test_numpy, feature_names=feature_names[
-                                                            start_feature:start_feature + args.n_features],
+    shap.summary_plot(shap_numpy, test_numpy,
+                      feature_names=feature_names[start_feature:start_feature +
+                                                                args.n_features],
                       max_display=args.n_features)
     fig_shap.show()
     wandb.log({'SHAP Summary Plot': wandb.Image(fig_shap)})

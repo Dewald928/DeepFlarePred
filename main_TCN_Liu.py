@@ -5,7 +5,7 @@ Whether he eats little or much;
 But the abundance of the rich will not permit him to sleep.
 """
 import pandas as pd
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 from sklearn.metrics import make_scorer
 import sklearn.metrics
@@ -221,7 +221,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -488,6 +488,7 @@ if __name__ == '__main__':
         n_features, title="Saliency Features")
 
     '''SHAP'''
+    plt.close('all')
     get_shap(model, test_loader, device, args, feature_names, start_feature)
 
     '''
