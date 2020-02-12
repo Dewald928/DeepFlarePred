@@ -33,12 +33,12 @@ parameters:
       - 4096
   weight_decay:
     distribution: log_uniform
-    min: -2.3
-    max: -11.5
+    max: -2.3
+    min: -11.5
   learning_rate:
     distribution: log_uniform
-    min: -2.3
-    max: -11.5
+    max: -2.3
+    min: -11.5
   n_features:
     distribution: constant
     value: 20
