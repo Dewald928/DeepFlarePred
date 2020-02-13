@@ -17,7 +17,6 @@ from matplotlib import pyplot as plt
 
 def calculate_metrics(confusion_matrix, nclass):
     # determine skill scores
-    print('Calculating skill scores: ')
     confusion_matrix = confusion_matrix.numpy()
     N = np.sum(confusion_matrix)
 
@@ -50,13 +49,6 @@ def calculate_metrics(confusion_matrix, nclass):
                     fp[p] + tn[p])), 4)
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
             fp[p]) / float(fp[p] + tn[p] + 1e-6)), 4)
-
-    print("tss: " + str(tss))
-    print("hss: " + str(hss))
-    print("bacc: " + str(bacc))
-    print("accuracy: " + str(accuracy))
-    print("precision: " + str(precision))
-    print("recall: " + str(recall))
 
     return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
 
@@ -108,7 +100,7 @@ def get_pr_auc(yhat, ytrue):
     # predict class values
     precision, recall, _ = precision_recall_curve(ytrue, pos_probs)
     f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
-    print('PR_AUC: ' + str(pr_auc))
+    # print('PR_AUC: ' + str(pr_auc))
     return precision, recall, f1, pr_auc
 
 
