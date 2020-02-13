@@ -230,10 +230,10 @@ def test(model, device, test_loader, criterion):
 
     end = time.time()
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
+          '{:^9s}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}'.format('Valid', epoch, end - start, tss[0],
-                                          pr_auc, hss[0], bacc[0], accuracy[0],
+          '{:^9.4f}{:^9.4f}'.format('Test', epoch, end - start, tss[0],
+                                          ' ', hss[0], bacc[0], accuracy[0],
                                           precision[1], recall[1], f1,
                                           test_loss))
 
