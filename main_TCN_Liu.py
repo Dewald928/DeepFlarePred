@@ -155,11 +155,11 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         = metric.calculate_metrics(confusion_matrix, nclass)
 
     # calculate predicted values
-    yhat = infer_model(model, device, train_loader)
+    yhat = infer_model(model, device, valid_loader)
 
     # PR curves on train
     precision_arr, recall_arr, f1, pr_auc \
-        = metric.get_pr_auc(yhat, train_loader.dataset.targets)
+        = metric.get_pr_auc(yhat, valid_loader.dataset.targets)
 
     end = time.time()
 
@@ -172,6 +172,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
 
     # checkpoint on best tss
     cp = ''
+    # todo change back to tss
     # if tss[0] >= best_tss:
     #     best_tss = tss[0]
     #     best_epoch = epoch
