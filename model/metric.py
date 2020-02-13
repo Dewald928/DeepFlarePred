@@ -39,17 +39,17 @@ def calculate_metrics(confusion_matrix, nclass):
                 fp[p] += confusion_matrix[q][p]
         tn[p] = N - tp[p] - fn[p] - fp[p]
 
-        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
-        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
+        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 4)
+        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 4)
         accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
         bacc[p] = round(0.5 * (
                 float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-            tn[p] + fp[p])), 3)
+            tn[p] + fp[p])), 4)
         hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
             (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
-                    fp[p] + tn[p])), 3)
+                    fp[p] + tn[p])), 4)
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
-            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
+            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 4)
 
     print("tss: " + str(tss))
     print("hss: " + str(hss))
@@ -97,22 +97,29 @@ def get_roc(model, yhat, ytrue, device, dataset='Test'):
         return roc_auc
 
 
-def get_precision_recall(model, yhat, ytrue, device, dataset='Test'):
+def get_pr_auc(yhat, ytrue):
+    # calculate roc curve
+    ytrue = ytrue.cpu().detach().numpy()
+    # retrieve just the probabilities for the positive class
+    pos_probs = yhat[:, 1]
+    # get predicted labels
+    _, ypred = torch.max(torch.tensor(yhat), 1)
+    ypred = ypred.cpu().detach().numpy()
+    # predict class values
+    precision, recall, _ = precision_recall_curve(ytrue, pos_probs)
+    f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
+    print('PR_AUC: ' + str(pr_auc))
+    return precision, recall, f1, pr_auc
+
+
+def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
     model.eval()
     with torch.no_grad():
-        # calculate roc curve
-        ytrue = ytrue.cpu().detach().numpy()
-        # retrieve just the probabilities for the positive class
-        pos_probs = yhat[:, 1]
-        # get predictied labels
-        _, ypred = torch.max(torch.tensor(yhat), 1)
-        ypred = ypred.cpu().detach().numpy()
-        # predict class values
-        precision, recall, _ = precision_recall_curve(ytrue, pos_probs)
-        f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
+        precision, recall, f1, pr_auc = get_pr_auc(yhat, ytrue)
         # summarize scores
         print(dataset + ' TCN: f1=%.3f pr_auc=%.3f' % (f1, pr_auc))
-        wandb.log({dataset+'_PR_AUC': pr_auc, dataset+'_F1': f1})
+        wandb.log({'Final_' + dataset + '_PR_AUC': pr_auc,
+                   'Final_' + dataset+'_F1': f1})
 
         '''
             Plot PR Curve

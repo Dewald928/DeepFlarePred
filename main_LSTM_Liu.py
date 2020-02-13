@@ -310,17 +310,17 @@ def calculate_metrics(confusion_matrix):
                 fp[p] += confusion_matrix[q][p]
         tn[p] = N - tp[p] - fn[p] - fp[p]
 
-        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 3)
-        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 3)
+        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 4)
+        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 4)
         accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
         bacc[p] = round(0.5 * (
                 float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-            tn[p] + fp[p])), 3)
+            tn[p] + fp[p])), 4)
         hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
             (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
-                    fp[p] + tn[p])), 3)
+                    fp[p] + tn[p])), 4)
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
-            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 3)
+            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 4)
 
     print("tss: " + str(tss))
     print("hss: " + str(hss))

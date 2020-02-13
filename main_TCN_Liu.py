@@ -91,14 +91,20 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         if batch_idx % args.log_interval == 0:
             print(
                 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch,
-                    batch_idx * len(data), len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader), loss.item()))
+                                                                         batch_idx * len(data), len(train_loader.dataset),
+                                                                         100. * batch_idx / len(train_loader), loss.item()))
 
     loss_epoch /= len(train_loader.dataset)
     print("Training Scores:")
-    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
-    tn = metric.calculate_metrics(
-        confusion_matrix, nclass)
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
+        = metric.calculate_metrics(confusion_matrix, nclass)
+
+    # calculate predicted values
+    yhat = infer_model(model, device, train_loader)
+
+    # PR curves on train
+    precision_arr, recall_arr, f1, pr_auc \
+        = metric.get_pr_auc(yhat, train_loader.dataset.targets)
 
     end = time.time()
     print(end - start)
@@ -106,8 +112,11 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
     wandb.log({"Training_Accuracy": accuracy[0], "Training_TSS": tss[0],
                "Training_HSS": hss[0], "Training_BACC": bacc[0],
                "Training_Precision": precision[1],
-               "Training_Recall": recall[1], "Training_Loss": loss_epoch},
+               "Training_Recall": recall[1], "Training_Loss": loss_epoch,
+               "Training_F1": f1, "Training_PR_AUC": pr_auc},
               step=epoch)
+    # "Training_F1": f1, "Training_PR_AUC": pr_auc}
+
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -143,14 +152,21 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     print("Validation Scores:")
-    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
-    tn = metric.calculate_metrics(
-        confusion_matrix, nclass)
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
+        = metric.calculate_metrics(confusion_matrix, nclass)
+
+    # calculate predicted values
+    yhat = infer_model(model, device, train_loader)
+
+    # PR curves on train
+    precision_arr, recall_arr, f1, pr_auc \
+        = metric.get_pr_auc(yhat, train_loader.dataset.targets)
 
     wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
                "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
                "Validation_Precision": precision[1],
-               "Validation_Recall": recall[1], "Validation_Loss": valid_loss},
+               "Validation_Recall": recall[1], "Validation_Loss": valid_loss,
+               "Validation_F1": f1, "Validation_PR_AUC": pr_auc},
               step=epoch)
 
     # checkpoint on best tss
@@ -204,6 +220,7 @@ def test(model, device, test_loader, criterion):
 
 
 def infer_model(model, device, data_loader):
+    """ :return prediction of inferred data loader"""
     model.eval()
     output_arr = []
     with torch.no_grad():
@@ -221,7 +238,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -268,7 +285,7 @@ if __name__ == '__main__':
                         help='restores model')
     parser.add_argument('--training', action='store_true', default=True,
                         help='trains and test model, if false only tests')
-    parser.add_argument('--num_workers', type=int, default=9,
+    parser.add_argument('--num_workers', type=int, default=4,
                         help='amount of gpu workers')
     args = parser.parse_args()
     wandb.config.update(args)
@@ -446,26 +463,22 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, train_loader)
 
     # PR curves on test set
-    precision, recall, f1, pr_auc = metric.get_precision_recall(model, yhat,
-                                                                y_train_tr_tensor,
-                                                                device,
-                                                                'Train')
+    precision, recall, f1, pr_auc \
+        = metric.plot_precision_recall(model, yhat, y_train_tr_tensor, 'Train')
 
     # get predicted output probabilities => numpy array
     yhat = infer_model(model, device, valid_loader)
 
     # PR curves on test set
-    precision, recall, f1, pr_auc = metric.get_precision_recall(model, yhat,
-                                                                y_valid_tr_tensor,
-                                                                device,
-                                                                'Validation')
+    precision, recall, f1, pr_auc\
+        = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
+                                       'Validation')
     # get predicted output probabilities => numpy array
     yhat = infer_model(model, device, test_loader)
 
     # PR curves on test set
-    precision, recall, f1, pr_auc = metric.get_precision_recall(model, yhat,
-                                                                y_test_tr_tensor,
-                                                                device, 'Test')
+    precision, recall, f1, pr_auc\
+        = metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')
 
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
 
