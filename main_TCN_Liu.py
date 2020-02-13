@@ -162,12 +162,6 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         = metric.get_pr_auc(yhat, train_loader.dataset.targets)
 
     end = time.time()
-    print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}'.format('Valid', epoch, end - start, tss[0],
-                                    pr_auc, hss[0], bacc[0], accuracy[0],
-                                    precision[1], recall[1], f1, valid_loss))
 
     wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
                "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
@@ -177,16 +171,30 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
               step=epoch)
 
     # checkpoint on best tss
-    if tss[0] >= best_tss:
-        best_tss = tss[0]
+    cp = ''
+    # if tss[0] >= best_tss:
+    #     best_tss = tss[0]
+    #     best_epoch = epoch
+    #     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
+    #     cp = '+'
+    if pr_auc >= best_tss:
+        best_tss = pr_auc
         best_epoch = epoch
         torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
-        print('[INFO] Checkpoint...')
+        cp = '+'
+    print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
+          '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
+          '{:^9.4f}{:^9.4f}'
+          '{:^9.4f}{:^9.4f}{:^3s}'.format('Valid', epoch, end - start, tss[0],
+                                    pr_auc, hss[0], bacc[0], accuracy[0],
+                                    precision[1], recall[1], f1, valid_loss,
+                                      cp))
 
     return tss[0], best_tss, best_epoch
 
 
 def test(model, device, test_loader, criterion):
+    start = time.time()
     model.eval()
     test_loss = 0
     correct = 0
@@ -206,19 +214,27 @@ def test(model, device, test_loader, criterion):
                 confusion_matrix[t.long(), p.long()] += 1
 
     test_loss /= len(test_loader.dataset)
-    print(
-        '\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-            test_loss, correct, len(test_loader.dataset),
-            100. * correct / len(test_loader.dataset)))
-
+    # print(
+    #     '\nTest set: Average loss: {:.4f}, Accuracy: {}/{}
+    #     ({:.0f}%)\n'.format(
+    #         test_loss, correct, len(test_loader.dataset),
+    #         100. * correct / len(test_loader.dataset)))
     # print(confusion_matrix)
     # # per class accuracy
     # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     print("Test Scores:")
-    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, \
-    tn = metric.calculate_metrics(
-        confusion_matrix, nclass)
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
+        = metric.calculate_metrics(confusion_matrix, nclass)
+
+    end = time.time()
+    print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
+          '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
+          '{:^9.4f}{:^9.4f}'
+          '{:^9.4f}{:^9.4f}'.format('Valid', epoch, end - start, tss[0],
+                                          pr_auc, hss[0], bacc[0], accuracy[0],
+                                          precision[1], recall[1], f1,
+                                          test_loss))
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
@@ -436,9 +452,10 @@ if __name__ == '__main__':
         print('{:<11s}{:^9s}{:^9s}{:^9s}'
               '{:^9s}{:^9s}{:^9s}{:^9s}'
               '{:^9s}{:^9s}'
-              '{:^9s}{:^9s}'.format('Data Loader', 'Epoch', 'Runtime',
+              '{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch', 'Runtime',
                                         'TSS', 'PR_AUC', 'HSS', 'BACC', 'ACC',
-                                        'Precision', 'Recall', 'F1', 'Loss'))
+                                        'Precision', 'Recall', 'F1', 'Loss',
+                                          'CP'))
         while epoch < args.epochs:
             train(model, device, train_loader, optimizer, epoch, criterion)
             tss, best_tss, best_epoch = validate(model, device, valid_loader,
