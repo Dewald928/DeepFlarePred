@@ -38,5 +38,6 @@ writer = SummaryWriter('runs/test')
 dataiter = iter(train_loader)
 data, labels = dataiter.next()
 # inspect model
-writer.add_graph(model, data)
+writer.add_graph(model, data.to(device))
 writer.close()
+# tensorboard --logdir=runs
