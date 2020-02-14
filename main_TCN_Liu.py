@@ -240,7 +240,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=150,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     #                     0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=5,
+    parser.add_argument('--seed', type=int, default=6,
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
@@ -421,7 +421,7 @@ if __name__ == '__main__':
         print(list(model.parameters())[i].size())
 
     # early stopping check
-    early_stop = early_stopping.EarlyStopping(mode='max', patience=40)
+    early_stop = early_stopping.EarlyStopping(mode='max', patience=30)
     best_tss = 0.0
     best_pr_auc = 0.0
     best_epoch = 0
@@ -438,7 +438,7 @@ if __name__ == '__main__':
                                           'Loss', 'CP'))
         while epoch < args.epochs:
             train(model, device, train_loader, optimizer, epoch, criterion)
-            stopping_metric, best_pr_auc, best_tss, best_epoch = validate(
+            stopping_metric, best_tss, best_pr_auc, best_epoch = validate(
                 model, device, valid_loader, criterion, epoch, best_tss,
                 best_pr_auc, best_epoch)
 
