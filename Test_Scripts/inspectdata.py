@@ -29,3 +29,14 @@ concattable = pd.concat(
     [df_pred.reset_index(drop=True), df_inf.reset_index(drop=True),
      x_flares_data.reset_index(drop=True)], sort=False, axis=1)
 
+'''
+Tensorboard
+'''
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter('runs/test')
+# get some random training images
+dataiter = iter(train_loader)
+data, labels = dataiter.next()
+# inspect model
+writer.add_graph(model, data)
+writer.close()

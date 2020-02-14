@@ -118,14 +118,13 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
-             best_epoch):
+             best_pr_auc, best_epoch):
     start = time.time()
     model.eval()
     valid_loss = 0
     correct = 0
     confusion_matrix = torch.zeros(nclass, nclass)
 
-    example_images = []
     with torch.no_grad():
         for data, target in valid_loader:
             data, target = data.to(device), target.to(device)
@@ -140,15 +139,6 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                 confusion_matrix[t.long(), p.long()] += 1
 
     valid_loss /= len(valid_loader.dataset)
-    # noinspection PyStringFormat
-    # print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({'
-    #       ':.0f}%)\n'.format(valid_loss, correct, len(valid_loader.dataset),
-    #                          100. * correct / len(valid_loader.dataset)))
-
-    # # validation conf matrix
-    # print(confusion_matrix)
-    # # per class accuracy
-    # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     # print("Validation Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
@@ -170,19 +160,15 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                "Validation_F1": f1, "Validation_PR_AUC": pr_auc},
               step=epoch)
 
-    # checkpoint on best tss
+    # checkpoint on best metric
     cp = ''
-    # todo change back to tss
-    # if tss[0] >= best_tss:
-    #     best_tss = tss[0]
-    #     best_epoch = epoch
-    #     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
-    #     cp = '+'
-    if pr_auc >= best_tss:
-        best_tss = pr_auc
+    if pr_auc >= best_pr_auc:
+        best_pr_auc = pr_auc
+        best_tss = tss[0]
         best_epoch = epoch
         torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
         cp = '+'
+
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
@@ -191,7 +177,8 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                                     precision[1], recall[1], f1, valid_loss,
                                       cp))
 
-    return tss[0], best_tss, best_epoch
+    stopping_metric = pr_auc
+    return stopping_metric, best_tss, best_pr_auc, best_epoch
 
 
 def test(model, device, test_loader, criterion):
@@ -215,14 +202,6 @@ def test(model, device, test_loader, criterion):
                 confusion_matrix[t.long(), p.long()] += 1
 
     test_loss /= len(test_loader.dataset)
-    # print(
-    #     '\nTest set: Average loss: {:.4f}, Accuracy: {}/{}
-    #     ({:.0f}%)\n'.format(
-    #         test_loss, correct, len(test_loader.dataset),
-    #         100. * correct / len(test_loader.dataset)))
-    # print(confusion_matrix)
-    # # per class accuracy
-    # print(confusion_matrix.diag() / confusion_matrix.sum(1))
 
     print("Test Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
@@ -232,10 +211,9 @@ def test(model, device, test_loader, criterion):
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9s}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}'.format('Test', epoch, end - start, tss[0],
-                                          ' ', hss[0], bacc[0], accuracy[0],
-                                          precision[1], recall[1], f1,
-                                          test_loss))
+          '{:^9s}{:^9.4f}'.format('Test', epoch, end - start, tss[0], ' ',
+                                  hss[0], bacc[0], accuracy[0], precision[1],
+                                  recall[1], ' ', test_loss))
 
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
@@ -309,7 +287,7 @@ if __name__ == '__main__':
                         help='restores model')
     parser.add_argument('--training', action='store_true', default=True,
                         help='trains and test model, if false only tests')
-    parser.add_argument('--num_workers', type=int, default=4,
+    parser.add_argument('--num_workers', type=int, default=7,
                         help='amount of gpu workers')
     args = parser.parse_args()
     wandb.config.update(args)
@@ -445,6 +423,7 @@ if __name__ == '__main__':
     # early stopping check
     early_stop = early_stopping.EarlyStopping(mode='max', patience=40)
     best_tss = 0.0
+    best_pr_auc = 0.0
     best_epoch = 0
 
     print("Training Network...")
@@ -454,16 +433,16 @@ if __name__ == '__main__':
               '{:^9s}{:^9s}{:^9s}{:^9s}'
               '{:^9s}{:^9s}'
               '{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch', 'Runtime',
-                                        'TSS', 'PR_AUC', 'HSS', 'BACC', 'ACC',
-                                        'Precision', 'Recall', 'F1', 'Loss',
-                                          'CP'))
+                                          'TSS', 'PR_AUC', 'HSS', 'BACC',
+                                          'ACC', 'Precision', 'Recall', 'F1',
+                                          'Loss', 'CP'))
         while epoch < args.epochs:
             train(model, device, train_loader, optimizer, epoch, criterion)
-            tss, best_tss, best_epoch = validate(model, device, valid_loader,
-                                                 criterion, epoch, best_tss,
-                                                 best_epoch)
+            stopping_metric, best_pr_auc, best_tss, best_epoch = validate(
+                model, device, valid_loader, criterion, epoch, best_tss,
+                best_pr_auc, best_epoch)
 
-            if early_stop.step(tss) and args.early_stop:
+            if early_stop.step(stopping_metric) and args.early_stop:
                 print('[INFO] Early Stopping')
                 break
 
@@ -474,7 +453,8 @@ if __name__ == '__main__':
             epoch += 1
 
     wandb.log(
-        {"Best_Validation_TSS": best_tss, "Best_Validation_epoch": best_epoch})
+        {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
+            best_epoch, 'Best_Validation_PR_AUC': best_pr_auc})
 
     # reload best tss checkpoint and test
     print("[INFO] Loading model at epoch:" + str(best_epoch))
