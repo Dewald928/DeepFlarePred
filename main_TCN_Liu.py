@@ -251,9 +251,9 @@ if __name__ == '__main__':
     parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
 
-    parser.add_argument('--levels', type=int, default=3,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=3,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     #                     0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=5,
+    parser.add_argument('--seed', type=int, default=7,
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
