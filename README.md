@@ -90,6 +90,7 @@ Tested, but not sweeped
 * [ ] TCN baseline (Liu dataset (20/40 features?))
 * [x] ROC + Precision Recall curves, with AUC (train, val & test set)
 * [ ] Find best features out of the 40. ([captum](https://captum.ai/))
+* [ ] Occlusions method compare.
 * [ ] What do these best features mean? (fits with other literature?)
 * [ ] SHARP only TCN
 * [ ] Case studies

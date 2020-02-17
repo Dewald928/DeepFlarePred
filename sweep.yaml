@@ -1,5 +1,6 @@
 program: main_TCN_Liu.py
 method: bayes
+description: Testing whether checkpointing on tss is better than pr_auc
 metric:
   name: Validation_PR_AUC
   goal: maximize
@@ -9,8 +10,8 @@ parameters:
     value: 20
   seed:
     distribution: int_uniform
-    min: 0
-    max: 10
+    min: 1
+    max: 5
   ksize:
     distribution: int_uniform
     min: 2
@@ -21,7 +22,7 @@ parameters:
   levels:
     distribution: int_uniform
     min: 1
-    max: 15
+    max: 10
   dropout:
     distribution: uniform
     min: 0

@@ -162,7 +162,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
 
     # checkpoint on best metric
     cp = ''
-    if pr_auc >= best_pr_auc:
+    if tss[0] >= best_tss:  # change to required metric
         best_pr_auc = pr_auc
         best_tss = tss[0]
         best_epoch = epoch
