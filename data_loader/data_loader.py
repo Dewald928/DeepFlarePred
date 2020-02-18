@@ -236,7 +236,6 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features,
     return X_arr, y_arr
 
 
-
 def get_feature_names(datafile):
     df = pd.read_csv(datafile)
     feature_names = list(df.columns)
@@ -247,5 +246,4 @@ def label_transform(data):
     encoder = LabelEncoder()
     encoder.fit(data)
     encoded_Y = encoder.transform(data)
-    # converteddata = np.eye(nclass, dtype='uint8')[encoded_Y]
     return encoded_Y

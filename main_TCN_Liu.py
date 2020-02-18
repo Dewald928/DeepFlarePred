@@ -34,7 +34,6 @@ from data_loader import CustomDataset
 from data_loader import data_loader
 from utils import early_stopping
 from model.tcn import TemporalConvNet
-from model.tcn import CNN_test
 from model import metric
 from interpret import interpreter
 
@@ -65,7 +64,7 @@ class TCN(nn.Module):
         self.linear.weight.data.normal_(0, 0.01)
 
     def forward(self, x):
-        y1 = self.tcn(x)  # input should have dimension (N, C, L)
+        y1 = self.tcn(x)  # input should have dimension (batch, chan, seq len)
         return self.linear(y1[:, :, -1])
 
 
@@ -77,6 +76,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
 
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
+        # data = data.view(-1, args.n_features, args.seq_len)
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
@@ -229,6 +229,7 @@ def infer_model(model, device, data_loader):
         # output = model(data_loader.dataset.data.to(device))
         for data, target in data_loader:
             data, target = data.to(device), target.to(device)
+            data = data.view(-1, args.n_features, args.seq_len)
             output = model(data)
             output_arr.append(output.cpu().detach().numpy())
 
@@ -240,7 +241,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -248,16 +249,16 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
-                        help='how many hidden layers (default: 5)')
+    parser.add_argument('--seq_len', type=int, default=2, metavar='N',
+                        help='size of sequence (default: 1)')
 
     parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=20,
+    parser.add_argument('--nhid', type=int, default=3,
                         help='number of hidden units per layer (default: 20)')
-    parser.add_argument('--n_features', type=int, default=20,
+    parser.add_argument('--n_features', type=int, default=3,
                         help='number of features (default: 20)')
 
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -331,19 +332,19 @@ if __name__ == '__main__':
     # setup dataloaders
     X_train_data, y_train_data = data_loader.load_data(
         datafile=filepath + 'normalized_training.csv',
-        flare_label=args.flare_label, series_len=args.layer_dim,
+        flare_label=args.flare_label, series_len=args.seq_len,
         start_feature=start_feature, n_features=n_features,
         mask_value=mask_value)
 
     X_valid_data, y_valid_data = data_loader.load_data(
         datafile=filepath + 'normalized_validation.csv',
-        flare_label=args.flare_label, series_len=args.layer_dim,
+        flare_label=args.flare_label, series_len=args.seq_len,
         start_feature=start_feature, n_features=n_features,
         mask_value=mask_value)
 
     X_test_data, y_test_data = data_loader.load_data(
         datafile=filepath + 'normalized_testing.csv',
-        flare_label=args.flare_label, series_len=args.layer_dim,
+        flare_label=args.flare_label, series_len=args.seq_len,
         start_feature=start_feature, n_features=n_features,
         mask_value=mask_value)
 
@@ -356,19 +357,23 @@ if __name__ == '__main__':
     y_valid_tr = data_loader.label_transform(y_valid_data)
     y_test_tr = data_loader.label_transform(y_test_data)
 
+    # (samples, seq_len, features) -> (samples, features, seq_len)
     X_train_data_tensor = torch.tensor(X_train_data).float()
-    X_train_data_tensor = X_train_data_tensor.view(len(X_train_data_tensor),
-                                                   n_features, args.layer_dim)
+    X_train_data_tensor = X_train_data_tensor.permute(0, 2, 1)
+    # X_train_data_tensor = X_train_data_tensor.view(len(X_train_data_tensor),
+    #                                                n_features, args.seq_len)
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
 
     X_valid_data_tensor = torch.tensor(X_valid_data).float()
-    X_valid_data_tensor = X_valid_data_tensor.view(len(X_valid_data_tensor),
-                                                   n_features, args.layer_dim)
+    X_valid_data_tensor = X_valid_data_tensor.permute(0, 2, 1)
+    # X_valid_data_tensor = X_valid_data_tensor.view(len(X_valid_data_tensor),
+    #                                                n_features, args.seq_len)
     y_valid_tr_tensor = torch.tensor(y_valid_tr).long()
 
     X_test_data_tensor = torch.tensor(X_test_data).float()
-    X_test_data_tensor = X_test_data_tensor.view(len(X_test_data_tensor),
-                                                 n_features, args.layer_dim)
+    X_test_data_tensor = X_test_data_tensor.permute(0, 2, 1)
+    # X_test_data_tensor = X_test_data_tensor.view(len(X_test_data_tensor),
+    #                                              n_features, args.seq_len)
     y_test_tr_tensor = torch.tensor(y_test_tr).long()
 
     # ready custom dataset
@@ -391,13 +396,13 @@ if __name__ == '__main__':
     test_loader = torch.utils.data.DataLoader(datasets['test'],
                                               args.batch_size, shuffle=False,
                                               drop_last=False, **kwargs)
+    # Shape: (batch size, features, seq_len)
 
     # make model
     channel_sizes = [args.nhid] * args.levels
     kernel_size = args.ksize
     dropout = args.dropout
 
-    # model = CNN_test(n_features, channel_sizes, kernel_size)
     model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
                 dropout=dropout).to(device)
     wandb.watch(model, log='all')
@@ -497,36 +502,36 @@ if __name__ == '__main__':
     Model interpretation
     '''
     # todo interpret on test set?
-
-    test_loader_interpret = torch.utils.data.DataLoader(datasets['test'], int(
-        args.batch_size / 6), shuffle=False, drop_last=False)
-
-    attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-        model, device, test_loader_interpret, n_features, args)
-
-    interpreter.visualize_importance(
-        np.array(feature_names[start_feature:start_feature + n_features]),
-        np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), n_features,
-        title="Integrated Gradient Features")
-
-    interpreter.visualize_importance(
-        np.array(feature_names[start_feature:start_feature + n_features]),
-        np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-        n_features, title="Saliency Features")
-
-    '''SHAP'''
-    plt.close('all')
-    get_shap(model, test_loader, device, args, feature_names, start_feature)
+    #
+    # test_loader_interpret = torch.utils.data.DataLoader(datasets['test'], int(
+    #     args.batch_size / 6), shuffle=False, drop_last=False)
+    #
+    # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
+    #     model, device, test_loader_interpret, n_features, args)
+    #
+    # interpreter.visualize_importance(
+    #     np.array(feature_names[start_feature:start_feature + n_features]),
+    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), n_features,
+    #     title="Integrated Gradient Features")
+    #
+    # interpreter.visualize_importance(
+    #     np.array(feature_names[start_feature:start_feature + n_features]),
+    #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
+    #     n_features, title="Saliency Features")
+    #
+    # '''SHAP'''
+    # plt.close('all')
+    # get_shap(model, test_loader, device, args, feature_names, start_feature)
 
     '''
         Skorch training
     '''
     # inputs = torch.tensor(X_train_data).float()
-    # inputs = inputs.view(len(inputs), n_features, args.layer_dim)
+    # inputs = inputs.view(len(inputs), n_features, args.seq_len)
     # labels = torch.tensor(y_train_tr).long()
     # X_valid_data = torch.tensor(X_valid_data).float()
     # X_valid_data = X_valid_data.view(len(X_valid_data), n_features,
-    #                                  args.layer_dim)
+    #                                  args.seq_len)
     # y_valid_tr = torch.tensor(y_valid_tr).long()
     #
     # inputs = inputs.numpy()
@@ -578,7 +583,7 @@ if __name__ == '__main__':
     # net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
     #
     # inputs = torch.tensor(X_test_data).float()
-    # inputs = inputs.view(len(inputs), n_features, args.layer_dim)
+    # inputs = inputs.view(len(inputs), n_features, args.seq_len)
     # labels = torch.tensor(y_test_tr).long()
     #
     # inputs = inputs.numpy()
