@@ -241,7 +241,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -256,9 +256,9 @@ if __name__ == '__main__':
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=3,
+    parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
-    parser.add_argument('--n_features', type=int, default=3,
+    parser.add_argument('--n_features', type=int, default=20,
                         help='number of features (default: 20)')
 
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -276,7 +276,7 @@ if __name__ == '__main__':
     #                     0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=7,
+    parser.add_argument('--seed', type=int, default=5,
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
