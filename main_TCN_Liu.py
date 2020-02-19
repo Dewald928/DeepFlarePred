@@ -38,6 +38,7 @@ from model import metric
 from interpret import interpreter
 
 import wandb
+from torchsummary import summary
 
 '''
 TCN with n residual blocks will have a receptive field of
@@ -241,7 +242,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=500,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -296,7 +297,7 @@ if __name__ == '__main__':
     # initialize parameters
     filepath = './Data/Liu/' + args.flare_label + '/'
     num_of_fold = 10
-    n_features = 0
+    # n_features = 0
     if args.flare_label == 'M5':
         n_features = args.n_features  # 20 original
     elif args.flare_label == 'M':
@@ -333,19 +334,19 @@ if __name__ == '__main__':
     X_train_data, y_train_data = data_loader.load_data(
         datafile=filepath + 'normalized_training.csv',
         flare_label=args.flare_label, series_len=args.seq_len,
-        start_feature=start_feature, n_features=n_features,
+        start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
 
     X_valid_data, y_valid_data = data_loader.load_data(
         datafile=filepath + 'normalized_validation.csv',
         flare_label=args.flare_label, series_len=args.seq_len,
-        start_feature=start_feature, n_features=n_features,
+        start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
 
     X_test_data, y_test_data = data_loader.load_data(
         datafile=filepath + 'normalized_testing.csv',
         flare_label=args.flare_label, series_len=args.seq_len,
-        start_feature=start_feature, n_features=n_features,
+        start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
 
     y_train_tr = data_loader.label_transform(y_train_data)
@@ -391,9 +392,11 @@ if __name__ == '__main__':
     kernel_size = args.ksize
     dropout = args.dropout
 
-    model = TCN(n_features, nclass, channel_sizes, kernel_size=kernel_size,
+    model = TCN(args.n_features, nclass, channel_sizes,
+                kernel_size=kernel_size,
                 dropout=dropout).to(device)
     wandb.watch(model, log='all')
+    summary(model, input_size=(args.n_features, args.seq_len))
 
     # optimizers
     class_weights = class_weight.compute_class_weight('balanced',
@@ -410,8 +413,8 @@ if __name__ == '__main__':
     print("Receptive Field: " + str(
         1 + 2 * (args.ksize - 1) * (2 ** args.levels - 1)))
     # print(len(list(model.parameters())))
-    for i in range(len(list(model.parameters()))):
-        print(list(model.parameters())[i].size())
+    # for i in range(len(list(model.parameters()))):
+    #     print(list(model.parameters())[i].size())
 
     # early stopping check
     early_stop = early_stopping.EarlyStopping(mode='max', patience=30)
@@ -495,17 +498,17 @@ if __name__ == '__main__':
     #     args.batch_size / 6), shuffle=False, drop_last=False)
     #
     # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-    #     model, device, test_loader_interpret, n_features, args)
+    #     model, device, test_loader_interpret, args.n_features, args)
     #
     # interpreter.visualize_importance(
-    #     np.array(feature_names[start_feature:start_feature + n_features]),
-    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), n_features,
+    #     np.array(feature_names[start_feature:start_feature + args.n_features]),
+    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), args.n_features,
     #     title="Integrated Gradient Features")
     #
     # interpreter.visualize_importance(
-    #     np.array(feature_names[start_feature:start_feature + n_features]),
+    #     np.array(feature_names[start_feature:start_feature + args.n_features]),
     #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-    #     n_features, title="Saliency Features")
+    #     args.n_features, title="Saliency Features")
     #
     # '''SHAP'''
     # plt.close('all')
@@ -515,10 +518,10 @@ if __name__ == '__main__':
         Skorch training
     '''
     # inputs = torch.tensor(X_train_data).float()
-    # inputs = inputs.view(len(inputs), n_features, args.seq_len)
+    # inputs = inputs.view(len(inputs), args.n_features, args.seq_len)
     # labels = torch.tensor(y_train_tr).long()
     # X_valid_data = torch.tensor(X_valid_data).float()
-    # X_valid_data = X_valid_data.view(len(X_valid_data), n_features,
+    # X_valid_data = X_valid_data.view(len(X_valid_data), args.n_features,
     #                                  args.seq_len)
     # y_valid_tr = torch.tensor(y_valid_tr).long()
     #
@@ -571,7 +574,7 @@ if __name__ == '__main__':
     # net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
     #
     # inputs = torch.tensor(X_test_data).float()
-    # inputs = inputs.view(len(inputs), n_features, args.seq_len)
+    # inputs = inputs.view(len(inputs), args.n_features, args.seq_len)
     # labels = torch.tensor(y_test_tr).long()
     #
     # inputs = inputs.numpy()
