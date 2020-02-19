@@ -177,7 +177,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                                     precision[1], recall[1], f1, valid_loss,
                                       cp))
 
-    stopping_metric = pr_auc
+    stopping_metric = best_tss
     return stopping_metric, best_tss, best_pr_auc, best_epoch
 
 
@@ -241,7 +241,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=500,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -249,7 +249,7 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=2, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=3, metavar='N',
                         help='size of sequence (default: 1)')
 
     parser.add_argument('--levels', type=int, default=1,
@@ -348,11 +348,6 @@ if __name__ == '__main__':
         start_feature=start_feature, n_features=n_features,
         mask_value=mask_value)
 
-    '''Syth dataset'''
-    # X_train_data = X_valid_data = X_test_data = np.array([[1,2,3],[1,2,3],
-    #                                                      [1,1,1],[1,1,1]])
-    # y_train_data = y_valid_data = y_test_data = np.array([1,1,0,0])
-
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
     y_test_tr = data_loader.label_transform(y_test_data)
@@ -360,20 +355,14 @@ if __name__ == '__main__':
     # (samples, seq_len, features) -> (samples, features, seq_len)
     X_train_data_tensor = torch.tensor(X_train_data).float()
     X_train_data_tensor = X_train_data_tensor.permute(0, 2, 1)
-    # X_train_data_tensor = X_train_data_tensor.view(len(X_train_data_tensor),
-    #                                                n_features, args.seq_len)
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
 
     X_valid_data_tensor = torch.tensor(X_valid_data).float()
     X_valid_data_tensor = X_valid_data_tensor.permute(0, 2, 1)
-    # X_valid_data_tensor = X_valid_data_tensor.view(len(X_valid_data_tensor),
-    #                                                n_features, args.seq_len)
     y_valid_tr_tensor = torch.tensor(y_valid_tr).long()
 
     X_test_data_tensor = torch.tensor(X_test_data).float()
     X_test_data_tensor = X_test_data_tensor.permute(0, 2, 1)
-    # X_test_data_tensor = X_test_data_tensor.view(len(X_test_data_tensor),
-    #                                              n_features, args.seq_len)
     y_test_tr_tensor = torch.tensor(y_test_tr).long()
 
     # ready custom dataset
@@ -397,7 +386,6 @@ if __name__ == '__main__':
                                               args.batch_size, shuffle=False,
                                               drop_last=False, **kwargs)
     # Shape: (batch size, features, seq_len)
-
     # make model
     channel_sizes = [args.nhid] * args.levels
     kernel_size = args.ksize
