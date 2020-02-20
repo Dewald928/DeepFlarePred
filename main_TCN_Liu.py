@@ -465,7 +465,7 @@ if __name__ == '__main__':
     # noinspection PyBroadException
     try:
         model.load_state_dict(
-            torch.load(os.path.join(wandb.run.dir, 'model_pr_auc.pt')))
+            torch.load(os.path.join(wandb.run.dir, 'model_tss.pt')))
     except:
         print('No model loaded...')
 

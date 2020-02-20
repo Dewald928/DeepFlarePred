@@ -1,8 +1,7 @@
 program: main_TCN_Liu.py
 method: bayes
-description: Testing whether checkpointing on tss is better than pr_auc
 metric:
-  name: Validation_PR_AUC
+  name: Validation_TSS
   goal: maximize
 parameters:
   nhid:
@@ -18,7 +17,7 @@ parameters:
     max: 10
   epochs:
     distribution: constant
-    value: 150
+    value: 300
   levels:
     distribution: int_uniform
     min: 1
@@ -28,23 +27,29 @@ parameters:
     min: 0
     max: 1
   batch_size:
-    distribution: constant
-    value: 2048
+    distribution: categorical
+    values:
+      - 1024
+      - 2048
+      - 4096
   weight_decay:
     distribution: log_uniform
-    max: -2.3
     min: -13.8
+    max: -2.3
   learning_rate:
     distribution: log_uniform
-    max: -2.3
     min: -13.8
+    max: -2.3
+  seq_len:
+    distribution: int_uniform
+    min: 1
+    max: 20
   n_features:
-    distribution: constant
-    value: 20
-  num_workers:
-    distribution: constant
-    value: 9
+    distribution: categorical
+    values:
+      - 20
+      - 40
 early_terminate:
   type: hyperband
   eta: 3
-  min_iter: 20
+  min_iter: 3
