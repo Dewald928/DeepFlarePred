@@ -1,25 +1,35 @@
 import pandas as pd
 import torch
+import re
 import main_TCN_Liu
+from tabulate import tabulate
 
-filepath = './Data/Liu/' + args.flare_label+ '/'
-df = pd.read_csv(filepath + 'normalized_testing.csv')
+filepath = './Data/Liu/' + args.flare_label + '/'
+df = pd.read_csv(filepath + 'normalized_validation.csv')
+
+'''
+Basic Stats
+'''
+df.dropna(inplace=True)
+perc = [.20, .40, .60, .80]
+include = ['object', 'float', 'int']
+desc = df.describe(include=include)
+print(tabulate(desc, headers="keys", tablefmt="github"))  # github for markdown
 
 # get x flares
-m5_flares_test = df[df['flare'].str.match('M5') |
-                    df['flare'].str.match('M6') |
-                    df['flare'].str.match('M7') |
-                    df['flare'].str.match('M8') |
-                    df['flare'].str.match('M9') |
-                    df['flare'].str.match('X')]
-m5_flared_NOAA = m5_flares_test['NOAA'].unique()
+m5_flares = df[df['flare'].str.match('M5') |
+               df['flare'].str.match('M6') |
+               df['flare'].str.match('M7') |
+               df['flare'].str.match('M8') |
+               df['flare'].str.match('M9') |
+               df['flare'].str.match('X')]
+m5_flared_NOAA = m5_flares['NOAA'].unique()
 
 '''
 Infer values
 '''
-df = pd.read_csv(filepath + 'normalized_testing.csv')
 x_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
-x_flares_idx =df.index[df['NOAA'].isin(m5_flared_NOAA)].tolist()
+x_flares_idx = df.index[df['NOAA'].isin(m5_flared_NOAA)].tolist()
 test_sample_x = test_loader.dataset.data[x_flares_idx].to(device)
 inferred = model(test_sample_x)
 _, predicted = torch.max(inferred.data, 1)
@@ -33,11 +43,11 @@ concattable = pd.concat(
 Tensorboard
 '''
 from torch.utils.tensorboard import SummaryWriter
+
 writer = SummaryWriter('runs/test')
 # get some random training images
 dataiter = iter(train_loader)
 data, labels = dataiter.next()
 # inspect model
 writer.add_graph(model, data.to(device))
-writer.close()
-# tensorboard --logdir=runs
+writer.close()  # tensorboard --logdir=runs

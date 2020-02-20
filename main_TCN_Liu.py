@@ -242,7 +242,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=300,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -250,7 +250,7 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=3, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=2, metavar='N',
                         help='size of sequence (default: 1)')
 
     parser.add_argument('--levels', type=int, default=1,
@@ -289,7 +289,7 @@ if __name__ == '__main__':
                         help='restores model')
     parser.add_argument('--training', action='store_true', default=True,
                         help='trains and test model, if false only tests')
-    parser.add_argument('--num_workers', type=int, default=7,
+    parser.add_argument('--num_workers', type=int, default=9,
                         help='amount of gpu workers')
     args = parser.parse_args()
     wandb.config.update(args)
@@ -326,7 +326,7 @@ if __name__ == '__main__':
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
-    torch.backends.cudnn.deterministic = False
+    torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
     np.random.seed(args.seed)
 
