@@ -1,54 +1,58 @@
 program: main_TCN_Liu.py
-method: bayes
+method: grid
 metric:
   name: Validation_TSS
   goal: maximize
 parameters:
   nhid:
     distribution: constant
-    value: 20
+    value: 40
   seed:
-    distribution: int_uniform
-    min: 1
-    max: 5
+    distribution: categorical
+    values:
+      - 1
+      - 2
+      - 3
   ksize:
-    distribution: int_uniform
-    min: 2
-    max: 10
+    distribution: categorical
+    values:
+      - 2
+      - 3
+      - 4
   epochs:
     distribution: constant
-    value: 300
+    value: 200
   levels:
-    distribution: int_uniform
-    min: 1
-    max: 10
+    distribution: categorical
+    values:
+      - 1
+      - 2
+      - 3
+      - 4
   dropout:
-    distribution: uniform
-    min: 0
-    max: 1
+    distribution: constant
+    value: 0.78
   batch_size:
-    distribution: categorical
-    values:
-      - 1024
-      - 2048
-      - 4096
+    distribution: constant
+    value: 4096
   weight_decay:
-    distribution: log_uniform
-    min: -13.8
-    max: -2.3
+    distribution: constant
+    value: 0.00001
   learning_rate:
-    distribution: log_uniform
-    min: -13.8
-    max: -2.3
-  seq_len:
-    distribution: int_uniform
-    min: 1
-    max: 20
+    distribution: constant
+    value: 0.0002
   n_features:
+    distribution: constant
+    value: 40
+  seq_len:
     distribution: categorical
     values:
-      - 20
-      - 40
+      - 1
+      - 2
+      - 4
+      - 12
+      - 24
+      - 48
 early_terminate:
   type: hyperband
   eta: 3

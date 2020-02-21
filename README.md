@@ -103,7 +103,7 @@ Tested, but not sweeped
 
 
 ### Future plans
-* [ ] SHARP query and infer model pipeline
+* [ ] SHARP query and infer model pipeline (un-normalize data)
 * [ ] Incorporate SHARP magnetogram images like Chen article
 * [ ] Use GAN for detecting anomalies
 * [ ] MLP/LSTM attention models

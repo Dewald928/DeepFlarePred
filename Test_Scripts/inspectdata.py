@@ -25,6 +25,10 @@ m5_flares = df[df['flare'].str.match('M5') |
                df['flare'].str.match('X')]
 m5_flared_NOAA = m5_flares['NOAA'].unique()
 
+# get average duration of sunspot
+# get good sunspots (that move from left to right)
+
+
 '''
 Infer values
 '''
