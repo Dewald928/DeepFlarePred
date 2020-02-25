@@ -261,7 +261,7 @@ if __name__ == '__main__':
     parser.add_argument('--seq_len', type=int, default=2, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=1,
+    parser.add_argument('--levels', type=int, default=2,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
@@ -526,11 +526,10 @@ if __name__ == '__main__':
         Skorch training
     '''
     # inputs = torch.tensor(X_train_data).float()
-    # inputs = inputs.view(len(inputs), args.n_features, args.seq_len)
+    # inputs = inputs.permute(0, 2, 1)
     # labels = torch.tensor(y_train_tr).long()
     # X_valid_data = torch.tensor(X_valid_data).float()
-    # X_valid_data = X_valid_data.view(len(X_valid_data), args.n_features,
-    #                                  args.seq_len)
+    # X_valid_data = X_valid_data.permute(0, 2, 1)
     # y_valid_tr = torch.tensor(y_valid_tr).long()
     #
     # inputs = inputs.numpy()
@@ -553,6 +552,12 @@ if __name__ == '__main__':
     # checkpoint = Checkpoint(monitor='valid_tss_best',
     #                         dirname='./saved/models/exp1')
     #
+    # tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=8)
+    #
+    # model = TCN(args.n_features, nclass, channel_sizes,
+    #             kernel_size=kernel_size, dropout=dropout).to(device)
+    #
+    # # noinspection PyArgumentList
     # net = NeuralNetClassifier(model, max_epochs=args.epochs,
     #                           batch_size=args.batch_size,
     #                           criterion=nn.CrossEntropyLoss,
@@ -561,19 +566,46 @@ if __name__ == '__main__':
     #                           optimizer=torch.optim.Adam,
     #                           optimizer__lr=args.learning_rate,
     #                           optimizer__weight_decay=args.weight_decay,
-    #                           optimizer__amsgrad=True,
+    #                           optimizer__amsgrad=False,
     #                           device=device,
-    #                           # train_split=None, #die breek die logs
+    #                           # train_split=skorch.dataset.CVSplit(cv=tscv,
+    #                           #                                    stratified=False),
     #                           train_split=predefined_split(valid_ds),
     #                           callbacks=[valid_tss, valid_hss, earlystop,
-    #                                      checkpoint,
-    #                                      skorch_utils.LoggingCallback],
+    #                                      checkpoint]
+    #                                      # skorch_utils.LoggingCallback],
     #                           # iterator_train__shuffle=True, # batches
     #                           # shuffle=False
     #                           # warm_start=False
     #                           )
     #
     # net.fit(inputs, labels)
+
+    # net.initialize()
+    # net.load_params(checkpoint=checkpoint)
+    # score = sklearn.model_selection.cross_val_score(net, inputs, labels,
+    #                                                cv=tscv,
+    #                                                scoring=make_scorer(
+    #                                                    skorch_utils.get_tss))
+    # print(score)
+    #
+    # '''
+    # K-fold cross val
+    # '''
+    # net.initialize()
+    # net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+
+    # inputs = torch.tensor(X_test_data).float()
+    # labels = torch.tensor(y_test_tr).long()
+
+    # inputs = inputs.numpy()
+    # labels = labels.numpy()
+
+    # net.max_epochs = 0
+
+    # print(score)
+    # y_pred = cross_val_predict(net, inputs, labels, cv=2)
+    # print(y_pred)
     #
     # '''
     # Test Results
@@ -582,7 +614,7 @@ if __name__ == '__main__':
     # net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
     #
     # inputs = torch.tensor(X_test_data).float()
-    # inputs = inputs.view(len(inputs), args.n_features, args.seq_len)
+    # inputs = inputs.permute(0, 2, 1)
     # labels = torch.tensor(y_test_tr).long()
     #
     # inputs = inputs.numpy()

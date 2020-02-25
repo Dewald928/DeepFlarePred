@@ -3,9 +3,14 @@ import torch
 import re
 import main_TCN_Liu
 from tabulate import tabulate
+import seaborn as sns
+
 
 filepath = './Data/Liu/' + args.flare_label + '/'
-df = pd.read_csv(filepath + 'normalized_validation.csv')
+df_train = pd.read_csv(filepath + 'normalized_training.csv')
+df_val = pd.read_csv(filepath + 'normalized_validation.csv')
+df_test = pd.read_csv(filepath + 'normalized_testing.csv')
+df = pd.concat([df_train, df_val, df_test], axis=0)
 
 '''
 Basic Stats
@@ -14,7 +19,7 @@ df.dropna(inplace=True)
 perc = [.20, .40, .60, .80]
 include = ['object', 'float', 'int']
 desc = df.describe(include=include)
-print(tabulate(desc, headers="keys", tablefmt="github"))  # github for markdown
+# print(tabulate(desc, headers="keys", tablefmt="github"))  # github for markdown
 
 # get x flares
 m5_flares = df[df['flare'].str.match('M5') |
@@ -24,15 +29,28 @@ m5_flares = df[df['flare'].str.match('M5') |
                df['flare'].str.match('M9') |
                df['flare'].str.match('X')]
 m5_flared_NOAA = m5_flares['NOAA'].unique()
+x_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
 # get average duration of sunspot
+samples_per_AR = x_flares_data['NOAA'].value_counts()
+samples_per_AR.mean()
+
 # get good sunspots (that move from left to right)
 
+# flares/spots per year
+
+'''
+Seaborn data
+'''
+snsdata = x_flares_data.drop(['flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
+# sns.pairplot(snsdata, diag_kind='kde', plot_kws={'alpha': .2})
+sns.pairplot(snsdata.iloc[0:3, 0:4], diag_kind='kde', plot_kws={'alpha': .2})
+plt.show()
 
 '''
 Infer values
 '''
-x_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
+
 x_flares_idx = df.index[df['NOAA'].isin(m5_flared_NOAA)].tolist()
 test_sample_x = test_loader.dataset.data[x_flares_idx].to(device)
 inferred = model(test_sample_x)
