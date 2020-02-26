@@ -170,13 +170,13 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         torch.save(model.state_dict(), os.path.join(wandb.run.dir,
                                                     'model_tss.pt'))
         cp = '+'
-    if pr_auc >= best_pr_auc:  # change to required metric
-        best_pr_auc = pr_auc
-        best_tss = tss[0]
-        best_epoch = epoch
-        torch.save(model.state_dict(), os.path.join(wandb.run.dir,
-                                                    'model_pr_auc.pt'))
-        cp = '-'
+    # if pr_auc >= best_pr_auc:  # change to required metric
+    #     best_pr_auc = pr_auc
+    #     best_tss = tss[0]
+    #     best_epoch = epoch
+    #     torch.save(model.state_dict(), os.path.join(wandb.run.dir,
+    #                                                 'model_pr_auc.pt'))
+    #     cp = '-'
 
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
@@ -250,32 +250,32 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=4096, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=2, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=4, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=2,
+    parser.add_argument('--levels', type=int, default=3,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=2,
+    parser.add_argument('--ksize', type=int, default=4,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=20,
+    parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 20)')
-    parser.add_argument('--n_features', type=int, default=20,
+    parser.add_argument('--n_features', type=int, default=40,
                         help='number of features (default: 20)')
 
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
     #                     help='SGD momentum (default: 0.5)')
 
-    parser.add_argument('--dropout', type=float, default=0.7,
+    parser.add_argument('--dropout', type=float, default=0.78,
                         help='dropout applied to layers (default: 0.7)')
-    parser.add_argument('--weight_decay', type=float, default=0.0001,
+    parser.add_argument('--weight_decay', type=float, default=0.00001,
                         metavar='LR', help='L2 regularizing (default: 0.0001)')
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
@@ -285,7 +285,7 @@ if __name__ == '__main__':
     #                     0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=5,
+    parser.add_argument('--seed', type=int, default=2,
                         help='random seed (default: 1111)')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N',
                         help='report interval (default: 100')
