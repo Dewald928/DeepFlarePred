@@ -10,15 +10,15 @@ parameters:
   seed:
     distribution: categorical
     values:
-      - 1
-      - 2
-      - 3
+      - 10
+      - 20
+      - 30
+      - 40
+      - 50
   ksize:
     distribution: categorical
     values:
       - 2
-      - 3
-      - 4
   epochs:
     distribution: constant
     value: 200
@@ -26,9 +26,6 @@ parameters:
     distribution: categorical
     values:
       - 1
-      - 2
-      - 3
-      - 4
   dropout:
     distribution: constant
     value: 0.78
@@ -50,6 +47,11 @@ parameters:
       - 1
       - 2
       - 4
-      - 12
-      - 24
-      - 48
+      - 8
+      - 16
+      - 32
+      - 64
+      - 128
+
+
+
