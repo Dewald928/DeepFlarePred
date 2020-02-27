@@ -114,8 +114,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
                "Training_HSS": hss[0], "Training_BACC": bacc[0],
                "Training_Precision": precision[1],
                "Training_Recall": recall[1], "Training_Loss": loss_epoch,
-               "Training_F1": f1, "Training_PR_AUC": pr_auc},
-              step=epoch)
+               "Training_F1": f1, "Training_PR_AUC": pr_auc}, step=epoch)
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -158,8 +157,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
                "Validation_Precision": precision[1],
                "Validation_Recall": recall[1], "Validation_Loss": valid_loss,
-               "Validation_F1": f1, "Validation_PR_AUC": pr_auc},
-              step=epoch)
+               "Validation_F1": f1, "Validation_PR_AUC": pr_auc}, step=epoch)
 
     # checkpoint on best metric
     cp = ''
@@ -167,8 +165,8 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         best_pr_auc = pr_auc
         best_tss = tss[0]
         best_epoch = epoch
-        torch.save(model.state_dict(), os.path.join(wandb.run.dir,
-                                                    'model_tss.pt'))
+        torch.save(model.state_dict(),
+                   os.path.join(wandb.run.dir, 'model_tss.pt'))
         cp = '+'
     # if pr_auc >= best_pr_auc:  # change to required metric
     #     best_pr_auc = pr_auc
@@ -287,8 +285,6 @@ if __name__ == '__main__':
                         help='optimizer to use (default: Adam)')
     parser.add_argument('--seed', type=int, default=2,
                         help='random seed (default: 1111)')
-    parser.add_argument('--log-interval', type=int, default=20, metavar='N',
-                        help='report interval (default: 100')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
     parser.add_argument('--early_stop', action='store_true', default=True,
@@ -382,8 +378,8 @@ if __name__ == '__main__':
                 'test': preprocess_customdataset(X_test_data_tensor,
                                                  y_test_tr_tensor)}
 
-    kwargs = {'num_workers': args.num_workers, 'pin_memory': True} if \
-        use_cuda else {}
+    kwargs = {'num_workers': args.num_workers,
+              'pin_memory': True} if use_cuda else {}
 
     train_loader = torch.utils.data.DataLoader(datasets['train'],
                                                args.batch_size, shuffle=False,
@@ -401,8 +397,7 @@ if __name__ == '__main__':
     dropout = args.dropout
 
     model = TCN(args.n_features, nclass, channel_sizes,
-                kernel_size=kernel_size,
-                dropout=dropout).to(device)
+                kernel_size=kernel_size, dropout=dropout).to(device)
     wandb.watch(model, log='all')
     summary(model, input_size=(args.n_features, args.seq_len))
 
@@ -457,8 +452,8 @@ if __name__ == '__main__':
             epoch += 1
 
     wandb.log(
-        {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
-            best_epoch, 'Best_Validation_PR_AUC': best_pr_auc})
+        {"Best_Validation_TSS": best_tss, "Best_Validation_epoch": best_epoch,
+         'Best_Validation_PR_AUC': best_pr_auc})
 
     # reload best tss checkpoint and test
     print("[INFO] Loading model at epoch:" + str(best_epoch))
@@ -502,19 +497,24 @@ if __name__ == '__main__':
     '''
     # todo interpret on test set?
     #
-    # test_loader_interpret = torch.utils.data.DataLoader(datasets['test'], int(
+    # test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
+    # int(
     #     args.batch_size / 6), shuffle=False, drop_last=False)
     #
-    # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
+    # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg =
+    # interpreter.interpret_model(
     #     model, device, test_loader_interpret, args.n_features, args)
     #
     # interpreter.visualize_importance(
-    #     np.array(feature_names[start_feature:start_feature + args.n_features]),
-    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0), args.n_features,
+    #     np.array(feature_names[start_feature:start_feature +
+    #     args.n_features]),
+    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
+    #     args.n_features,
     #     title="Integrated Gradient Features")
     #
     # interpreter.visualize_importance(
-    #     np.array(feature_names[start_feature:start_feature + args.n_features]),
+    #     np.array(feature_names[start_feature:start_feature +
+    #     args.n_features]),
     #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
     #     args.n_features, title="Saliency Features")
     #
@@ -569,7 +569,8 @@ if __name__ == '__main__':
     #                           optimizer__amsgrad=False,
     #                           device=device,
     #                           # train_split=skorch.dataset.CVSplit(cv=tscv,
-    #                           #                                    stratified=False),
+    #                           #
+    #                           stratified=False),
     #                           train_split=predefined_split(valid_ds),
     #                           callbacks=[valid_tss, valid_hss, earlystop,
     #                                      checkpoint]

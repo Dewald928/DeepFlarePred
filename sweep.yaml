@@ -18,14 +18,14 @@ parameters:
   ksize:
     distribution: categorical
     values:
-      - 2
+      - 4
   epochs:
     distribution: constant
     value: 200
   levels:
     distribution: categorical
     values:
-      - 1
+      - 3
   dropout:
     distribution: constant
     value: 0.78
