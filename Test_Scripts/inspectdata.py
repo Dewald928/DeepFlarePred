@@ -32,8 +32,10 @@ x_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
 # get average duration of sunspot
 samples_per_AR = df['NOAA'].value_counts()
+# samples_per_AR = x_flares_data.value_counts()
 samples_per_AR.mean()
 samples_per_AR.std()
+samples_per_AR.min()
 # / (np.sqrt(len(samples_per_AR)))
 
 # flares/spots per year

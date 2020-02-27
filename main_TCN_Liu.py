@@ -168,13 +168,12 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         torch.save(model.state_dict(),
                    os.path.join(wandb.run.dir, 'model_tss.pt'))
         cp = '+'
-    # if pr_auc >= best_pr_auc:  # change to required metric
-    #     best_pr_auc = pr_auc
-    #     best_tss = tss[0]
-    #     best_epoch = epoch
-    #     torch.save(model.state_dict(), os.path.join(wandb.run.dir,
-    #                                                 'model_pr_auc.pt'))
-    #     cp = '-'
+    if pr_auc >= best_pr_auc:  # saves best auc model
+        # best_pr_auc = pr_auc
+        # best_tss = tss[0]
+        # best_epoch = epoch
+        torch.save(model.state_dict(), os.path.join(wandb.run.dir,
+                                                    'model_pr_auc.pt'))
 
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
@@ -248,7 +247,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -462,7 +461,9 @@ if __name__ == '__main__':
         model.load_state_dict(
             torch.load(os.path.join(wandb.run.dir, 'model_tss.pt')))
     except:
-        print('No model loaded...')
+        print('No model loaded... Loading default')
+        model.load_state_dict(
+            torch.load(os.path.join('saved/models/TCN_4_3_8_0.91', 'model_tss.pt')))
 
     test(model, device, test_loader, criterion)
 
