@@ -290,7 +290,7 @@ if __name__ == '__main__':
                         help='Stops training if overfitting')
     parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')
-    parser.add_argument('--training', action='store_true', default=True,
+    parser.add_argument('--training', action='store_false', default=True,
                         help='trains and test model, if false only tests')
     parser.add_argument('--num_workers', type=int, default=9,
                         help='amount of gpu workers')
@@ -423,17 +423,18 @@ if __name__ == '__main__':
     best_tss = 0.0
     best_pr_auc = 0.0
     best_epoch = 0
+    epoch = 0
 
-    print("Training Network...")
+    print('{:<11s}{:^9s}{:^9s}{:^9s}'
+          '{:^9s}{:^9s}{:^9s}{:^9s}'
+          '{:^9s}{:^9s}'
+          '{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch', 'Runtime', 'TSS',
+                                      'PR_AUC', 'HSS', 'BACC', 'ACC',
+                                      'Precision', 'Recall', 'F1', 'Loss',
+                                      'CP'))
+
     if args.training:
-        epoch = 0
-        print('{:<11s}{:^9s}{:^9s}{:^9s}'
-              '{:^9s}{:^9s}{:^9s}{:^9s}'
-              '{:^9s}{:^9s}'
-              '{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch', 'Runtime',
-                                          'TSS', 'PR_AUC', 'HSS', 'BACC',
-                                          'ACC', 'Precision', 'Recall', 'F1',
-                                          'Loss', 'CP'))
+
         while epoch < args.epochs:
             train(model, device, train_loader, optimizer, epoch, criterion)
             stopping_metric, best_tss, best_pr_auc, best_epoch = validate(
