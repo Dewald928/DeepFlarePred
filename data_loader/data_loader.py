@@ -247,3 +247,21 @@ def label_transform(data):
     encoder.fit(data)
     encoded_Y = encoder.transform(data)
     return encoded_Y
+
+
+def partition_10_folds(X, y, num_of_fold):
+    num = len(X)
+    index = [i for i in range(num)]
+    # np.random.seed(123)
+    # np.random.shuffle(index)
+    X_output = []
+    y_output = []
+    num_in_each_fold = round(num / num_of_fold)
+    for i in range(num_of_fold):
+        if i == (num_of_fold - 1):
+            idx = index[num_in_each_fold * (num_of_fold - 1):]
+        else:
+            idx = index[num_in_each_fold * i : num_in_each_fold * (i + 1)]
+        X_output.append(X[idx])
+        y_output.append(y[idx])
+    return X_output, y_output

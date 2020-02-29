@@ -40,6 +40,8 @@ from interpret import interpreter
 import wandb
 from torchsummary import summary
 
+import crossval_fold
+
 '''
 TCN with n residual blocks will have a receptive field of
 1 + 2*(kernel_size-1)*(2^n-1)
@@ -69,7 +71,8 @@ class TCN(nn.Module):
         return self.linear(y1[:, :, -1])
 
 
-def train(model, device, train_loader, optimizer, epoch, criterion):
+def train(model, device, train_loader, optimizer, epoch, criterion, args,
+          nclass=2):
     start = time.time()
     model.train()
     confusion_matrix = torch.zeros(nclass, nclass)
@@ -94,7 +97,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
         = metric.calculate_metrics(confusion_matrix, nclass)
 
     # calculate predicted values
-    yhat = infer_model(model, device, train_loader)
+    yhat = infer_model(model, device, train_loader, args)
 
     # PR curves on train
     precision_arr, recall_arr, f1, pr_auc \
@@ -116,9 +119,11 @@ def train(model, device, train_loader, optimizer, epoch, criterion):
                "Training_Recall": recall[1], "Training_Loss": loss_epoch,
                "Training_F1": f1, "Training_PR_AUC": pr_auc}, step=epoch)
 
+    return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
+
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
-             best_pr_auc, best_epoch):
+             best_pr_auc, best_epoch, args, nclass=2):
     start = time.time()
     model.eval()
     valid_loss = 0
@@ -145,7 +150,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         = metric.calculate_metrics(confusion_matrix, nclass)
 
     # calculate predicted values
-    yhat = infer_model(model, device, valid_loader)
+    yhat = infer_model(model, device, valid_loader, args)
 
     # PR curves on train
     precision_arr, recall_arr, f1, pr_auc \
@@ -184,10 +189,10 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                                           valid_loss, cp))
 
     stopping_metric = best_tss
-    return stopping_metric, best_tss, best_pr_auc, best_epoch
+    return stopping_metric, best_tss, best_pr_auc, best_epoch, recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
 
 
-def test(model, device, test_loader, criterion):
+def test(model, device, test_loader, criterion, epoch, nclass=2):
     start = time.time()
     model.eval()
     test_loss = 0
@@ -226,9 +231,13 @@ def test(model, device, test_loader, criterion):
          "Test_BACC": bacc[0], "Test_Precision": precision[1],
          "Test_Recall": recall[1], "Test_Loss": test_loss})
 
+    return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
 
-def infer_model(model, device, data_loader):
-    """ :return prediction of inferred data loader"""
+
+def infer_model(model, device, data_loader, args):
+    """    :param args:
+         :return prediction of inferred data loader
+    """
     model.eval()
     output_arr = []
     with torch.no_grad():
@@ -247,7 +256,7 @@ if __name__ == '__main__':
 
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -299,7 +308,6 @@ if __name__ == '__main__':
 
     # initialize parameters
     filepath = './Data/Liu/' + args.flare_label + '/'
-    num_of_fold = 10
     # n_features = 0
     if args.flare_label == 'M5':
         n_features = args.n_features  # 20 original
@@ -314,6 +322,7 @@ if __name__ == '__main__':
     start_feature = 5
     mask_value = 0
     nclass = 2
+    num_of_fold = 10
 
     # GPU check
     use_cuda = args.cuda and torch.cuda.is_available()
@@ -339,18 +348,30 @@ if __name__ == '__main__':
         flare_label=args.flare_label, series_len=args.seq_len,
         start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
+    X_train_fold, y_train_fold = data_loader.partition_10_folds(X_train_data,
+                                                     y_train_data,
+                                                    num_of_fold)
 
     X_valid_data, y_valid_data = data_loader.load_data(
         datafile=filepath + 'normalized_validation.csv',
         flare_label=args.flare_label, series_len=args.seq_len,
         start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
+    X_valid_fold, y_valid_fold = data_loader.partition_10_folds(
+        X_valid_data, y_valid_data,
+                                                    num_of_fold)
 
     X_test_data, y_test_data = data_loader.load_data(
         datafile=filepath + 'normalized_testing.csv',
         flare_label=args.flare_label, series_len=args.seq_len,
         start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
+    X_test_fold, y_test_fold = data_loader.partition_10_folds(X_test_data,
+                                                              y_test_data, num_of_fold)
+
+    crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
+                                  X_valid_fold, y_valid_fold, X_test_fold,
+                                  y_test_fold, args, nclass, device)
 
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
@@ -436,10 +457,11 @@ if __name__ == '__main__':
     if args.training:
 
         while epoch < args.epochs:
-            train(model, device, train_loader, optimizer, epoch, criterion)
+            train_tss = train(model, device, train_loader, optimizer, epoch,
+                              criterion, args)[5]
             stopping_metric, best_tss, best_pr_auc, best_epoch = validate(
                 model, device, valid_loader, criterion, epoch, best_tss,
-                best_pr_auc, best_epoch)
+                best_pr_auc, best_epoch, args)[0:4]
 
             if early_stop.step(stopping_metric) and args.early_stop:
                 print('[INFO] Early Stopping')
@@ -466,27 +488,27 @@ if __name__ == '__main__':
         model.load_state_dict(
             torch.load(os.path.join('saved/models/TCN_4_3_8_0.91', 'model_tss.pt')))
 
-    test(model, device, test_loader, criterion)
+    test_tss = test(model, device, test_loader, criterion, args)[5]
 
     '''
     PR Curves
     '''
     # get predicted output probabilities => numpy array
-    yhat = infer_model(model, device, train_loader)
+    yhat = infer_model(model, device, train_loader, args)
 
     # PR curves on test set
     precision, recall, f1, pr_auc \
         = metric.plot_precision_recall(model, yhat, y_train_tr_tensor, 'Train')
 
     # get predicted output probabilities => numpy array
-    yhat = infer_model(model, device, valid_loader)
+    yhat = infer_model(model, device, valid_loader, args)
 
     # PR curves on test set
     precision, recall, f1, pr_auc\
         = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
                                        'Validation')
     # get predicted output probabilities => numpy array
-    yhat = infer_model(model, device, test_loader)
+    yhat = infer_model(model, device, test_loader, args)
 
     # PR curves on test set
     precision, recall, f1, pr_auc\
@@ -595,14 +617,6 @@ if __name__ == '__main__':
     # '''
     # K-fold cross val
     # '''
-    # net.initialize()
-    # net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
-
-    # inputs = torch.tensor(X_test_data).float()
-    # labels = torch.tensor(y_test_tr).long()
-
-    # inputs = inputs.numpy()
-    # labels = labels.numpy()
 
     # net.max_epochs = 0
 

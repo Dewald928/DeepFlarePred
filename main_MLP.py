@@ -184,7 +184,7 @@ class MLP(nn.Module):
         return X.squeeze(-1)
 
 def train(model, device, train_loader, optimizer, epoch, criterion):
-    model.train()
+    model.train(,,
     confusion_matrix = torch.zeros(nclass, nclass)
     loss_epoch = 0
 
