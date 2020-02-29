@@ -161,6 +161,10 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             best_epoch = 0
             epoch = 0
 
+            val_recall, val_precision, val_accuracy,\
+            val_bacc, val_hss, val_tss = 0, 0, 0, 0, 0, 0
+
+
             print('{:<11s}{:^9s}{:^9s}{:^9s}'
                   '{:^9s}{:^9s}{:^9s}{:^9s}'
                   '{:^9s}{:^9s}'
@@ -171,7 +175,6 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                                               'Loss', 'CP'))
 
             if args.training:
-
                 while epoch < args.epochs:
                     train_recall, train_precision, train_accuracy, \
                     train_bacc, train_hss, train_tss = main_TCN_Liu.train(
@@ -212,12 +215,33 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             test_hss, test_tss = main_TCN_Liu.test(model, device, test_loader,
                                                    criterion, epoch)
 
+            val_recall1list.append(val_recall)
+            val_precision1list.append(val_precision)
+            val_acclist.append(val_accuracy)
+            val_bacclist.append(val_bacc)
+            val_tsslist.append(val_tss)
+            val_hsslist.append(val_hss)
             test_recall1list.append(test_recall)
             test_precision1list.append(test_precision)
             test_acclist.append(test_accuracy)
             test_bacclist.append(test_bacc)
-            test_tsslist.append(test_hss)
-            test_hsslist.append(test_tss)
+            test_tsslist.append(test_tss)
+            test_hsslist.append(test_hss)
+
+
+
+    avg_recall0_list = []
+    std_recall0_list = []
+    avg_precision0_list = []
+    std_precision0_list = []
+    avg_acc_list = []
+    std_acc_list = []
+    avg_bacc_list = []
+    std_bacc_list = []
+    avg_hss_list = []
+    std_hss_list = []
+    avg_tss_list = []
+    std_tss_list = []
 
 
 
