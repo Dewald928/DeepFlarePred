@@ -195,9 +195,9 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                         break
                     epoch += 1
 
-            # wandb.log({"Best_Validation_TSS": best_tss,
-            #            "Best_Validation_epoch": best_epoch,
-            #            'Best_Validation_PR_AUC': best_pr_auc})
+            wandb.log({"Best_Validation_TSS": best_tss,
+                       "Best_Validation_epoch": best_epoch,
+                       'Best_Validation_PR_AUC': best_pr_auc})
 
             # reload best tss checkpoint and test
             print("[INFO] Loading model at epoch:" + str(best_epoch))
