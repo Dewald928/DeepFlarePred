@@ -253,7 +253,7 @@ def partition_10_folds(X, y, num_of_fold):
     num = len(X)
     index = [i for i in range(num)]
     # np.random.seed(123)
-    # np.random.shuffle(index)
+    np.random.shuffle(index)
     X_output = []
     y_output = []
     num_in_each_fold = round(num / num_of_fold)
