@@ -1,57 +1,44 @@
-program: main_TCN_Liu.py
 method: grid
 metric:
-  name: Validation_TSS
   goal: maximize
+  name: Validation_TSS
 parameters:
+  batch_size:
+    distribution: constant
+    value: 4096
+  dropout:
+    distribution: constant
+    value: 0.78
+  epochs:
+    distribution: constant
+    value: 200
+  ksize:
+    distribution: constant
+    value: 3
+  learning_rate:
+    distribution: constant
+    value: 0.0002
+  levels:
+    distribution: constant
+    value: 7
+  n_features:
+    distribution: constant
+    value: 40
   nhid:
     distribution: constant
     value: 40
   seed:
     distribution: categorical
     values:
-      - 10
-      - 20
-      - 30
-      - 40
-      - 50
-  ksize:
-    distribution: categorical
-    values:
-      - 4
-  epochs:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+  seq_len:
     distribution: constant
-    value: 200
-  levels:
-    distribution: categorical
-    values:
-      - 3
-  dropout:
-    distribution: constant
-    value: 0.78
-  batch_size:
-    distribution: constant
-    value: 4096
+    value: 7
   weight_decay:
     distribution: constant
-    value: 0.00001
-  learning_rate:
-    distribution: constant
-    value: 0.0002
-  n_features:
-    distribution: constant
-    value: 40
-  seq_len:
-    distribution: categorical
-    values:
-      - 1
-      - 2
-      - 4
-      - 8
-      - 16
-      - 32
-      - 64
-      - 128
-
-
-
+    value: 1e-05
+program: main_TCN_Liu.py

@@ -51,8 +51,9 @@ Seaborn data
 # todo note that this is for flares that actually erupted eventually
 snsdata = x_flares_data.drop(['flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
 # sns.pairplot(snsdata, diag_kind='kde', plot_kws={'alpha': .2})
-sns_plot = sns.pairplot(snsdata, hue='label', kind='reg')
-sns_plot.savefig("saved/figures/snsplot_flaredARs_reg.png")
+sns_plot = sns.pairplot(snsdata, hue='label', hue_order=['negative',
+                                                         'positive'])
+sns_plot.savefig("saved/figures/snsplot_flaredARs_order.png")
 # sns_plot.fig.show()
 
 box_plot = sns.catplot(x='label', y='TOTUSJH', data=snsdata, kind='box')

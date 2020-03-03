@@ -260,20 +260,20 @@ if __name__ == '__main__':
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=2048, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=4096, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=4, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=7, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=3,
+    parser.add_argument('--levels', type=int, default=7,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=4,
+    parser.add_argument('--ksize', type=int, default=3,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=40,
+    parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
-    parser.add_argument('--n_features', type=int, default=40,
+    parser.add_argument('--n_features', type=int, default=20,
                         help='number of features (default: 20)')
 
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -291,7 +291,7 @@ if __name__ == '__main__':
     #                     0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=2,
+    parser.add_argument('--seed', type=int, default=4,
                         help='random seed (default: 1111)')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
@@ -369,9 +369,9 @@ if __name__ == '__main__':
     X_test_fold, y_test_fold = data_loader.partition_10_folds(X_test_data,
                                                               y_test_data, num_of_fold)
 
-    crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
-                                  X_valid_fold, y_valid_fold, X_test_fold,
-                                  y_test_fold, args, nclass, device)
+    # crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
+    #                               X_valid_fold, y_valid_fold, X_test_fold,
+    #                               y_test_fold, args, nclass, device)
 
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
@@ -488,7 +488,7 @@ if __name__ == '__main__':
         model.load_state_dict(
             torch.load(os.path.join('saved/models/TCN_4_3_8_0.91', 'model_tss.pt')))
 
-    test_tss = test(model, device, test_loader, criterion, args)[5]
+    test_tss = test(model, device, test_loader, criterion, epoch)[5]
 
     '''
     PR Curves
@@ -578,9 +578,6 @@ if __name__ == '__main__':
     #
     # tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=8)
     #
-    # model = TCN(args.n_features, nclass, channel_sizes,
-    #             kernel_size=kernel_size, dropout=dropout).to(device)
-    #
     # # noinspection PyArgumentList
     # net = NeuralNetClassifier(model, max_epochs=args.epochs,
     #                           batch_size=args.batch_size,
@@ -593,9 +590,9 @@ if __name__ == '__main__':
     #                           optimizer__amsgrad=False,
     #                           device=device,
     #                           # train_split=skorch.dataset.CVSplit(cv=tscv,
-    #                           #
-    #                           stratified=False),
-    #                           train_split=predefined_split(valid_ds),
+    #                           # stratified=False),
+    #                           # train_split=predefined_split(valid_ds),
+    #                           # train_split=None,
     #                           callbacks=[valid_tss, valid_hss, earlystop,
     #                                      checkpoint]
     #                                      # skorch_utils.LoggingCallback],
@@ -604,8 +601,13 @@ if __name__ == '__main__':
     #                           # warm_start=False
     #                           )
     #
-    # net.fit(inputs, labels)
+    # score = sklearn.model_selection.cross_validate(net, inputs, labels,
+    #                                                scoring=make_scorer(
+    #                                                    skorch_utils.get_tss),
+    #                                                cv=8)
 
+    # net.fit(inputs, labels)
+    #
     # net.initialize()
     # net.load_params(checkpoint=checkpoint)
     # score = sklearn.model_selection.cross_val_score(net, inputs, labels,
@@ -613,16 +615,16 @@ if __name__ == '__main__':
     #                                                scoring=make_scorer(
     #                                                    skorch_utils.get_tss))
     # print(score)
-    #
+
     # '''
     # K-fold cross val
     # '''
-
-    # net.max_epochs = 0
-
-    # print(score)
-    # y_pred = cross_val_predict(net, inputs, labels, cv=2)
-    # print(y_pred)
+    #
+    # # net.max_epochs = 0
+    # #
+    # # print(score)
+    # # y_pred = cross_val_predict(net, inputs, labels, cv=2)
+    # # print(y_pred)
     #
     # '''
     # Test Results
