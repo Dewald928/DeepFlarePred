@@ -273,7 +273,7 @@ if __name__ == '__main__':
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
-    parser.add_argument('--n_features', type=int, default=20,
+    parser.add_argument('--n_features', type=int, default=40,
                         help='number of features (default: 20)')
 
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -349,17 +349,17 @@ if __name__ == '__main__':
         start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
     X_train_fold, y_train_fold = data_loader.partition_10_folds(X_train_data,
-                                                     y_train_data,
-                                                    num_of_fold)
+                                                                y_train_data,
+                                                                num_of_fold)
 
     X_valid_data, y_valid_data = data_loader.load_data(
         datafile=filepath + 'normalized_validation.csv',
         flare_label=args.flare_label, series_len=args.seq_len,
         start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
-    X_valid_fold, y_valid_fold = data_loader.partition_10_folds(
-        X_valid_data, y_valid_data,
-                                                    num_of_fold)
+    X_valid_fold, y_valid_fold = data_loader.partition_10_folds(X_valid_data,
+                                                                y_valid_data,
+                                                                num_of_fold)
 
     X_test_data, y_test_data = data_loader.load_data(
         datafile=filepath + 'normalized_testing.csv',
@@ -367,7 +367,8 @@ if __name__ == '__main__':
         start_feature=start_feature, n_features=args.n_features,
         mask_value=mask_value)
     X_test_fold, y_test_fold = data_loader.partition_10_folds(X_test_data,
-                                                              y_test_data, num_of_fold)
+                                                              y_test_data,
+                                                              num_of_fold)
 
     # crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
     #                               X_valid_fold, y_valid_fold, X_test_fold,
@@ -440,7 +441,7 @@ if __name__ == '__main__':
     #     print(list(model.parameters())[i].size())
 
     # early stopping check
-    early_stop = early_stopping.EarlyStopping(mode='max', patience=30)
+    early_stop = early_stopping.EarlyStopping(mode='max', patience=40)
     best_tss = 0.0
     best_pr_auc = 0.0
     best_epoch = 0
