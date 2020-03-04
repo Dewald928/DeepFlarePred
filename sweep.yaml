@@ -11,13 +11,17 @@ parameters:
     value: 0.78
   epochs:
     distribution: constant
-    value: 200
+    value: 300
   ksize:
     distribution: constant
     value: 3
   learning_rate:
-    distribution: constant
-    value: 0.0002
+    distribution: categorical
+    values:
+      - 0.01
+      - 0.001
+      - 0.0001
+      - 0.00001
   levels:
     distribution: constant
     value: 7
