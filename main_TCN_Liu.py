@@ -117,7 +117,8 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
                "Training_HSS": hss[0], "Training_BACC": bacc[0],
                "Training_Precision": precision[1],
                "Training_Recall": recall[1], "Training_Loss": loss_epoch,
-               "Training_F1": f1, "Training_PR_AUC": pr_auc}, step=epoch)
+               "Training_F1": f1, "Training_PR_AUC": pr_auc, "Train_CM":
+             confusion_matrix}, step=epoch)
 
     return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
 
@@ -162,7 +163,9 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
                "Validation_Precision": precision[1],
                "Validation_Recall": recall[1], "Validation_Loss": valid_loss,
-               "Validation_F1": f1, "Validation_PR_AUC": pr_auc}, step=epoch)
+               "Validation_F1": f1, "Validation_PR_AUC": pr_auc,
+               "Validation_CM":
+             confusion_matrix}, step=epoch)
 
     # checkpoint on best metric
     cp = ''
@@ -229,7 +232,8 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
          "Test_BACC": bacc[0], "Test_Precision": precision[1],
-         "Test_Recall": recall[1], "Test_Loss": test_loss})
+         "Test_Recall": recall[1], "Test_Loss": test_loss, "Test_CM":
+             confusion_matrix})
 
     return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
 
@@ -252,11 +256,9 @@ def infer_model(model, device, data_loader, args):
 
 
 if __name__ == '__main__':
-    wandb.init(project="liu_pytorch_tcn", notes='TCN')
-
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -267,11 +269,11 @@ if __name__ == '__main__':
     parser.add_argument('--seq_len', type=int, default=7, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=7,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=3,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=20,
+    parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 20)')
     parser.add_argument('--n_features', type=int, default=40,
                         help='number of features (default: 20)')
@@ -304,7 +306,9 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=9,
                         help='amount of gpu workers')
     args = parser.parse_args()
+    wandb.init(project="liu_pytorch_tcn", notes='TCN', tags='debug')
     wandb.config.update(args)
+
 
     # initialize parameters
     filepath = './Data/Liu/' + args.flare_label + '/'

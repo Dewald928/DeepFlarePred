@@ -1,48 +1,48 @@
-method: grid
+method: bayes
 metric:
   goal: maximize
   name: Validation_TSS
 parameters:
   batch_size:
-    distribution: constant
-    value: 4096
+    distribution: categorical
+    values:
+    - 4096
   dropout:
-    distribution: constant
-    value: 0.78
+    distribution: uniform
+    max: 1
+    min: 0
   epochs:
     distribution: constant
     value: 300
   ksize:
-    distribution: constant
-    value: 3
+    distribution: int_uniform
+    max: 10
+    min: 2
   learning_rate:
+    distribution: log_uniform
+    max: -2.3
+    min: -11.5
+  levels:
+    distribution: int_uniform
+    max: 10
+    min: 1
+  n_features:
     distribution: categorical
     values:
-      - 0.01
-      - 0.001
-      - 0.0001
-      - 0.00001
-  levels:
-    distribution: constant
-    value: 7
-  n_features:
-    distribution: constant
-    value: 40
+    - 20
   nhid:
     distribution: constant
     value: 40
   seed:
-    distribution: categorical
-    values:
-    - 1
-    - 2
-    - 3
-    - 4
-    - 5
+    distribution: int_uniform
+    max: 5
+    min: 1
   seq_len:
-    distribution: constant
-    value: 7
+    distribution: int_uniform
+    max: 24
+    min: 1
   weight_decay:
-    distribution: constant
-    value: 1e-05
+    distribution: log_uniform
+    max: -2.3
+    min: -13.8
 program: main_TCN_Liu.py

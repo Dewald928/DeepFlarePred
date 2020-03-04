@@ -50,9 +50,8 @@ Seaborn data
 '''
 # todo note that this is for flares that actually erupted eventually
 snsdata = x_flares_data.drop(['flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
-# sns.pairplot(snsdata, diag_kind='kde', plot_kws={'alpha': .2})
-sns_plot = sns.pairplot(snsdata, hue='label', hue_order=['negative',
-                                                         'positive'])
+sns_plot = sns.pairplot(snsdata, hue='label', hue_order=['Negative',
+                                                         'Positive'])
 sns_plot.savefig("saved/figures/snsplot_flaredARs_order.png")
 # sns_plot.fig.show()
 
@@ -73,6 +72,16 @@ snsdata_no['flared'] = 'Negative'
 snsdata_all = pd.concat([snsdata, snsdata_no.iloc[0:8021, :]])
 sns_all_plot = sns.pairplot(snsdata_all, hue='flared')
 sns_all_plot.savefig("saved/figures/snsplot_flarevsno.png")
+
+# sns testing
+df_iris = sns.load_dataset('iris')
+cmap = sns.cubehelix_palette(as_cmap=True, dark=0, light=1, reverse=True)
+g = sns.PairGrid(snsdata, hue='label', hue_order=['Negative', 'Positive'])
+g.map_upper(plt.scatter)
+g.map_lower(sns.kdeplot)
+g.map_diag(sns.kdeplot)
+g.savefig("saved/figures/snsplot_flaredARs_mixed.png")
+# plt.show()
 
 '''
 Infer values
