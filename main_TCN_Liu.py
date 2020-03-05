@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 from sklearn.metrics import make_scorer
 import sklearn.metrics
+import seaborn as sn
 
 import sys
 import os
@@ -36,6 +37,7 @@ from utils import early_stopping
 from model.tcn import TemporalConvNet
 from model import metric
 from interpret import interpreter
+from utils import confusion_matrix_plot
 
 import wandb
 from torchsummary import summary
@@ -117,8 +119,8 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
                "Training_HSS": hss[0], "Training_BACC": bacc[0],
                "Training_Precision": precision[1],
                "Training_Recall": recall[1], "Training_Loss": loss_epoch,
-               "Training_F1": f1, "Training_PR_AUC": pr_auc, "Train_CM":
-             confusion_matrix}, step=epoch)
+               "Training_F1": f1, "Training_PR_AUC": pr_auc,
+               "Train_CM": confusion_matrix}, step=epoch)
 
     return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
 
@@ -164,8 +166,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                "Validation_Precision": precision[1],
                "Validation_Recall": recall[1], "Validation_Loss": valid_loss,
                "Validation_F1": f1, "Validation_PR_AUC": pr_auc,
-               "Validation_CM":
-             confusion_matrix}, step=epoch)
+               "Validation_CM": confusion_matrix}, step=epoch)
 
     # checkpoint on best metric
     cp = ''
@@ -229,11 +230,16 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
                                   hss[0], bacc[0], accuracy[0], precision[1],
                                   recall[1], ' ', test_loss))
 
+    # get confusion matrix plot
+    df_cm = pd.DataFrame(confusion_matrix.numpy(), ['Negative', 'Positive'],
+                         ['Negative', 'Positive'])
+    cm_plot = confusion_matrix_plot.pretty_plot_confusion_matrix(df_cm)
+
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
          "Test_BACC": bacc[0], "Test_Precision": precision[1],
-         "Test_Recall": recall[1], "Test_Loss": test_loss, "Test_CM":
-             confusion_matrix})
+         "Test_Recall": recall[1], "Test_Loss": test_loss,
+         "Test_Confusion_Matrix": wandb.Image(cm_plot)})
 
     return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
 
@@ -258,7 +264,7 @@ def infer_model(model, device, data_loader, args):
 if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=2,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -288,9 +294,6 @@ if __name__ == '__main__':
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
 
-    # parser.add_argument('--clip', type=float, default=0.2,
-    #                     help='gradient clip, -1 means no clip (default:
-    #                     0.2)')
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
     parser.add_argument('--seed', type=int, default=4,
@@ -305,8 +308,10 @@ if __name__ == '__main__':
                         help='trains and test model, if false only tests')
     parser.add_argument('--num_workers', type=int, default=9,
                         help='amount of gpu workers')
+    parser.add_argument('--tag', type=str, default='',
+                        help='tag when debugging')
     args = parser.parse_args()
-    wandb.init(project="liu_pytorch_tcn", notes='TCN', tags='debug')
+    wandb.init(project="liu_pytorch_tcn", notes='TCN', tags=args.tag)
     wandb.config.update(args)
 
 
