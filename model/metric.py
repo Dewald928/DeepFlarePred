@@ -113,16 +113,22 @@ def get_pr_auc(yhat, ytrue):
     _, ypred = torch.max(torch.tensor(yhat), 1)
     ypred = ypred.cpu().detach().numpy()
     # predict class values
-    precision, recall, _ = precision_recall_curve(ytrue, pos_probs)
+    precision, recall, thresholds = precision_recall_curve(ytrue, pos_probs)
     f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
 
-    return precision, recall, f1, pr_auc
+    return precision, recall, f1, pr_auc, thresholds
 
 
 def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
     model.eval()
     with torch.no_grad():
-        precision, recall, f1, pr_auc = get_pr_auc(yhat, ytrue)
+        precision, recall, f1, pr_auc, thresholds = get_pr_auc(yhat, ytrue)
+        # convert to f score
+        fscore = (2 * precision * recall) / (precision + recall)
+        fscore = np.nan_to_num(fscore)
+        # locate the index of the largest f score
+        ix = np.argmax(fscore)
+        print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], fscore[ix]))
         # summarize scores
         print(dataset + ' TCN: f1=%.3f pr_auc=%.3f' % (f1, pr_auc))
         wandb.log({'Model_' + dataset + '_PR_AUC': pr_auc,
@@ -135,9 +141,11 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
         # plot the precision-recall curves
         no_skill = len(ytrue[ytrue == 1]) / len(ytrue)
         plt.plot([0, 1], [no_skill, no_skill], linestyle='--',
-                 label='No Skill')
+                 label='No Skill', zorder=1)
         plt.plot(recall, precision, marker='.', label='AUC:'+str(round(
-            pr_auc, 3)))
+            pr_auc, 3)), zorder=2)
+        plt.scatter(recall[ix], precision[ix], marker='o', color='black',
+                    label='Best', zorder=3)
         # axis labels
         plt.title(dataset+' Precision-Recall Curve')
         plt.xlabel('Recall')

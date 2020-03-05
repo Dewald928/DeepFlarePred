@@ -102,8 +102,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
     yhat = infer_model(model, device, train_loader, args)
 
     # PR curves on train
-    precision_arr, recall_arr, f1, pr_auc \
-        = metric.get_pr_auc(yhat, train_loader.dataset.targets)
+    f1, pr_auc = metric.get_pr_auc(yhat, train_loader.dataset.targets)[2:4]
 
     end = time.time()
 
@@ -156,8 +155,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     yhat = infer_model(model, device, valid_loader, args)
 
     # PR curves on train
-    precision_arr, recall_arr, f1, pr_auc \
-        = metric.get_pr_auc(yhat, valid_loader.dataset.targets)
+    f1, pr_auc = metric.get_pr_auc(yhat, valid_loader.dataset.targets)[2:4]
 
     end = time.time()
 
@@ -501,25 +499,23 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, train_loader, args)
 
     # PR curves on train set
-    precision, recall, f1, pr_auc\
-        = metric.plot_precision_recall(model, yhat, y_train_tr_tensor, 'Train')
+    f1, pr_auc= metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
+                                             'Train')[2:4]
     metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
 
     # Validation
     yhat = infer_model(model, device, valid_loader, args)
 
     # PR curves on val set
-    precision, recall, f1, pr_auc\
-        = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
-                                       'Validation')
+    f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
+                                       'Validation')[2:4]
     metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
 
     # Test
     yhat = infer_model(model, device, test_loader, args)
 
     # PR curves on test set
-    precision, recall, f1, pr_auc\
-        = metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')
+    f1, pr_auc= metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')[2:4]
     metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
 
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')

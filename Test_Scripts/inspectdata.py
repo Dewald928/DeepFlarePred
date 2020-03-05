@@ -11,6 +11,8 @@ df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
 df = pd.concat([df_train, df_val, df_test], axis=0)
 
+a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
+
 '''
 Basic Stats
 '''
