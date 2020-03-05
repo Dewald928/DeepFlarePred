@@ -91,8 +91,21 @@ def get_roc(model, yhat, ytrue, device, dataset='Test'):
         return roc_auc
 
 
+def plot_confusion_matrix(yhat, ytrue, dataset):
+    ytrue = ytrue.cpu().detach().numpy()
+    # retrieve just the probabilities for the positive class
+    pos_probs = yhat[:, 1]
+    # get predicted labels
+    _, ypred = torch.max(torch.tensor(yhat), 1)
+    ypred = ypred.cpu().detach().numpy()
+    fig_cm = confusion_matrix_plot.plot_confusion_matrix_from_data(ytrue,
+                                                                   ypred,
+                                                                   ['Negative',
+                                                                    'Positive'])
+    wandb.log({dataset + " Confusion Matrix": wandb.Image(fig_cm)})
+
+
 def get_pr_auc(yhat, ytrue):
-    # calculate roc curve
     ytrue = ytrue.cpu().detach().numpy()
     # retrieve just the probabilities for the positive class
     pos_probs = yhat[:, 1]
@@ -103,9 +116,6 @@ def get_pr_auc(yhat, ytrue):
     precision, recall, _ = precision_recall_curve(ytrue, pos_probs)
     f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
 
-    fig_cm = confusion_matrix_plot.plot_confusion_matrix_from_data(
-        ytrue, ypred)
-    wandb.log({dataset + " Confusion Matrix": wandb.Image(fig_cm)})
     return precision, recall, f1, pr_auc
 
 

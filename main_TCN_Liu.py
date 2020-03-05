@@ -230,16 +230,10 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
                                   hss[0], bacc[0], accuracy[0], precision[1],
                                   recall[1], ' ', test_loss))
 
-    # get confusion matrix plot
-    df_cm = pd.DataFrame(confusion_matrix.numpy(), ['Negative', 'Positive'],
-                         ['Negative', 'Positive'])
-    cm_plot = confusion_matrix_plot.pretty_plot_confusion_matrix(df_cm)
-
     wandb.log(
         {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
          "Test_BACC": bacc[0], "Test_Precision": precision[1],
-         "Test_Recall": recall[1], "Test_Loss": test_loss,
-         "Test_Confusion_Matrix": wandb.Image(cm_plot)})
+         "Test_Recall": recall[1], "Test_Loss": test_loss})
 
     return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
 
@@ -503,26 +497,30 @@ if __name__ == '__main__':
     '''
     PR Curves
     '''
-    # get predicted output probabilities => numpy array
+    # Train
     yhat = infer_model(model, device, train_loader, args)
 
-    # PR curves on test set
+    # PR curves on train set
     precision, recall, f1, pr_auc\
         = metric.plot_precision_recall(model, yhat, y_train_tr_tensor, 'Train')
+    metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
 
-    # get predicted output probabilities => numpy array
+    # Validation
     yhat = infer_model(model, device, valid_loader, args)
 
-    # PR curves on test set
+    # PR curves on val set
     precision, recall, f1, pr_auc\
         = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
                                        'Validation')
-    # get predicted output probabilities => numpy array
+    metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
+
+    # Test
     yhat = infer_model(model, device, test_loader, args)
 
     # PR curves on test set
     precision, recall, f1, pr_auc\
         = metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')
+    metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
 
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
 
