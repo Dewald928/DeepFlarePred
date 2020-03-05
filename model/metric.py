@@ -14,6 +14,8 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from matplotlib import pyplot as plt
 
+from utils import confusion_matrix_plot
+
 
 def calculate_metrics(confusion_matrix, nclass):
     # determine skill scores
@@ -100,7 +102,10 @@ def get_pr_auc(yhat, ytrue):
     # predict class values
     precision, recall, _ = precision_recall_curve(ytrue, pos_probs)
     f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
-    # print('PR_AUC: ' + str(pr_auc))
+
+    fig_cm = confusion_matrix_plot.plot_confusion_matrix_from_data(
+        ytrue, ypred)
+    wandb.log({dataset + " Confusion Matrix": wandb.Image(fig_cm)})
     return precision, recall, f1, pr_auc
 
 
