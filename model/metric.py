@@ -66,16 +66,35 @@ def get_roc(model, yhat, ytrue, device, dataset='Test'):
         # get predictied labels
         _, ypred = torch.max(torch.tensor(yhat), 1)
         ypred = ypred.cpu().detach().numpy()
-        # plot no skill roc curve
-        plt.plot([0, 1], [0, 1], linestyle='--', label='No Skill')
+
         # calculate roc curve for model
-        fpr, tpr, _ = roc_curve(ytrue, pos_probs)
+        fpr, tpr, thresholds = roc_curve(ytrue, pos_probs)
         # calculate roc auc
         roc_auc = roc_auc_score(ytrue, pos_probs)
         print('Model ROC AUC %.3f' % roc_auc)
+        # get the best threshold
+
+        J = tpr - fpr
+        ix = np.argmax(J)
+        best_thresh = thresholds[ix]
+        print('Best Threshold=%f, J stat=%.3f' % (thresholds[ix], J[ix]))
+        # probs = yhat[:, 1]
+        # # define thresholds
+        # thresholds = np.arange(0, 1, 0.01)
+        # # evaluate each threshold
+        # scores = [f1_score(ytrue, to_labels(probs, t)) for t in
+        #           thresholds]
+        # # get best threshold
+        # ix = np.argmax(scores)
+        # print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], scores[ix]))
 
         # plot model roc curve
-        plt.plot(fpr, tpr, marker='.', label='AUC'+str(round(roc_auc, 3)))
+        # plot no skill roc curve
+        plt.plot([0, 1], [0, 1], linestyle='--', label='No Skill', zorder=1)
+        plt.plot(fpr, tpr, marker='.', label='AUC '+str(round(roc_auc, 3)),
+                 zorder=2)
+        plt.scatter(fpr[ix], tpr[ix], marker='o', color='black',
+                    label='Best', zorder=3)
         # axis labels
         plt.title(dataset+ ' ROC curve')
         plt.xlabel('False Positive Rate')
@@ -84,9 +103,8 @@ def get_roc(model, yhat, ytrue, device, dataset='Test'):
         plt.legend()
         # show the plot
         fig.show()
-        wandb.log({dataset + ' ROC curve': wandb.Image(fig), dataset +
-                                                            ' ROC_AUC':
-            roc_auc})
+        wandb.log({dataset + ' ROC curve': wandb.Image(fig),
+                   dataset + ' ROC_AUC': roc_auc})
 
         return roc_auc
 
@@ -103,6 +121,11 @@ def plot_confusion_matrix(yhat, ytrue, dataset):
                                                                    ['Negative',
                                                                     'Positive'])
     wandb.log({dataset + " Confusion Matrix": wandb.Image(fig_cm)})
+
+
+# apply threshold to positive probabilities to create labels
+def to_labels(pos_probs, threshold):
+    return (pos_probs >= threshold).astype('int')
 
 
 def get_pr_auc(yhat, ytrue):
@@ -123,12 +146,26 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
     model.eval()
     with torch.no_grad():
         precision, recall, f1, pr_auc, thresholds = get_pr_auc(yhat, ytrue)
-        # convert to f score
-        fscore = (2 * precision * recall) / (precision + recall)
-        fscore = np.nan_to_num(fscore)
-        # locate the index of the largest f score
-        ix = np.argmax(fscore)
-        print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], fscore[ix]))
+        # # convert to f score
+        # fscore = (2 * precision * recall) / (precision + recall)
+        # fscore = np.nan_to_num(fscore)
+        # # locate the index of the largest f score
+        # ix = np.argmax(fscore)
+        # print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], fscore[ix]))
+
+        probs = yhat[:, 1]
+        # define thresholds
+        thresholds = np.arange(0, 1, 0.01)
+        # evaluate each threshold
+        scores = [f1_score(ytrue, to_labels(probs, t)) for t in
+                  thresholds]
+        # cm = [sklearn.metrics.confusion_matrix(ytrue, to_labels(probs, t)) for
+        #       t in thresholds]
+        # tn, fp, fn, tp = confusion_matrix().ravel()
+        # get best threshold
+        ix = np.argmax(scores)
+        print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], scores[ix]))
+
         # summarize scores
         print(dataset + ' TCN: f1=%.3f pr_auc=%.3f' % (f1, pr_auc))
         wandb.log({'Model_' + dataset + '_PR_AUC': pr_auc,

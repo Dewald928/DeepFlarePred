@@ -499,7 +499,7 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, train_loader, args)
 
     # PR curves on train set
-    f1, pr_auc= metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
+    f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
                                              'Train')[2:4]
     metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
 
