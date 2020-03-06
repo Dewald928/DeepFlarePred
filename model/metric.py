@@ -76,7 +76,6 @@ def get_roc(model, yhat, ytrue, device, dataset='Test'):
 
         J = tpr - fpr
         ix = np.argmax(J)
-        best_thresh = thresholds[ix]
         print('Best Threshold=%f, J stat=%.3f' % (thresholds[ix], J[ix]))
         # probs = yhat[:, 1]
         # # define thresholds
@@ -146,25 +145,16 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
     model.eval()
     with torch.no_grad():
         precision, recall, f1, pr_auc, thresholds = get_pr_auc(yhat, ytrue)
-        # # convert to f score
-        # fscore = (2 * precision * recall) / (precision + recall)
-        # fscore = np.nan_to_num(fscore)
-        # # locate the index of the largest f score
-        # ix = np.argmax(fscore)
-        # print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], fscore[ix]))
+        # convert to f score
+        fscore = (2 * precision * recall) / (precision + recall)
+        fscore = np.nan_to_num(fscore)
+        # locate the index of the largest f score
+        ix = np.argmax(fscore)
+        print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], fscore[ix]))
 
-        probs = yhat[:, 1]
-        # define thresholds
-        thresholds = np.arange(0, 1, 0.01)
-        # evaluate each threshold
-        scores = [f1_score(ytrue, to_labels(probs, t)) for t in
-                  thresholds]
-        # cm = [sklearn.metrics.confusion_matrix(ytrue, to_labels(probs, t)) for
-        #       t in thresholds]
-        # tn, fp, fn, tp = confusion_matrix().ravel()
-        # get best threshold
-        ix = np.argmax(scores)
-        print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], scores[ix]))
+
+
+        # print('Best Threshold=%f, F-Score=%.3f' % (thresholds[ix], scores[ix]))
 
         # summarize scores
         print(dataset + ' TCN: f1=%.3f pr_auc=%.3f' % (f1, pr_auc))
@@ -196,4 +186,41 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
         return precision, recall, f1, pr_auc
 
 
+def get_metrics_threshold(yhat, ytrue):
+    probs = yhat[:, 1]
+    # define thresholds
+    thresholds = np.arange(0, 1, 0.01)
+    N = len(thresholds)
+    tn = [None] * N
+    fp = [None] * N
+    fn = [None] * N
+    tp = [None] * N
+    recall = [None] * N
+    precision = [None] * N
+    accuracy = [None] * N
+    bacc = [None] * N
+    tss = [None] * N
+    hss = [None] * N
 
+    # evaluate each threshold
+    cm = [sklearn.metrics.confusion_matrix(ytrue, to_labels(probs, t)).ravel()
+          for t in thresholds]
+    for p in range(len(thresholds)):
+        tn[p], fp[p], fn[p], tp[p] = cm[p]
+        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 4)
+        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 4)
+        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
+        bacc[p] = round(0.5 * (
+                float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
+            tn[p] + fp[p])), 4)
+        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
+            (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
+                    fp[p] + tn[p])), 4)
+        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
+            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 4)
+
+    # get best threshold
+    ix = np.argmax(tss)
+    print('Best Threshold=%f, TSS=%.3f' % (thresholds[ix], tss[ix]))
+    return recall[ix], precision[ix], accuracy[ix], bacc[ix], tss[ix], hss[
+        ix], tp[ix], fn[ix], fp[ix], tn[ix], thresholds[ix]

@@ -256,7 +256,7 @@ def infer_model(model, device, data_loader, args):
 if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='upper epoch limit (default: 100)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -515,8 +515,9 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, test_loader, args)
 
     # PR curves on test set
-    f1, pr_auc= metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')[2:4]
+    f1, pr_auc = metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')[2:4]
     metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
+    tss = metric.get_metrics_threshold(yhat, y_test_tr_tensor)[4]
 
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
 
