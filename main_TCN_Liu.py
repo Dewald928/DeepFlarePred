@@ -96,7 +96,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
 
     loss_epoch /= len(train_loader.dataset)
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
-        = metric.calculate_metrics(confusion_matrix, nclass)
+        = metric.calculate_metrics(confusion_matrix.numpy(), nclass)
 
     # calculate predicted values
     yhat = infer_model(model, device, train_loader, args)
@@ -110,18 +110,18 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}'.format('Train', epoch, end - start, tss[0], pr_auc,
-                                hss[0], bacc[0], accuracy[0], precision[1],
-                                recall[1], f1, loss_epoch))
+          '{:^9.4f}{:^9.4f}'.format('Train', epoch, end - start, tss, pr_auc,
+                                hss, bacc, accuracy, precision,
+                                recall, f1, loss_epoch))
 
-    wandb.log({"Training_Accuracy": accuracy[0], "Training_TSS": tss[0],
-               "Training_HSS": hss[0], "Training_BACC": bacc[0],
-               "Training_Precision": precision[1],
-               "Training_Recall": recall[1], "Training_Loss": loss_epoch,
+    wandb.log({"Training_Accuracy": accuracy, "Training_TSS": tss,
+               "Training_HSS": hss, "Training_BACC": bacc,
+               "Training_Precision": precision,
+               "Training_Recall": recall, "Training_Loss": loss_epoch,
                "Training_F1": f1, "Training_PR_AUC": pr_auc,
                "Train_CM": confusion_matrix}, step=epoch)
 
-    return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
+    return recall, precision, accuracy, bacc, hss, tss
 
 
 def validate(model, device, valid_loader, criterion, epoch, best_tss,
@@ -149,7 +149,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
 
     # print("Validation Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
-        = metric.calculate_metrics(confusion_matrix, nclass)
+        = metric.calculate_metrics(confusion_matrix.numpy(), nclass)
 
     # calculate predicted values
     yhat = infer_model(model, device, valid_loader, args)
@@ -159,18 +159,18 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
 
     end = time.time()
 
-    wandb.log({"Validation_Accuracy": accuracy[0], "Validation_TSS": tss[0],
-               "Validation_HSS": hss[0], "Validation_BACC": bacc[0],
-               "Validation_Precision": precision[1],
-               "Validation_Recall": recall[1], "Validation_Loss": valid_loss,
+    wandb.log({"Validation_Accuracy": accuracy, "Validation_TSS": tss,
+               "Validation_HSS": hss, "Validation_BACC": bacc,
+               "Validation_Precision": precision,
+               "Validation_Recall": recall, "Validation_Loss": valid_loss,
                "Validation_F1": f1, "Validation_PR_AUC": pr_auc,
                "Validation_CM": confusion_matrix}, step=epoch)
 
     # checkpoint on best metric
     cp = ''
-    if tss[0] >= best_tss:  # change to required metric
+    if tss >= best_tss:  # change to required metric
         best_pr_auc = pr_auc
-        best_tss = tss[0]
+        best_tss = tss
         best_epoch = epoch
         torch.save(model.state_dict(),
                    os.path.join(wandb.run.dir, 'model_tss.pt'))
@@ -185,13 +185,14 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}{:^3s}'.format('Valid', epoch, end - start, tss[0],
-                                          pr_auc, hss[0], bacc[0], accuracy[0],
-                                          precision[1], recall[1], f1,
+          '{:^9.4f}{:^9.4f}{:^3s}'.format('Valid', epoch, end - start, tss,
+                                          pr_auc, hss, bacc, accuracy,
+                                          precision, recall, f1,
                                           valid_loss, cp))
 
     stopping_metric = best_tss
-    return stopping_metric, best_tss, best_pr_auc, best_epoch, recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
+    return stopping_metric, best_tss, best_pr_auc, best_epoch, recall, \
+           precision, accuracy, bacc, hss, tss
 
 
 def test(model, device, test_loader, criterion, epoch, nclass=2):
@@ -218,22 +219,22 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
 
     print("Test Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
-        = metric.calculate_metrics(confusion_matrix, nclass)
+        = metric.calculate_metrics(confusion_matrix.numpy(), nclass)
 
     end = time.time()
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9s}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9s}{:^9.4f}'.format('Test', epoch, end - start, tss[0], ' ',
-                                  hss[0], bacc[0], accuracy[0], precision[1],
-                                  recall[1], ' ', test_loss))
+          '{:^9s}{:^9.4f}'.format('Test', epoch, end - start, tss, ' ',
+                                  hss, bacc, accuracy, precision,
+                                  recall, ' ', test_loss))
 
     wandb.log(
-        {"Test_Accuracy": accuracy[0], "Test_TSS": tss[0], "Test_HSS": hss[0],
-         "Test_BACC": bacc[0], "Test_Precision": precision[1],
-         "Test_Recall": recall[1], "Test_Loss": test_loss})
+        {"Test_Accuracy": accuracy, "Test_TSS": tss, "Test_HSS": hss,
+         "Test_BACC": bacc, "Test_Precision": precision,
+         "Test_Recall": recall, "Test_Loss": test_loss})
 
-    return recall[1], precision[1], accuracy[0], bacc[0], hss[0], tss[0]
+    return recall, precision, accuracy, bacc, hss, tss
 
 
 def infer_model(model, device, data_loader, args):
@@ -256,8 +257,8 @@ def infer_model(model, device, data_loader, args):
 if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=10,
-                        help='upper epoch limit (default: 100)')
+    parser.add_argument('--epochs', type=int, default=1,
+                        help='upper epoch limit (default: 200)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
     parser.add_argument('--batch_size', type=int, default=4096, metavar='N',
@@ -502,6 +503,7 @@ if __name__ == '__main__':
     f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
                                              'Train')[2:4]
     metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
+    tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
 
     # Validation
     yhat = infer_model(model, device, valid_loader, args)
@@ -510,7 +512,8 @@ if __name__ == '__main__':
     f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
                                        'Validation')[2:4]
     metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
-
+    th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
+    ypred = metric.to_labels(yhat[:, 1], th)
     # Test
     yhat = infer_model(model, device, test_loader, args)
 

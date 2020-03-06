@@ -19,7 +19,7 @@ from utils import confusion_matrix_plot
 
 def calculate_metrics(confusion_matrix, nclass):
     # determine skill scores
-    confusion_matrix = confusion_matrix.numpy()
+    # confusion_matrix = confusion_matrix.numpy()
     N = np.sum(confusion_matrix)
 
     recall = np.zeros(nclass)
@@ -52,7 +52,8 @@ def calculate_metrics(confusion_matrix, nclass):
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
             fp[p]) / float(fp[p] + tn[p] + 1e-6)), 4)
 
-    return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
+    return recall[1], precision[1], accuracy[1], bacc[1], tss[1], hss[1], tp[
+        1], fn[1], fp[1], tn[1]
 
 
 def get_roc(model, yhat, ytrue, device, dataset='Test'):
@@ -189,7 +190,7 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
 def get_metrics_threshold(yhat, ytrue):
     probs = yhat[:, 1]
     # define thresholds
-    thresholds = np.arange(0, 1, 0.01)
+    thresholds = np.arange(-1, 1, 0.01)
     N = len(thresholds)
     tn = [None] * N
     fp = [None] * N
@@ -203,21 +204,11 @@ def get_metrics_threshold(yhat, ytrue):
     hss = [None] * N
 
     # evaluate each threshold
-    cm = [sklearn.metrics.confusion_matrix(ytrue, to_labels(probs, t)).ravel()
+    cm = [sklearn.metrics.confusion_matrix(ytrue, to_labels(probs, t))
           for t in thresholds]
     for p in range(len(thresholds)):
-        tn[p], fp[p], fn[p], tp[p] = cm[p]
-        recall[p] = round(float(tp[p]) / float(tp[p] + fn[p] + 1e-6), 4)
-        precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 4)
-        accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
-        bacc[p] = round(0.5 * (
-                float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-            tn[p] + fp[p])), 4)
-        hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
-            (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
-                    fp[p] + tn[p])), 4)
-        tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
-            fp[p]) / float(fp[p] + tn[p] + 1e-6)), 4)
+        recall[p], precision[p], accuracy[p], bacc[p], tss[p], hss[p], tp[p], \
+        fn[p], fp[p], tn[p] = calculate_metrics(cm[p], 2)
 
     # get best threshold
     ix = np.argmax(tss)
