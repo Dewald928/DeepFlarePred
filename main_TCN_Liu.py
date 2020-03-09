@@ -70,7 +70,8 @@ class TCN(nn.Module):
 
     def forward(self, x):
         y1 = self.tcn(x)  # input should have dimension (batch, chan, seq len)
-        return self.linear(y1[:, :, -1])
+        out = self.linear(y1[:, :, -1])
+        return F.softmax(out, dim=1)
 
 
 def train(model, device, train_loader, optimizer, epoch, criterion, args,
@@ -95,7 +96,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
             confusion_matrix[t.long(), p.long()] += 1
 
     loss_epoch /= len(train_loader.dataset)
-    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn, mcc \
         = metric.calculate_metrics(confusion_matrix.numpy(), nclass)
 
     # calculate predicted values
@@ -110,9 +111,10 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}'.format('Train', epoch, end - start, tss, pr_auc,
-                                hss, bacc, accuracy, precision,
-                                recall, f1, loss_epoch))
+          '{:^9.4f}{:^9.4f}{:^9.4f}'.format('Train', epoch, end - start, tss,
+                                           pr_auc, hss, bacc, accuracy,
+                                           precision, recall, f1, loss_epoch,
+                                           mcc))
 
     wandb.log({"Training_Accuracy": accuracy, "Training_TSS": tss,
                "Training_HSS": hss, "Training_BACC": bacc,
@@ -148,7 +150,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     valid_loss /= len(valid_loader.dataset)
 
     # print("Validation Scores:")
-    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn, mcc \
         = metric.calculate_metrics(confusion_matrix.numpy(), nclass)
 
     # calculate predicted values
@@ -185,10 +187,10 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}{:^3s}'.format('Valid', epoch, end - start, tss,
+          '{:^9.4f}{:^9.4f}{:^9.4f}{:^3s}'.format('Valid', epoch, end - start, tss,
                                           pr_auc, hss, bacc, accuracy,
                                           precision, recall, f1,
-                                          valid_loss, cp))
+                                          valid_loss, mcc, cp))
 
     stopping_metric = best_tss
     return stopping_metric, best_tss, best_pr_auc, best_epoch, recall, \
@@ -218,16 +220,16 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
     test_loss /= len(test_loader.dataset)
 
     print("Test Scores:")
-    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn \
+    recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn, mcc \
         = metric.calculate_metrics(confusion_matrix.numpy(), nclass)
 
     end = time.time()
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9s}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9s}{:^9.4f}'.format('Test', epoch, end - start, tss, ' ',
+          '{:^9s}{:^9.4f}{:^9.4f}'.format('Test', epoch, end - start, tss, ' ',
                                   hss, bacc, accuracy, precision,
-                                  recall, ' ', test_loss))
+                                  recall, ' ', test_loss, mcc))
 
     wandb.log(
         {"Test_Accuracy": accuracy, "Test_TSS": tss, "Test_HSS": hss,
@@ -257,7 +259,7 @@ def infer_model(model, device, data_loader, args):
 if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='upper epoch limit (default: 200)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -268,7 +270,7 @@ if __name__ == '__main__':
     parser.add_argument('--seq_len', type=int, default=7, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=1,
+    parser.add_argument('--levels', type=int, default=3,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
@@ -289,7 +291,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=4,
+    parser.add_argument('--seed', type=int, default=5,
                         help='random seed (default: 1111)')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
@@ -452,10 +454,10 @@ if __name__ == '__main__':
     print('{:<11s}{:^9s}{:^9s}{:^9s}'
           '{:^9s}{:^9s}{:^9s}{:^9s}'
           '{:^9s}{:^9s}'
-          '{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch', 'Runtime', 'TSS',
-                                      'PR_AUC', 'HSS', 'BACC', 'ACC',
-                                      'Precision', 'Recall', 'F1', 'Loss',
-                                      'CP'))
+          '{:^9s}{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch', 'Runtime',
+                                            'TSS', 'PR_AUC', 'HSS', 'BACC',
+                                            'ACC', 'Precision', 'Recall', 'F1',
+                                            'Loss', 'MCC', 'CP'))
 
     if args.training:
 
@@ -499,7 +501,6 @@ if __name__ == '__main__':
     # Train
     yhat = infer_model(model, device, train_loader, args)
 
-    # PR curves on train set
     f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
                                              'Train')[2:4]
     metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
@@ -508,16 +509,18 @@ if __name__ == '__main__':
     # Validation
     yhat = infer_model(model, device, valid_loader, args)
 
-    # PR curves on val set
     f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
                                        'Validation')[2:4]
     metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
+    tss = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[4]
     th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
-    ypred = metric.to_labels(yhat[:, 1], th)
+
     # Test
     yhat = infer_model(model, device, test_loader, args)
+    cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
+                                          metric.to_labels(yhat[:, 1], th))
+    tss_th = metric.calculate_metrics(cm, 2)[4]  # todo figure out integration
 
-    # PR curves on test set
     f1, pr_auc = metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')[2:4]
     metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
     tss = metric.get_metrics_threshold(yhat, y_test_tr_tensor)[4]

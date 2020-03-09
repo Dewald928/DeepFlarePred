@@ -32,6 +32,7 @@ def calculate_metrics(confusion_matrix, nclass):
     fn = np.zeros(nclass)
     fp = np.zeros(nclass)
     tn = np.zeros(nclass)
+    mcc = np.zeros(nclass)
     for p in range(nclass):
         tp[p] = confusion_matrix[p][p]
         for q in range(nclass):
@@ -45,15 +46,18 @@ def calculate_metrics(confusion_matrix, nclass):
         accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
         bacc[p] = round(0.5 * (
                 float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-            tn[p] + fp[p])), 4)
+                    tn[p] + fp[p])), 4)
         hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
             (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
                     fp[p] + tn[p])), 4)
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
             fp[p]) / float(fp[p] + tn[p] + 1e-6)), 4)
+        mcc[p] = round(float(tp[p] * tn[p] - fp[p] * fn[p]) / float(np.sqrt(
+            (tp[p] + fp[p]) * (tp[p] + fn[p]) * (tn[p] + fp[p]) * (
+                    tn[p] + fn[p])) + 1e-6), 4)
 
     return recall[1], precision[1], accuracy[1], bacc[1], tss[1], hss[1], tp[
-        1], fn[1], fp[1], tn[1]
+        1], fn[1], fp[1], tn[1], mcc[1]
 
 
 def get_roc(model, yhat, ytrue, device, dataset='Test'):
@@ -190,7 +194,7 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
 def get_metrics_threshold(yhat, ytrue):
     probs = yhat[:, 1]
     # define thresholds
-    thresholds = np.arange(-1, 1, 0.01)
+    thresholds = np.arange(0, 1, 0.01)
     N = len(thresholds)
     tn = [None] * N
     fp = [None] * N
@@ -202,13 +206,14 @@ def get_metrics_threshold(yhat, ytrue):
     bacc = [None] * N
     tss = [None] * N
     hss = [None] * N
+    mcc = [None] * N
 
     # evaluate each threshold
     cm = [sklearn.metrics.confusion_matrix(ytrue, to_labels(probs, t))
           for t in thresholds]
     for p in range(len(thresholds)):
         recall[p], precision[p], accuracy[p], bacc[p], tss[p], hss[p], tp[p], \
-        fn[p], fp[p], tn[p] = calculate_metrics(cm[p], 2)
+        fn[p], fp[p], tn[p], mcc[p] = calculate_metrics(cm[p], 2)
 
     # get best threshold
     ix = np.argmax(tss)
