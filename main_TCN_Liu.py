@@ -121,7 +121,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
                "Training_Precision": precision,
                "Training_Recall": recall, "Training_Loss": loss_epoch,
                "Training_F1": f1, "Training_PR_AUC": pr_auc,
-               "Train_CM": confusion_matrix}, step=epoch)
+               "Train_CM": confusion_matrix, 'Train_MCC': mcc}, step=epoch)
 
     return recall, precision, accuracy, bacc, hss, tss
 
@@ -166,7 +166,8 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                "Validation_Precision": precision,
                "Validation_Recall": recall, "Validation_Loss": valid_loss,
                "Validation_F1": f1, "Validation_PR_AUC": pr_auc,
-               "Validation_CM": confusion_matrix}, step=epoch)
+               "Validation_CM": confusion_matrix, "Validation_MCC": mcc},
+              step=epoch)
 
     # checkpoint on best metric
     cp = ''
@@ -234,7 +235,7 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
     wandb.log(
         {"Test_Accuracy": accuracy, "Test_TSS": tss, "Test_HSS": hss,
          "Test_BACC": bacc, "Test_Precision": precision,
-         "Test_Recall": recall, "Test_Loss": test_loss})
+         "Test_Recall": recall, "Test_Loss": test_loss, "Test_MCC": mcc})
 
     return recall, precision, accuracy, bacc, hss, tss
 
