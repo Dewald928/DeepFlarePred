@@ -4,6 +4,7 @@ import re
 import main_TCN_Liu
 from tabulate import tabulate
 import seaborn as sns
+import scipy
 
 filepath = './Data/Liu/' + args.flare_label + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')

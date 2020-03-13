@@ -118,10 +118,9 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
 
     wandb.log({"Training_Accuracy": accuracy, "Training_TSS": tss,
                "Training_HSS": hss, "Training_BACC": bacc,
-               "Training_Precision": precision,
-               "Training_Recall": recall, "Training_Loss": loss_epoch,
-               "Training_F1": f1, "Training_PR_AUC": pr_auc,
-               "Train_CM": confusion_matrix, 'Train_MCC': mcc}, step=epoch)
+               "Training_Precision": precision, "Training_Recall": recall,
+               "Training_Loss": loss_epoch, "Training_F1": f1,
+               "Training_PR_AUC": pr_auc, 'Train_MCC': mcc}, step=epoch)
 
     return recall, precision, accuracy, bacc, hss, tss
 
@@ -163,11 +162,9 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
 
     wandb.log({"Validation_Accuracy": accuracy, "Validation_TSS": tss,
                "Validation_HSS": hss, "Validation_BACC": bacc,
-               "Validation_Precision": precision,
-               "Validation_Recall": recall, "Validation_Loss": valid_loss,
-               "Validation_F1": f1, "Validation_PR_AUC": pr_auc,
-               "Validation_CM": confusion_matrix, "Validation_MCC": mcc},
-              step=epoch)
+               "Validation_Precision": precision, "Validation_Recall": recall,
+               "Validation_Loss": valid_loss, "Validation_F1": f1,
+               "Validation_PR_AUC": pr_auc, "Validation_MCC": mcc}, step=epoch)
 
     # checkpoint on best metric
     cp = ''
@@ -188,10 +185,10 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
     print('{:<11s}{:^9d}{:^9.1f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}{:^9.4f}{:^9.4f}'
           '{:^9.4f}{:^9.4f}'
-          '{:^9.4f}{:^9.4f}{:^9.4f}{:^3s}'.format('Valid', epoch, end - start, tss,
-                                          pr_auc, hss, bacc, accuracy,
-                                          precision, recall, f1,
-                                          valid_loss, mcc, cp))
+          '{:^9.4f}{:^9.4f}{:^9.4f}{:^3s}'.format('Valid', epoch, end - start,
+                                                  tss, pr_auc, hss, bacc,
+                                                  accuracy, precision, recall,
+                                                  f1, valid_loss, mcc, cp))
 
     stopping_metric = best_tss
     return stopping_metric, best_tss, best_pr_auc, best_epoch, recall, \
@@ -260,7 +257,7 @@ def infer_model(model, device, data_loader, args):
 if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='upper epoch limit (default: 200)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -271,7 +268,7 @@ if __name__ == '__main__':
     parser.add_argument('--seq_len', type=int, default=7, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=3,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
     parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
@@ -283,7 +280,7 @@ if __name__ == '__main__':
     # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
     #                     help='SGD momentum (default: 0.5)')
 
-    parser.add_argument('--dropout', type=float, default=0.78,
+    parser.add_argument('--dropout', type=float, default=0.7,
                         help='dropout applied to layers (default: 0.7)')
     parser.add_argument('--weight_decay', type=float, default=0.00001,
                         metavar='LR', help='L2 regularizing (default: 0.0001)')
@@ -292,11 +289,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=5,
+    parser.add_argument('--seed', type=int, default=43,
                         help='random seed (default: 1111)')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
-    parser.add_argument('--early_stop', action='store_true', default=True,
+    parser.add_argument('--early_stop', action='store_false', default=True,
                         help='Stops training if overfitting')
     parser.add_argument('--restore', action='store_true', default=False,
                         help='restores model')
@@ -515,6 +512,8 @@ if __name__ == '__main__':
     metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
     tss = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[4]
     th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
+    roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
+                             'Validation')
 
     # Test
     yhat = infer_model(model, device, test_loader, args)
@@ -527,6 +526,8 @@ if __name__ == '__main__':
     tss = metric.get_metrics_threshold(yhat, y_test_tr_tensor)[4]
 
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
+
+    print("Test TSS from validation threshold: " + str(tss_th))
 
     '''
     Model interpretation
