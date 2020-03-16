@@ -38,6 +38,7 @@ from model.tcn import TemporalConvNet
 from model import metric
 from interpret import interpreter
 from utils import confusion_matrix_plot
+from utils import pdf
 
 import wandb
 from torchsummary import summary
@@ -514,6 +515,7 @@ if __name__ == '__main__':
     th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
     roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
                              'Validation')
+    pdf.plot_density_estimation(valid_loader, y_valid_tr_tensor, 'Validation')
 
     # Test
     yhat = infer_model(model, device, test_loader, args)
@@ -528,6 +530,9 @@ if __name__ == '__main__':
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
 
     print("Test TSS from validation threshold: " + str(tss_th))
+    wandb.log({'Test_TSS_Th': tss_th})
+
+    pdf.plot_density_estimation(test_loader, y_test_tr_tensor, 'Test')
 
     '''
     Model interpretation
