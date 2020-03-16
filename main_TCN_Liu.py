@@ -258,7 +258,7 @@ def infer_model(model, device, data_loader, args):
 if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='upper epoch limit (default: 200)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -515,7 +515,7 @@ if __name__ == '__main__':
     th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
     roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
                              'Validation')
-    pdf.plot_density_estimation(valid_loader, y_valid_tr_tensor, 'Validation')
+    pdf.plot_density_estimation(yhat, y_valid_tr_tensor, 'Validation')
 
     # Test
     yhat = infer_model(model, device, test_loader, args)
@@ -532,7 +532,7 @@ if __name__ == '__main__':
     print("Test TSS from validation threshold: " + str(tss_th))
     wandb.log({'Test_TSS_Th': tss_th})
 
-    pdf.plot_density_estimation(test_loader, y_test_tr_tensor, 'Test')
+    pdf.plot_density_estimation(yhat, y_test_tr_tensor, 'Test')
 
     '''
     Model interpretation
