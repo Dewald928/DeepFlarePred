@@ -258,7 +258,7 @@ def infer_model(model, device, data_loader, args):
 if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='upper epoch limit (default: 200)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
@@ -278,10 +278,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_features', type=int, default=40,
                         help='number of features (default: 20)')
 
-    # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
-    #                     help='SGD momentum (default: 0.5)')
-
-    parser.add_argument('--dropout', type=float, default=0.7,
+    parser.add_argument('--dropout', type=float, default=0.78,
                         help='dropout applied to layers (default: 0.7)')
     parser.add_argument('--weight_decay', type=float, default=0.00001,
                         metavar='LR', help='L2 regularizing (default: 0.0001)')
@@ -489,8 +486,12 @@ if __name__ == '__main__':
             torch.load(os.path.join(wandb.run.dir, 'model_tss.pt')))
     except:
         print('No model loaded... Loading default')
-        model.load_state_dict(
-            torch.load(os.path.join('saved/models/TCN_4_3_8_0.91', 'model_tss.pt')))
+        weights_file = wandb.restore('model_tss.pt',
+                                   run_path="dewald123/liu_pytorch_tcn/8k9cxmyu")
+        model.load_state_dict(torch.load(weights_file.name))
+        # model.load_state_dict(
+        #     torch.load(os.path.join('saved/models/TCN_1_2_7', 'model_tss.pt')))
+
 
     test_tss = test(model, device, test_loader, criterion, epoch)[5]
 
@@ -515,12 +516,14 @@ if __name__ == '__main__':
     th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
     roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
                              'Validation')
-    pdf.plot_density_estimation(yhat, y_valid_tr_tensor, 'Validation')
+    th_norm = pdf.plot_density_estimation(yhat, y_valid_tr_tensor,
+                                          'Validation')
 
     # Test
     yhat = infer_model(model, device, test_loader, args)
     cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
-                                          metric.to_labels(yhat[:, 1], th))
+                                          metric.to_labels(yhat[:, 1],
+                                                           th))
     tss_th = metric.calculate_metrics(cm, 2)[4]  # todo figure out integration
 
     f1, pr_auc = metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')[2:4]
@@ -532,7 +535,7 @@ if __name__ == '__main__':
     print("Test TSS from validation threshold: " + str(tss_th))
     wandb.log({'Test_TSS_Th': tss_th})
 
-    pdf.plot_density_estimation(yhat, y_test_tr_tensor, 'Test')
+    th_norm = pdf.plot_density_estimation(yhat, y_test_tr_tensor, 'Test')
 
     '''
     Model interpretation

@@ -208,7 +208,7 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             except:
                 print('No model loaded... Loading default')
                 # model.load_state_dict(torch.load(
-                #     os.path.join('saved/models/TCN_4_3_8_0.91',
+                #     os.path.join('saved/models/TCN_3_4_8_0.91',
                 #                  'model_tss.pt')))
 
             test_recall, test_precision, test_accuracy, test_bacc, \

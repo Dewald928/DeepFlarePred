@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import wandb
+from scipy.stats import norm
 
 
 def plot_density_estimation(yhat, labels, dataset_name):
@@ -12,13 +13,29 @@ def plot_density_estimation(yhat, labels, dataset_name):
     y = labels
     x_flare = x[np.where(y >= 1)[0]]
     x_no_flare = x[np.where(y < 1)[0]]
-    sns.distplot(x_flare, bins=20, color='r')
-    sns.distplot(x_no_flare, bins=20, color='b')
+    ax0 = sns.distplot(x_flare, bins=30, fit=norm,
+                       kde_kws={'color': 'r', 'label': 'Flare_KDE'},
+                       fit_kws={'color': '#c20078', 'label': 'Flare_Normal'},
+                       hist_kws={'color': 'r'})
+    ax1 = sns.distplot(x_no_flare, bins=30, fit=norm,
+                       kde_kws={'color': 'b', 'label': 'No_Flare_KDE'},
+                       fit_kws={'color': '#75bbfd',
+                                'label': 'No_Flare_Normal'},
+                       hist_kws={'color': 'b'})
+
+    x = ax0.lines[3].get_xdata()
+    y = ax0.lines[3].get_ydata()
+    maxid = np.argmax(y)  # The id of the peak (maximum of y data)
+    # plt.plot(x[maxid], y[maxid], 'k|', ms=10)
+
     # axis labels
     plt.title(dataset_name + ' Probability Density Estimation')
-    plt.xlabel('Threshold')
-    plt.ylabel('Probability Estimate')
-    plt.legend(['Flare', 'No_Flare'])
+    plt.xlabel('Threshold Probability')
+    plt.ylabel('Count')
+    # plt.legend(['Flare', 'No_Flare'])
     # plt.show()
+    plt.legend()
     fig.show()
     wandb.log({dataset_name+' Probability Density Plot': wandb.Image(fig)})
+
+    return x[maxid]
