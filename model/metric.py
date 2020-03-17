@@ -113,13 +113,12 @@ def get_roc(model, yhat, ytrue, device, dataset='Test'):
         return roc_auc
 
 
-def plot_confusion_matrix(yhat, ytrue, dataset):
+def plot_confusion_matrix(yhat, ytrue, dataset, threshold=0.5):
     ytrue = ytrue.cpu().detach().numpy()
     # retrieve just the probabilities for the positive class
-    pos_probs = yhat[:, 1]
     # get predicted labels
-    _, ypred = torch.max(torch.tensor(yhat), 1)
-    ypred = ypred.cpu().detach().numpy()
+    ypred = to_labels(yhat[:, 1], threshold)
+    # ypred = ypred.cpu().detach().numpy()
     fig_cm = confusion_matrix_plot.plot_confusion_matrix_from_data(ytrue,
                                                                    ypred,
                                                                    ['Negative',

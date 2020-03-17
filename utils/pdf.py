@@ -15,7 +15,7 @@ def plot_density_estimation(yhat, labels, dataset_name):
     x_no_flare = x[np.where(y < 1)[0]]
     ax0 = sns.distplot(x_flare, bins=30, fit=norm,
                        kde_kws={'color': 'r', 'label': 'Flare_KDE'},
-                       fit_kws={'color': '#c20078', 'label': 'Flare_Normal'},
+                       fit_kws={'color': '#ff81c0', 'label': 'Flare_Normal'},
                        hist_kws={'color': 'r'})
     ax1 = sns.distplot(x_no_flare, bins=30, fit=norm,
                        kde_kws={'color': 'b', 'label': 'No_Flare_KDE'},
@@ -25,8 +25,11 @@ def plot_density_estimation(yhat, labels, dataset_name):
 
     x = ax0.lines[3].get_xdata()
     y = ax0.lines[3].get_ydata()
+    f = ax0.lines[3].get_ydata()
+    g = ax0.lines[1].get_ydata()
     maxid = np.argmax(y)  # The id of the peak (maximum of y data)
-    # plt.plot(x[maxid], y[maxid], 'k|', ms=10)
+    idx = np.argwhere(np.diff(np.sign(f - g))).flatten()  # intersection
+    plt.plot(x[idx], y[idx], 'k|', ms=10)
 
     # axis labels
     plt.title(dataset_name + ' Probability Density Estimation')
@@ -38,4 +41,4 @@ def plot_density_estimation(yhat, labels, dataset_name):
     fig.show()
     wandb.log({dataset_name+' Probability Density Plot': wandb.Image(fig)})
 
-    return x[maxid]
+    return x[idx]

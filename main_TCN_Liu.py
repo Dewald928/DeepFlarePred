@@ -269,9 +269,9 @@ if __name__ == '__main__':
     parser.add_argument('--seq_len', type=int, default=7, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=1,
+    parser.add_argument('--levels', type=int, default=7,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=2,
+    parser.add_argument('--ksize', type=int, default=3,
                         help='kernel size (default: 5)')
     parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 20)')
@@ -287,7 +287,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=43,
+    parser.add_argument('--seed', type=int, default=5,
                         help='random seed (default: 1111)')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
@@ -487,11 +487,10 @@ if __name__ == '__main__':
     except:
         print('No model loaded... Loading default')
         weights_file = wandb.restore('model_tss.pt',
-                                   run_path="dewald123/liu_pytorch_tcn/8k9cxmyu")
+                                   run_path="dewald123/liu_pytorch_tcn/26it4m0u")
         model.load_state_dict(torch.load(weights_file.name))
         # model.load_state_dict(
         #     torch.load(os.path.join('saved/models/TCN_1_2_7', 'model_tss.pt')))
-
 
     test_tss = test(model, device, test_loader, criterion, epoch)[5]
 
@@ -523,8 +522,8 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, test_loader, args)
     cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
                                           metric.to_labels(yhat[:, 1],
-                                                           th))
-    tss_th = metric.calculate_metrics(cm, 2)[4]  # todo figure out integration
+                                                           th_norm))  # watch
+    tss_th = metric.calculate_metrics(cm, 2)[4]
 
     f1, pr_auc = metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')[2:4]
     metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
@@ -535,7 +534,7 @@ if __name__ == '__main__':
     print("Test TSS from validation threshold: " + str(tss_th))
     wandb.log({'Test_TSS_Th': tss_th})
 
-    th_norm = pdf.plot_density_estimation(yhat, y_test_tr_tensor, 'Test')
+    th_norm_test = pdf.plot_density_estimation(yhat, y_test_tr_tensor, 'Test')
 
     '''
     Model interpretation
