@@ -29,7 +29,9 @@ def plot_density_estimation(yhat, labels, dataset_name):
     g = ax0.lines[1].get_ydata()
     maxid = np.argmax(y)  # The id of the peak (maximum of y data)
     idx = np.argwhere(np.diff(np.sign(f - g))).flatten()  # intersection
+    stdidx = maxid + int(round(0.341*(len(x)-1-maxid)))
     plt.plot(x[idx], y[idx], 'k|', ms=10)
+    plt.plot(x[stdidx], y[stdidx], 'b*', ms=10)
 
     # axis labels
     plt.title(dataset_name + ' Probability Density Estimation')

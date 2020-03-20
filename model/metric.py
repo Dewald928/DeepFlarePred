@@ -76,7 +76,7 @@ def get_roc(model, yhat, ytrue, device, dataset='Test'):
         fpr, tpr, thresholds = roc_curve(ytrue, pos_probs)
         # calculate roc auc
         roc_auc = roc_auc_score(ytrue, pos_probs)
-        print('Model ROC AUC %.3f' % roc_auc)
+        # print('Model ROC AUC %.3f' % roc_auc)
         # get the best threshold
 
         J = tpr - fpr

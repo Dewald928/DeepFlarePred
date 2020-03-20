@@ -266,14 +266,14 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=7, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=8, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=7,
+    parser.add_argument('--levels', type=int, default=5,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=3,
+    parser.add_argument('--ksize', type=int, default=5,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=40,
+    parser.add_argument('--nhid', type=int, default=20,
                         help='number of hidden units per layer (default: 20)')
     parser.add_argument('--n_features', type=int, default=40,
                         help='number of features (default: 20)')
@@ -304,7 +304,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     wandb.init(project="liu_pytorch_tcn", notes='TCN', tags=args.tag)
     wandb.config.update(args)
-
 
     # initialize parameters
     filepath = './Data/Liu/' + args.flare_label + '/'
@@ -377,6 +376,8 @@ if __name__ == '__main__':
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
     y_test_tr = data_loader.label_transform(y_test_data)
+
+
 
     # (samples, seq_len, features) -> (samples, features, seq_len)
     X_train_data_tensor = torch.tensor(X_train_data).float()
@@ -487,7 +488,7 @@ if __name__ == '__main__':
     except:
         print('No model loaded... Loading default')
         weights_file = wandb.restore('model_tss.pt',
-                                   run_path="dewald123/liu_pytorch_tcn/26it4m0u")
+                                   run_path="dewald123/liu_pytorch_tcn/lfi8kivp")
         model.load_state_dict(torch.load(weights_file.name))
         # model.load_state_dict(
         #     torch.load(os.path.join('saved/models/TCN_1_2_7', 'model_tss.pt')))
@@ -522,7 +523,7 @@ if __name__ == '__main__':
     yhat = infer_model(model, device, test_loader, args)
     cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
                                           metric.to_labels(yhat[:, 1],
-                                                           th_norm))  # watch
+                                                           th))  # watch
     tss_th = metric.calculate_metrics(cm, 2)[4]
 
     f1, pr_auc = metric.plot_precision_recall(model, yhat, y_test_tr_tensor, 'Test')[2:4]
@@ -531,7 +532,8 @@ if __name__ == '__main__':
 
     roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
 
-    print("Test TSS from validation threshold: " + str(tss_th))
+    print('Test TSS from validation threshold ({:0.3f}): {:0.3f}'.format(th,
+                                                                    tss_th))
     wandb.log({'Test_TSS_Th': tss_th})
 
     th_norm_test = pdf.plot_density_estimation(yhat, y_test_tr_tensor, 'Test')
