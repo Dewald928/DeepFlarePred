@@ -105,6 +105,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
 
     # PR curves on train
     f1, pr_auc = metric.get_pr_auc(yhat, train_loader.dataset.targets)[2:4]
+    # f1, pr_auc = 0, 0
 
     end = time.time()
 
@@ -262,18 +263,18 @@ if __name__ == '__main__':
                         help='upper epoch limit (default: 200)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=4096, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=10, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=8, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=1, metavar='N',
                         help='size of sequence (default: 1)')
 
-    parser.add_argument('--levels', type=int, default=5,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=5,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=20,
+    parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 20)')
     parser.add_argument('--n_features', type=int, default=40,
                         help='number of features (default: 20)')
@@ -301,6 +302,8 @@ if __name__ == '__main__':
                         help='amount of gpu workers')
     parser.add_argument('--tag', type=str, default='',
                         help='tag when debugging')
+    parser.add_argument('--ar_split', action='store_true', default=False,
+                        help='splits dataset per AR')
     args = parser.parse_args()
     wandb.init(project="liu_pytorch_tcn", notes='TCN', tags=args.tag)
     wandb.config.update(args)
@@ -377,12 +380,18 @@ if __name__ == '__main__':
     y_valid_tr = data_loader.label_transform(y_valid_data)
     y_test_tr = data_loader.label_transform(y_test_data)
 
-
-
     # (samples, seq_len, features) -> (samples, features, seq_len)
     X_train_data_tensor = torch.tensor(X_train_data).float()
     X_train_data_tensor = X_train_data_tensor.permute(0, 2, 1)
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
+
+    if args.ar_split:
+        if args.seq_len == 1:
+            X_train_data_tensor, y_train_tr_tensor = \
+                data_loader.split_dataset_per_ar(
+                X_train_data_tensor, y_train_tr, args)
+        else:
+            print("[WARNING] Change seq_len to 1 to split")
 
     X_valid_data_tensor = torch.tensor(X_valid_data).float()
     X_valid_data_tensor = X_valid_data_tensor.permute(0, 2, 1)

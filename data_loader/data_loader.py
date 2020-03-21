@@ -1,11 +1,15 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
+from itertools import accumulate
+from torch.nn.utils.rnn import pad_sequence
+import torch
 
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features,
               mask_value):
     df = pd.read_csv(datafile)
+    df = df.sort_values(by=['NOAA', 'timestamp'])
     df_values = df.values
     feature_names = list(df.columns)
     X = []
@@ -261,7 +265,41 @@ def partition_10_folds(X, y, num_of_fold):
         if i == (num_of_fold - 1):
             idx = index[num_in_each_fold * (num_of_fold - 1):]
         else:
-            idx = index[num_in_each_fold * i : num_in_each_fold * (i + 1)]
+            idx = index[num_in_each_fold * i: num_in_each_fold * (i + 1)]
         X_output.append(X[idx])
         y_output.append(y[idx])
     return X_output, y_output
+
+
+def split_dataset_per_ar(dataset, labels, args):
+    mask_value = 0
+    filepath = './Data/Liu/' + args.flare_label + '/'
+    df = pd.read_csv(filepath + 'normalized_training.csv')
+    df = df.sort_values(by=['NOAA', 'timestamp'])
+    samples_per_ar = df['NOAA'].value_counts(sort=False)
+    samples_per_ar = samples_per_ar.sort_index().to_numpy()
+    dfs = dict(tuple(df.groupby('NOAA')))
+
+    # dataset = torch.tensor(dataset).float()
+    dataset = dataset.view(len(dataset), args.n_features)
+
+    # split sequence to tensor
+    dataset_split = [dataset[x - y: x] for x, y in
+                     zip(accumulate(samples_per_ar), samples_per_ar)]
+    labels_split = [labels[x-y: x] for x, y in
+                    zip(accumulate(samples_per_ar), samples_per_ar)]
+
+    x_padded = pad_sequence(dataset_split, batch_first=True,
+                            padding_value=mask_value)
+    # y_padded = pad_sequence(labels_split, padding_value=0)
+    y = labels_split
+    for i, val in enumerate(labels_split):
+        if 1 in val:
+            y[i] = 1
+        else:
+            y[i] = 0
+
+    x_padded = x_padded.permute(0, 2, 1)
+    y = torch.Tensor(y).long()
+
+    return x_padded, y

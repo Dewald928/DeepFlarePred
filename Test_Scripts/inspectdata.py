@@ -10,7 +10,8 @@ filepath = './Data/Liu/' + args.flare_label + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_train, df_val, df_test], axis=0)
+df = pd.concat([df_train], axis=0)
+df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
 
