@@ -91,8 +91,8 @@ dependencies:
   - lz4-c=1.8.3=he1b5a44_1001
   - markdown=3.2=py_0
   - markupsafe=1.1.1=py37h516909a_0
-  - matplotlib=3.1.1=py37_1
-  - matplotlib-base=3.1.1=py37he7580a8_1
+  - matplotlib=3.2.0=1
+  - matplotlib-base=3.2.0=py37h250f245_1
   - mistune=0.8.4=py37h516909a_1000
   - mkl=2019.4=243
   - more-itertools=8.0.2=py_0
@@ -115,6 +115,7 @@ dependencies:
   - pandocfilters=1.4.2=py_1
   - parfive=1.0.0=py_1
   - parso=0.5.2=py_0
+  - patsy=0.5.1=py_0
   - pcre=8.43=he1b5a44_0
   - pexpect=4.7.0=py37_0
   - pickleshare=0.7.5=py37_1000
@@ -158,6 +159,7 @@ dependencies:
   - scikit-image=0.16.2=py37hb3f55d8_0
   - scikit-learn=0.21.3=py37hcdab131_0
   - scipy=1.4.1=py37h921218d_0
+  - seaborn=0.10.0=py_1
   - send2trash=1.5.0=py_0
   - setuptools=44.0.0=py37_0
   - shap=0.31.0=py37hb3f55d8_0
@@ -167,6 +169,7 @@ dependencies:
   - soupsieve=1.9.4=py37_0
   - sqlalchemy=1.3.11=py37h516909a_0
   - sqlite=3.30.1=h7b6447c_0
+  - statsmodels=0.9.0=py37h3010b51_1000
   - sunpy=1.0.3=py37h516909a_0
   - tabulate=0.8.6=py_0
   - tensorboard=1.15.0=py37_0
@@ -240,7 +243,7 @@ dependencies:
     - termcolor==1.1.0
     - terminaltables==3.1.0
     - torchsummary==1.5.1
-    - wandb==0.8.27
+    - wandb==0.8.30
     - watchdog==0.9.0
 prefix: /home/fuzzy/local/miniconda3/envs/DeepFlarePred
 
