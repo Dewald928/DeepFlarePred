@@ -39,7 +39,7 @@ samples_per_AR = df['NOAA'].value_counts()
 # samples_per_AR = x_flares_data.value_counts()
 samples_per_AR.mean()
 samples_per_AR.std()
-samples_per_AR.min()
+samples_per_AR.max()
 # / (np.sqrt(len(samples_per_AR)))
 
 # flares/spots per year

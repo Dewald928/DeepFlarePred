@@ -271,35 +271,3 @@ def partition_10_folds(X, y, num_of_fold):
     return X_output, y_output
 
 
-def split_dataset_per_ar(dataset, labels, args):
-    mask_value = 0
-    filepath = './Data/Liu/' + args.flare_label + '/'
-    df = pd.read_csv(filepath + 'normalized_training.csv')
-    df = df.sort_values(by=['NOAA', 'timestamp'])
-    samples_per_ar = df['NOAA'].value_counts(sort=False)
-    samples_per_ar = samples_per_ar.sort_index().to_numpy()
-    dfs = dict(tuple(df.groupby('NOAA')))
-
-    # dataset = torch.tensor(dataset).float()
-    dataset = dataset.view(len(dataset), args.n_features)
-
-    # split sequence to tensor
-    dataset_split = [dataset[x - y: x] for x, y in
-                     zip(accumulate(samples_per_ar), samples_per_ar)]
-    labels_split = [labels[x-y: x] for x, y in
-                    zip(accumulate(samples_per_ar), samples_per_ar)]
-
-    x_padded = pad_sequence(dataset_split, batch_first=True,
-                            padding_value=mask_value)
-    # y_padded = pad_sequence(labels_split, padding_value=0)
-    y = labels_split
-    for i, val in enumerate(labels_split):
-        if 1 in val:
-            y[i] = 1
-        else:
-            y[i] = 0
-
-    x_padded = x_padded.permute(0, 2, 1)
-    y = torch.Tensor(y).long()
-
-    return x_padded, y
