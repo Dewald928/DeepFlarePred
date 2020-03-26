@@ -4,9 +4,8 @@ metric:
   name: Validation_TSS
 parameters:
   batch_size:
-    distribution: categorical
-    values:
-    - 4096
+    distribution: constant
+    value: 4096
   dropout:
     distribution: uniform
     max: 1
@@ -15,32 +14,31 @@ parameters:
     distribution: constant
     value: 300
   ksize:
-    distribution: int_uniform
-    max: 10
-    min: 2
+    distribution: constant
+    value: 2
   learning_rate:
     distribution: log_uniform
-    max: -2.3
+    max: -4.6
     min: -11.5
   levels:
-    distribution: int_uniform
-    max: 10
-    min: 1
+    distribution: constant
+    value: 1
   n_features:
     distribution: categorical
     values:
-    - 20
+    - 40
   nhid:
-    distribution: constant
-    value: 40
+    distribution: int_uniform
+    max: 50
+    min: 10
   seed:
-    distribution: int_uniform
-    max: 5
-    min: 1
+    distribution: categorical
+    values:
+    - 5
   seq_len:
-    distribution: int_uniform
-    max: 24
-    min: 1
+    distribution: categorical
+    values:
+    - 3
   weight_decay:
     distribution: log_uniform
     max: -2.3
