@@ -1,7 +1,7 @@
 method: bayes
 metric:
   goal: maximize
-  name: Validation_TSS
+  name: Best_Validation_TSS
 parameters:
   batch_size:
     distribution: constant
@@ -18,7 +18,7 @@ parameters:
     value: 2
   learning_rate:
     distribution: log_uniform
-    max: -4.6
+    max: -6.9
     min: -11.5
   levels:
     distribution: constant
@@ -41,6 +41,6 @@ parameters:
     - 3
   weight_decay:
     distribution: log_uniform
-    max: -2.3
+    max: -9.2
     min: -13.8
 program: main_TCN_Liu.py
