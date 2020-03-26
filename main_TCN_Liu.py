@@ -267,14 +267,14 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=10, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=8, metavar='N',
                         help='size of sequence (default: 1)')  # max 229
 
-    parser.add_argument('--levels', type=int, default=5,
+    parser.add_argument('--levels', type=int, default=1,
                         help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=5,
+    parser.add_argument('--ksize', type=int, default=2,
                         help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=20,
+    parser.add_argument('--nhid', type=int, default=40,
                         help='number of hidden units per layer (default: 20)')
     parser.add_argument('--n_features', type=int, default=40,
                         help='number of features (default: 20)')
@@ -282,7 +282,8 @@ if __name__ == '__main__':
     parser.add_argument('--dropout', type=float, default=0.78,
                         help='dropout applied to layers (default: 0.7)')
     parser.add_argument('--weight_decay', type=float, default=0.00001,
-                        metavar='LR', help='L2 regularizing (default: 0.0001)')
+                        metavar='LR', help='L2 regularizing (default: '
+                                           '0.00001)')
     parser.add_argument('--rnn_module', default="TCN",
                         help='Types of rnn (default: LSTM')
 
@@ -491,8 +492,6 @@ if __name__ == '__main__':
         weights_file = wandb.restore('model_tss.pt',
                                    run_path="dewald123/liu_pytorch_tcn/lfi8kivp")
         model.load_state_dict(torch.load(weights_file.name))
-        # model.load_state_dict(
-        #     torch.load(os.path.join('saved/models/TCN_1_2_7', 'model_tss.pt')))
 
     test_tss = test(model, device, test_loader, criterion, epoch)[5]
 

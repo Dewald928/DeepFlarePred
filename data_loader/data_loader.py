@@ -9,7 +9,7 @@ import torch
 def load_data(datafile, flare_label, series_len, start_feature, n_features,
               mask_value):
     df = pd.read_csv(datafile)
-    df = df.sort_values(by=['NOAA', 'timestamp'])
+    df = df.sort_values(by=['NOAA', 'timestamp'])  # I added this, valid?
     df_values = df.values
     feature_names = list(df.columns)
     X = []
