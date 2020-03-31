@@ -34,7 +34,7 @@ def get_metric(y_true, y_pred, nclass, metric_name='tss'):
         accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
         bacc[p] = round(0.5 * (
                 float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-            tn[p] + fp[p])), 4)
+            tn[p] + fp[p]) + 1e-6), 4)
         hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
             (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
                     fp[p] + tn[p])), 4)
@@ -89,3 +89,20 @@ class LoggingCallback(Callback):
             {'Train_Loss': h['train_loss'], 'Validation_TSS': h['valid_tss'],
              'Validation_HSS': h['valid_hss'],
              'Validation_Loss': h['valid_loss']}, step=h['epoch'])
+
+
+# counter = 0
+#
+#
+# class MyNet():
+#     def fit(self, X, y, **fit_params):
+#         global counter
+#         counter += 1  # increase the counter with each fit call
+#         return super().fit(X, y, **fit_params)
+
+
+class MyCheckpoint(Checkpoint):
+    def get_formatted_files(self, *args, **kwargs):
+        files_dict = super().get_formatted_files(*args, **kwargs)
+        # add code to modify the values of the dict using "counter"
+        return files_dict

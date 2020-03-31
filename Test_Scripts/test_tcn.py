@@ -27,5 +27,11 @@ kernel = m.weight.data.numpy()
 out = m(a)
 out_np = out.detach().numpy()
 
-# padding and masking
-
+# cross val
+from sklearn.model_selection import TimeSeriesSplit
+X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+y = np.array([1, 2, 3, 4, 5, 6])
+tscv = TimeSeriesSplit(n_splits=8)
+print(tscv)
+for train, test in tscv.split(X_test_data):
+    print("%s %s" % (train, test))
