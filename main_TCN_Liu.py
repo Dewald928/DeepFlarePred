@@ -259,64 +259,19 @@ def infer_model(model, device, data_loader, args):
 
 
 if __name__ == '__main__':
-    # parse hyperparameters
-    parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=400,
-                        help='upper epoch limit (default: 200)')
-    parser.add_argument('--flare_label', default="M5",
-                        help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=8192, metavar='N',
-                        help='input batch size for training (default: 256)')
-    parser.add_argument('--learning_rate', type=float, default=2e-4,
-                        help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=1, metavar='N',
-                        help='size of sequence (default: 1)')  # max 229
-
-    parser.add_argument('--levels', type=int, default=1,
-                        help='# of levels (default: 4)')
-    parser.add_argument('--ksize', type=int, default=2,
-                        help='kernel size (default: 5)')
-    parser.add_argument('--nhid', type=int, default=40,
-                        help='number of hidden units per layer (default: 20)')
-    parser.add_argument('--n_features', type=int, default=40,
-                        help='number of features (default: 20)')
-
-    parser.add_argument('--dropout', type=float, default=0.78,
-                        help='dropout applied to layers (default: 0.7)')
-    parser.add_argument('--weight_decay', type=float, default=0.00001,
-                        metavar='LR', help='L2 regularizing (default: '
-                                           '0.00001)')
-    parser.add_argument('--rnn_module', default="TCN",
-                        help='Types of rnn (default: LSTM')
-
-    parser.add_argument('--optim', type=str, default='Adam',
-                        help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=103,
-                        help='random seed (default: 1111)')
-    parser.add_argument('--cuda', action='store_false', default=True,
-                        help='enables CUDA training')
-    parser.add_argument('--early_stop', action='store_false', default=True,
-                        help='Stops training if overfitting')
-    parser.add_argument('--restore', action='store_true', default=False,
-                        help='restores model')
-    parser.add_argument('--training', action='store_false', default=True,
-                        help='trains and test model, if false only tests')
-    parser.add_argument('--num_workers', type=int, default=9,
-                        help='amount of gpu workers')
-    parser.add_argument('--tag', type=str, default='', nargs='+',
-                        help='tag when debugging')
-    args = parser.parse_args()
-    wandb.init(project="liu_pytorch_tcn", notes='TCN', tags=args.tag)
-    wandb.config.update(args)
+    wandb.init(project="liu_pytorch_tcn", notes='TCN')
+    cfg = wandb.config
+    wandb.init(project="liu_pytorch_tcn", tags=cfg.tag)
+    # wandb.config.update(cfg)
 
     # initialize parameters
-    filepath = './Data/Liu/' + args.flare_label + '/'
+    filepath = './Data/Liu/' + cfg.flare_label + '/'
     # n_features = 0
-    if args.flare_label == 'M5':
-        n_features = args.n_features  # 20 original
-    elif args.flare_label == 'M':
+    if cfg.flare_label == 'M5':
+        n_features = cfg.n_features  # 20 original
+    elif cfg.flare_label == 'M':
         n_features = 22
-    elif args.flare_label == 'C':
+    elif cfg.flare_label == 'C':
         n_features = 14
     feature_names = data_loader.get_feature_names(
         filepath + 'normalized_training.csv')
@@ -328,28 +283,28 @@ if __name__ == '__main__':
     num_of_fold = 10
 
     # GPU check
-    use_cuda = args.cuda and torch.cuda.is_available()
-    if args.cuda and torch.cuda.is_available():
+    use_cuda = cfg.cuda and torch.cuda.is_available()
+    if cfg.cuda and torch.cuda.is_available():
         print("Cuda enabled and available")
-    elif args.cuda and not torch.cuda.is_available():
+    elif cfg.cuda and not torch.cuda.is_available():
         print("Cuda enabled not not available, CPU used.")
-    elif not args.cuda:
+    elif not cfg.cuda:
         print("Cuda disabled")
     device = torch.device("cuda" if use_cuda else "cpu")
 
     # set seed
-    torch.manual_seed(args.seed)
+    torch.manual_seed(cfg.seed)
     if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(args.seed)
+        torch.cuda.manual_seed_all(cfg.seed)
     torch.backends.cudnn.deterministic = False
     torch.backends.cudnn.benchmark = True
-    np.random.seed(args.seed)
+    np.random.seed(cfg.seed)
 
     # setup dataloaders
     X_train_data, y_train_data = data_loader.load_data(
         datafile=filepath + 'normalized_training.csv',
-        flare_label=args.flare_label, series_len=args.seq_len,
-        start_feature=start_feature, n_features=args.n_features,
+        flare_label=cfg.flare_label, series_len=cfg.seq_len,
+        start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value)
     X_train_fold, y_train_fold = data_loader.partition_10_folds(X_train_data,
                                                                 y_train_data,
@@ -357,8 +312,8 @@ if __name__ == '__main__':
 
     X_valid_data, y_valid_data = data_loader.load_data(
         datafile=filepath + 'normalized_validation.csv',
-        flare_label=args.flare_label, series_len=args.seq_len,
-        start_feature=start_feature, n_features=args.n_features,
+        flare_label=cfg.flare_label, series_len=cfg.seq_len,
+        start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value)
     X_valid_fold, y_valid_fold = data_loader.partition_10_folds(X_valid_data,
                                                                 y_valid_data,
@@ -366,8 +321,8 @@ if __name__ == '__main__':
 
     X_test_data, y_test_data = data_loader.load_data(
         datafile=filepath + 'normalized_testing.csv',
-        flare_label=args.flare_label, series_len=args.seq_len,
-        start_feature=start_feature, n_features=args.n_features,
+        flare_label=cfg.flare_label, series_len=cfg.seq_len,
+        start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value)
     X_test_fold, y_test_fold = data_loader.partition_10_folds(X_test_data,
                                                               y_test_data,
@@ -402,25 +357,25 @@ if __name__ == '__main__':
                 'test': preprocess_customdataset(X_test_data_tensor,
                                                  y_test_tr_tensor)}
 
-    kwargs = {'num_workers': args.num_workers,
+    kwargs = {'num_workers': cfg.num_workers,
               'pin_memory': True} if use_cuda else {}
 
     train_loader = torch.utils.data.DataLoader(datasets['train'],
-                                               args.batch_size, shuffle=False,
+                                               cfg.batch_size, shuffle=False,
                                                drop_last=False, **kwargs)
     valid_loader = torch.utils.data.DataLoader(datasets['valid'],
-                                               args.batch_size, shuffle=False,
+                                               cfg.batch_size, shuffle=False,
                                                drop_last=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(datasets['test'],
-                                              args.batch_size, shuffle=False,
+                                              cfg.batch_size, shuffle=False,
                                               drop_last=False, **kwargs)
     # Shape: (batch size, features, seq_len)
     # make model
-    channel_sizes = [args.nhid] * args.levels
-    kernel_size = args.ksize
-    dropout = args.dropout
+    channel_sizes = [cfg.nhid] * cfg.levels
+    kernel_size = cfg.ksize
+    dropout = cfg.dropout
 
-    model = TCN(args.n_features, nclass, channel_sizes,
+    model = TCN(cfg.n_features, nclass, channel_sizes,
                 kernel_size=kernel_size, dropout=dropout).to(device)
     # wandb.watch(model, log='all')
     # summary(model, input_size=(args.n_features, args.seq_len))
@@ -433,12 +388,12 @@ if __name__ == '__main__':
     # noinspection PyArgumentList
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(
         device))  # weighted cross entropy
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate,
-                                 weight_decay=args.weight_decay, amsgrad=False)
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
+                                 weight_decay=cfg.weight_decay, amsgrad=False)
 
     # print model parameters
     print("Receptive Field: " + str(
-        1 + 2 * (args.ksize - 1) * (2 ** args.levels - 1)))
+        1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)))
     # print(len(list(model.parameters())))
     # for i in range(len(list(model.parameters()))):
     #     print(list(model.parameters())[i].size())
@@ -572,12 +527,12 @@ if __name__ == '__main__':
         Skorch training
     '''
     X_train_data = np.reshape(X_train_data, (len(X_train_data),
-                                             args.n_features)) # disable normal
+                                             cfg.n_features)) # disable normal
     inputs = torch.tensor(X_train_data).float()
     # inputs = inputs.permute(0, 2, 1) # DISABLE FOR MLP
     labels = torch.tensor(y_train_tr).long()
     X_valid_data = np.reshape(X_valid_data, (len(X_valid_data),
-                                             args.n_features)) # disable normal
+                                             cfg.n_features)) # disable normal
     X_valid_data = torch.tensor(X_valid_data).float()
     # X_valid_data = X_valid_data.permute(0, 2, 1) # Disable for mlp
     y_valid_tr = torch.tensor(y_valid_tr).long()
@@ -613,20 +568,21 @@ if __name__ == '__main__':
 
     tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=8)
 
-    MLP = mlp.MLPModule(input_units=args.n_features, hidden_units=args.nhid,
-                    num_hidden=1)
+    MLP = mlp.MLPModule(input_units=cfg.n_features,
+                        hidden_units=cfg.hidden_units,
+                        num_hidden=cfg.layers)
     # summary(MLP, input_size=(args.n_features))
     wandb.watch(MLP, log='all')
 
     # noinspection PyArgumentList
-    net = NeuralNetClassifier(MLP, max_epochs=args.epochs,
-                              batch_size=args.batch_size,
+    net = NeuralNetClassifier(MLP, max_epochs=cfg.epochs,
+                              batch_size=cfg.batch_size,
                               criterion=nn.CrossEntropyLoss,
                               criterion__weight=torch.FloatTensor(
                                   class_weights).to(device),
                               optimizer=torch.optim.Adam,
-                              optimizer__lr=args.learning_rate,
-                              optimizer__weight_decay=args.weight_decay,
+                              optimizer__lr=cfg.learning_rate,
+                              optimizer__weight_decay=cfg.weight_decay,
                               optimizer__amsgrad=False,
                               device=device,
                               # train_split=skorch.dataset.CVSplit(cv=tscv,
@@ -678,7 +634,7 @@ if __name__ == '__main__':
     net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
     X_test_data = np.reshape(X_test_data,
-                              (len(X_test_data), args.n_features))
+                             (len(X_test_data), cfg.n_features))
 
     inputs = torch.tensor(X_test_data).float()
     # inputs = inputs.permute(0, 2, 1) # disable for mlp

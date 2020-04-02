@@ -1,0 +1,69 @@
+# Basic HP
+epochs:
+  desc: Number of epochs to train over
+  value: 300
+batch_size:
+  desc: Size of each mini-batch
+  value: 32
+learning_rate:
+  desc: initial learning rate
+  value: 0.0002
+optim:
+  desc: optimizer to use
+  value: Adam
+n_features:
+  desc: number of features to include (max 40)
+  value: 40
+
+# TCN HP
+levels:
+  desc: num of tcn blocks
+  value: 1
+ksize:
+  desc: kernel size (smallest is 2)
+  value: 2
+nhid:
+  desc: number of filters
+  value: 40
+seq_len:
+  desc: size of sequence
+  value: 1
+
+# MLP
+layers:
+  desc: MLP layers
+  value: 1
+hidden_units:
+  desc: number hidden nodes in layer
+  value: 40
+
+# Regularizer
+dropout:
+  desc: dopout applied to layers
+  value: 0.7
+weight_decay:
+  desc: L2 regularizing
+  value: 0.00001
+
+# Environment
+flare_label:
+  desc: Types of flare class
+  value: M5
+seed:
+  desc: random seed
+  value: 4
+cuda:
+  desc: enables cuda training
+  value: True
+early_stop:
+  desc: stops training if overfitting
+  value: True
+training:
+  desc: Trains models, else only tests
+  value: True
+num_workers:
+  desc: number of gpu workers
+  value: 9
+tag:
+  desc: wandb tags
+  value: MLP
