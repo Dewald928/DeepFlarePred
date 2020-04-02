@@ -10,7 +10,7 @@ filepath = './Data/Liu/' + args.flare_label + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_train], axis=0)
+df = pd.concat([df_test], axis=0)
 df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
@@ -25,12 +25,7 @@ desc = df.describe(include=include)
 # print(tabulate(desc, headers="keys", tablefmt="github"))  # latex too
 
 # get x flares
-m5_flares = df[df['flare'].str.match('M5') |
-               df['flare'].str.match('M6') |
-               df['flare'].str.match('M7') |
-               df['flare'].str.match('M8') |
-               df['flare'].str.match('M9') |
-               df['flare'].str.match('X')]
+m5_flares = df[df['label'].str.match('Positive')]
 m5_flared_NOAA = m5_flares['NOAA'].unique()
 x_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
@@ -54,8 +49,8 @@ Seaborn data
 '''
 # todo note that this is for flares that actually erupted eventually
 snsdata = x_flares_data.drop(['flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
-sns_plot = sns.pairplot(snsdata, hue='label', hue_order=['Negative',
-                                                         'Positive'])
+sns_plot = sns.pairplot(snsdata, hue='label',
+                        hue_order=['Negative', 'Positive'])
 sns_plot.savefig("saved/figures/snsplot_flaredARs_order.png")
 # sns_plot.fig.show()
 
@@ -94,12 +89,15 @@ x_flares_idx = df.index[df['NOAA'].isin(m5_flared_NOAA)].tolist()
 test_sample_x = test_loader.dataset.data[x_flares_idx].to(device)
 inferred = model(test_sample_x)
 _, predicted = torch.max(inferred.data, 1)
-df_inf = pd.DataFrame(inferred.cpu().detach().numpy(), columns=list('01'))
+df_inf = pd.DataFrame(inferred.cpu().detach().numpy()[:, 1], columns=list('1'))
 df_pred = pd.DataFrame(predicted.cpu().detach().numpy(), columns=list('p'))
 concattable = pd.concat(
     [df_pred.reset_index(drop=True), df_inf.reset_index(drop=True),
      x_flares_data.reset_index(drop=True)], sort=False, axis=1)
-
+ARs_classified = concattable[(concattable['p'] == 1) & (concattable['label']
+                                                        == 'Positive')]
+ARs_classified_NOAA = ARs_classified['NOAA'].unique()
+numberofAR = len(m5_flared_NOAA) - len(ARs_classified_NOAA)
 '''
 Tensorboard
 '''

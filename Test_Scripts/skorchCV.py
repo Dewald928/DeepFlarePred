@@ -8,6 +8,7 @@ from skorch.dataset import Dataset
 from skorch.callbacks import Checkpoint
 from skorch.toy import make_classifier
 from sklearn.model_selection import cross_validate
+from sklearn.model_selection import cross_val_score
 import torch
 
 np.random.seed(0)

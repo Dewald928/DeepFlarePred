@@ -27,6 +27,7 @@ from skorch import NeuralNetClassifier
 from skorch.callbacks import *
 from skorch.helper import predefined_split
 from skorch.dataset import Dataset
+from skorch import toy
 
 from interpret.interpreter import get_shap
 from skorch_tools import skorch_utils
@@ -36,6 +37,7 @@ from data_loader import data_loader
 from utils import early_stopping
 from model.tcn import TemporalConvNet
 from model import metric
+from model import mlp
 from interpret import interpreter
 from utils import confusion_matrix_plot
 from utils import pdf
@@ -259,15 +261,15 @@ def infer_model(model, device, data_loader, args):
 if __name__ == '__main__':
     # parse hyperparameters
     parser = argparse.ArgumentParser(description='Deep Flare Prediction')
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=400,
                         help='upper epoch limit (default: 200)')
     parser.add_argument('--flare_label', default="M5",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--batch_size', type=int, default=4096, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=8192, metavar='N',
                         help='input batch size for training (default: 256)')
     parser.add_argument('--learning_rate', type=float, default=2e-4,
                         help='initial learning rate (default: 1e-3)')
-    parser.add_argument('--seq_len', type=int, default=3, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=1, metavar='N',
                         help='size of sequence (default: 1)')  # max 229
 
     parser.add_argument('--levels', type=int, default=1,
@@ -289,7 +291,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--optim', type=str, default='Adam',
                         help='optimizer to use (default: Adam)')
-    parser.add_argument('--seed', type=int, default=15,
+    parser.add_argument('--seed', type=int, default=103,
                         help='random seed (default: 1111)')
     parser.add_argument('--cuda', action='store_false', default=True,
                         help='enables CUDA training')
@@ -420,8 +422,8 @@ if __name__ == '__main__':
 
     model = TCN(args.n_features, nclass, channel_sizes,
                 kernel_size=kernel_size, dropout=dropout).to(device)
-    wandb.watch(model, log='all')
-    summary(model, input_size=(args.n_features, args.seq_len))
+    # wandb.watch(model, log='all')
+    # summary(model, input_size=(args.n_features, args.seq_len))
 
     # optimizers
     class_weights = class_weight.compute_class_weight('balanced',
@@ -487,8 +489,8 @@ if __name__ == '__main__':
     #         torch.load(os.path.join(wandb.run.dir, 'model_tss.pt')))
     # except:
     #     print('No model loaded... Loading default')
-    #     weights_file = wandb.restore('model_tss.pt',
-    #                                run_path="dewald123/liu_pytorch_tcn/sbysypy9")
+    #     weights_file = wandb.restore('model.pt',
+    #                                run_path="dewald123/liu_pytorch_tcn/3tcj8ahy")
     #     model.load_state_dict(torch.load(weights_file.name))
     #
     # test_tss = test(model, device, test_loader, criterion, epoch)[5]
@@ -569,11 +571,15 @@ if __name__ == '__main__':
     '''
         Skorch training
     '''
+    X_train_data = np.reshape(X_train_data, (len(X_train_data),
+                                             args.n_features)) # disable normal
     inputs = torch.tensor(X_train_data).float()
-    inputs = inputs.permute(0, 2, 1)
+    # inputs = inputs.permute(0, 2, 1) # DISABLE FOR MLP
     labels = torch.tensor(y_train_tr).long()
+    X_valid_data = np.reshape(X_valid_data, (len(X_valid_data),
+                                             args.n_features)) # disable normal
     X_valid_data = torch.tensor(X_valid_data).float()
-    X_valid_data = X_valid_data.permute(0, 2, 1)
+    # X_valid_data = X_valid_data.permute(0, 2, 1) # Disable for mlp
     y_valid_tr = torch.tensor(y_valid_tr).long()
 
     inputs = inputs.numpy()
@@ -607,8 +613,13 @@ if __name__ == '__main__':
 
     tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=8)
 
+    MLP = mlp.MLPModule(input_units=args.n_features, hidden_units=args.nhid,
+                    num_hidden=1)
+    # summary(MLP, input_size=(args.n_features))
+    wandb.watch(MLP, log='all')
+
     # noinspection PyArgumentList
-    net = NeuralNetClassifier(model, max_epochs=args.epochs,
+    net = NeuralNetClassifier(MLP, max_epochs=args.epochs,
                               batch_size=args.batch_size,
                               criterion=nn.CrossEntropyLoss,
                               criterion__weight=torch.FloatTensor(
@@ -620,21 +631,21 @@ if __name__ == '__main__':
                               device=device,
                               # train_split=skorch.dataset.CVSplit(cv=tscv,
                               #                                    stratified=False),
-                              # train_split=predefined_split(valid_ds),
+                              train_split=predefined_split(valid_ds),
                               # train_split=None,
-                              callbacks=[EarlyStopping()],
-                                         # earlystop,
-                                         # checkpoint,
-                                         # skorch_utils.LoggingCallback],
+                              callbacks=[valid_tss, valid_hss,
+                                         earlystop,
+                                         checkpoint,
+                                         skorch_utils.LoggingCallback],
                               # iterator_train__shuffle=True,
                               warm_start=False
                               )
 
     # net.max_epochs = 1
-    # net.fit(inputs, labels)
+    net.fit(inputs, labels)
     # net.max_epochs = args.epochs
-    y_pred = sklearn.model_selection.cross_val_predict(net, inputs, labels,
-                                                       cv=5)
+    # y_pred = sklearn.model_selection.cross_val_predict(net, inputs, labels,
+    #                                                    cv=5)
     # net.initialize()
     # score = sklearn.model_selection.cross_val_score(net, inputs, labels,
     #                                                 cv=tscv,
@@ -642,12 +653,12 @@ if __name__ == '__main__':
     #                                                     skorch_utils.get_tss))
 
     # net.max_epochs = 15
-    score = sklearn.model_selection.cross_validate(net, inputs, labels,
-                                                   cv=10,
-                                                   scoring=make_scorer(
-                                                       skorch_utils.get_tss),
-                                                   return_train_score=True)
-    print(score)
+    # score = sklearn.model_selection.cross_validate(net, inputs, labels,
+    #                                                cv=10,
+    #                                                scoring=make_scorer(
+    #                                                    skorch_utils.get_tss),
+    #                                                return_train_score=True)
+    # print(score)
 
     '''
     K-fold cross val
@@ -666,8 +677,11 @@ if __name__ == '__main__':
     net.initialize()
     net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
+    X_test_data = np.reshape(X_test_data,
+                              (len(X_test_data), args.n_features))
+
     inputs = torch.tensor(X_test_data).float()
-    inputs = inputs.permute(0, 2, 1)
+    # inputs = inputs.permute(0, 2, 1) # disable for mlp
     labels = torch.tensor(y_test_tr).long()
 
     inputs = inputs.numpy()

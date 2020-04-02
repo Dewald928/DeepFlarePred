@@ -183,8 +183,9 @@ class MLP(nn.Module):
         X = self.output(X)
         return X.squeeze(-1)
 
+
 def train(model, device, train_loader, optimizer, epoch, criterion):
-    model.train(,,
+    model.train()
     confusion_matrix = torch.zeros(nclass, nclass)
     loss_epoch = 0
 
@@ -324,7 +325,7 @@ if __name__ == '__main__':
                         help='how many batches to wait before logging training status')
     parser.add_argument('--flare_label', default="M",
                         help='Types of flare class (default: M-Class')
-    parser.add_argument('--layer_dim', type=int, default=7, metavar='N',
+    parser.add_argument('--layer_dim', type=int, default=1, metavar='N',
                         help='how many hidden layers (default: 5)')
     parser.add_argument('--hidden_dim', type=int, default=200, metavar='N',
                         help='how many nodes in layers (default: 64)')
@@ -424,11 +425,15 @@ if __name__ == '__main__':
     '''
     K-fold cross validation
     '''
-    # model = toy.make_binary_classifier(input_units=n_features, output_units=2, hidden_units=1000, num_hidden=2, dropout=args.dropout)
+    model = toy.make_binary_classifier(input_units=n_features,
+                                       output_units=2, hidden_units=40,
+                                       num_hidden=2, dropout=args.dropout)
     # wandb.watch(model, log='all')
 
     auc = EpochScoring(scoring='roc_auc', lower_is_better=False)
     tss = EpochScoring(scoring=make_scorer(get_tss), lower_is_better=False, name='tss')  # on train to set on train
+
+    # valid_ds = Dataset(X_valid_data, y_valid_tr)
 
     # scoring = {'tss':make_scorer(tss)}
     net = NeuralNetClassifier(
@@ -442,11 +447,12 @@ if __name__ == '__main__':
         optimizer__weight_decay=args.weight_decay,
         device=device,
         # train_split=None, #die breek die logs
+        train_split=predefined_split(valid_ds),
         callbacks=[auc, tss],
         # iterator_train__shuffle=True,  # batches shuffle
     )
 
-    net.fit(np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)))
+    net.fit(X_train_data, y_train_tr)
 
     y_pred = cross_val_score(net, np.concatenate((X_train_data, X_valid_data)), np.concatenate((y_train_tr, y_valid_tr)),
                              cv=2, scoring=make_scorer(get_tss))
