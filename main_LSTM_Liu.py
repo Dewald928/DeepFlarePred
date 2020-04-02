@@ -783,8 +783,8 @@ if __name__ == '__main__':
     best_epoch = 0
 
     # print("Training Network...")
-    # if args.training:
-    #     for epoch in range(args.epochs):
+    # if cfg.training:
+    #     for epoch in range(cfg.epochs):
     #         train(model, device, train_loader, optimizer, epoch, criterion)
     #         tss, best_tss, best_epoch = validate(model, device, valid_loader,
     #                                              criterion, epoch, best_tss,

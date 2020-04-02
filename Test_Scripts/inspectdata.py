@@ -6,7 +6,7 @@ from tabulate import tabulate
 import seaborn as sns
 import scipy
 
-filepath = './Data/Liu/' + args.flare_label + '/'
+filepath = './Data/Liu/' + cfg.flare_label + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')

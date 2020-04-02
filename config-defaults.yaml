@@ -4,7 +4,7 @@ epochs:
   value: 300
 batch_size:
   desc: Size of each mini-batch
-  value: 32
+  value: 16384
 learning_rate:
   desc: initial learning rate
   value: 0.0002
@@ -32,14 +32,14 @@ seq_len:
 # MLP
 layers:
   desc: MLP layers
-  value: 1
+  value: 2
 hidden_units:
   desc: number hidden nodes in layer
-  value: 40
+  value: 100
 
 # Regularizer
 dropout:
-  desc: dopout applied to layers
+  desc: dropout applied to layers
   value: 0.7
 weight_decay:
   desc: L2 regularizing
@@ -51,7 +51,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 4
+  value: 5
 cuda:
   desc: enables cuda training
   value: True
@@ -66,4 +66,7 @@ num_workers:
   value: 9
 tag:
   desc: wandb tags
+  value: MLP
+model_type:
+  desc: which model to use (TCN/MLP)
   value: MLP

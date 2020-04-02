@@ -418,7 +418,7 @@ if __name__ == '__main__':
     #     print(list(model.parameters())[i].size())
 
     # print("Training Network...")
-    # for epoch in range(args.epochs):
+    # for epoch in range(cfg.epochs):
     #     train(model, device, train_loader, optimizer, epoch, criterion)
     #     validate(model, device, valid_loader, criterion, epoch)
 

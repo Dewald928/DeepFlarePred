@@ -86,7 +86,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
 
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
-        # data = data.view(-1, args.n_features, args.seq_len)
+        # data = data.view(-1, cfg.n_features, cfg.seq_len)
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
@@ -259,10 +259,8 @@ def infer_model(model, device, data_loader, args):
 
 
 if __name__ == '__main__':
-    wandb.init(project="liu_pytorch_tcn", notes='TCN')
+    wandb.init(project="liu_pytorch_MLP", tags='MLP')
     cfg = wandb.config
-    wandb.init(project="liu_pytorch_tcn", tags=cfg.tag)
-    # wandb.config.update(cfg)
 
     # initialize parameters
     filepath = './Data/Liu/' + cfg.flare_label + '/'
@@ -330,7 +328,7 @@ if __name__ == '__main__':
 
     # crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
     #                               X_valid_fold, y_valid_fold, X_test_fold,
-    #                               y_test_fold, args, nclass, device)
+    #                               y_test_fold, cfg, nclass, device)
 
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
@@ -375,10 +373,16 @@ if __name__ == '__main__':
     kernel_size = cfg.ksize
     dropout = cfg.dropout
 
-    model = TCN(cfg.n_features, nclass, channel_sizes,
-                kernel_size=kernel_size, dropout=dropout).to(device)
-    # wandb.watch(model, log='all')
-    # summary(model, input_size=(args.n_features, args.seq_len))
+    if cfg.model_type == 'MLP':
+        model = mlp.MLPModule(input_units=cfg.n_features,
+                            hidden_units=cfg.hidden_units,
+                            num_hidden=cfg.layers)
+    elif cfg.model_type == "TCN":
+        model = TCN(cfg.n_features, nclass, channel_sizes,
+                    kernel_size=kernel_size, dropout=dropout).to(device)
+        summary(model, input_size=(cfg.n_features, cfg.seq_len))
+
+    wandb.watch(model, log='all')
 
     # optimizers
     class_weights = class_weight.compute_class_weight('balanced',
@@ -413,22 +417,22 @@ if __name__ == '__main__':
                                             'ACC', 'Precision', 'Recall', 'F1',
                                             'Loss', 'MCC', 'CP'))
 
-    # if args.training:
+    # if cfg.training:
     #
-    #     while epoch < args.epochs:
+    #     while epoch < cfg.epochs:
     #         train_tss = train(model, device, train_loader, optimizer, epoch,
-    #                           criterion, args)[5]
+    #                           criterion, cfg)[5]
     #         stopping_metric, best_tss, best_pr_auc, best_epoch = validate(
     #             model, device, valid_loader, criterion, epoch, best_tss,
-    #             best_pr_auc, best_epoch, args)[0:4]
+    #             best_pr_auc, best_epoch, cfg)[0:4]
     #
-    #         if early_stop.step(stopping_metric) and args.early_stop:
+    #         if early_stop.step(stopping_metric) and cfg.early_stop:
     #             print('[INFO] Early Stopping')
     #             break
     #
     #         # # Continue training if recently improved
-    #         # if epoch == args.epochs-1 and early_stop.num_bad_epochs < 2:
-    #         #     args.epochs += 5
+    #         # if epoch == cfg.epochs-1 and early_stop.num_bad_epochs < 2:
+    #         #     cfg.epochs += 5
     #         #     print("[INFO] not finished training...")
     #         epoch += 1
     #
@@ -454,7 +458,7 @@ if __name__ == '__main__':
     # PR Curves
     # '''
     # # Train
-    # yhat = infer_model(model, device, train_loader, args)
+    # yhat = infer_model(model, device, train_loader, cfg)
     #
     # f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
     #                                          'Train')[2:4]
@@ -462,7 +466,7 @@ if __name__ == '__main__':
     # tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
     #
     # # Validation
-    # yhat = infer_model(model, device, valid_loader, args)
+    # yhat = infer_model(model, device, valid_loader, cfg)
     #
     # f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
     #                                    'Validation')[2:4]
@@ -475,7 +479,7 @@ if __name__ == '__main__':
     #                                       'Validation')
     #
     # # Test
-    # yhat = infer_model(model, device, test_loader, args)
+    # yhat = infer_model(model, device, test_loader, cfg)
     # cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
     #                                       metric.to_labels(yhat[:, 1],
     #                                                        th))  # watch
@@ -500,28 +504,28 @@ if __name__ == '__main__':
     #
     # test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
     # int(
-    #     args.batch_size / 6), shuffle=False, drop_last=False)
+    #     cfg.batch_size / 6), shuffle=False, drop_last=False)
     #
     # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg =
     # interpreter.interpret_model(
-    #     model, device, test_loader_interpret, args.n_features, args)
+    #     model, device, test_loader_interpret, cfg.n_features, cfg)
     #
     # interpreter.visualize_importance(
     #     np.array(feature_names[start_feature:start_feature +
-    #     args.n_features]),
+    #     cfg.n_features]),
     #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
-    #     args.n_features,
+    #     cfg.n_features,
     #     title="Integrated Gradient Features")
     #
     # interpreter.visualize_importance(
     #     np.array(feature_names[start_feature:start_feature +
-    #     args.n_features]),
+    #     cfg.n_features]),
     #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-    #     args.n_features, title="Saliency Features")
+    #     cfg.n_features, title="Saliency Features")
     #
     # '''SHAP'''
     # plt.close('all')
-    # get_shap(model, test_loader, device, args, feature_names, start_feature)
+    # get_shap(model, test_loader, device, cfg, feature_names, start_feature)
 
     '''
         Skorch training
@@ -568,14 +572,8 @@ if __name__ == '__main__':
 
     tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=8)
 
-    MLP = mlp.MLPModule(input_units=cfg.n_features,
-                        hidden_units=cfg.hidden_units,
-                        num_hidden=cfg.layers)
-    # summary(MLP, input_size=(args.n_features))
-    wandb.watch(MLP, log='all')
-
     # noinspection PyArgumentList
-    net = NeuralNetClassifier(MLP, max_epochs=cfg.epochs,
+    net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
                               batch_size=cfg.batch_size,
                               criterion=nn.CrossEntropyLoss,
                               criterion__weight=torch.FloatTensor(
@@ -599,7 +597,7 @@ if __name__ == '__main__':
 
     # net.max_epochs = 1
     net.fit(inputs, labels)
-    # net.max_epochs = args.epochs
+    # net.max_epochs = cfg.epochs
     # y_pred = sklearn.model_selection.cross_val_predict(net, inputs, labels,
     #                                                    cv=5)
     # net.initialize()
