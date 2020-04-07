@@ -624,18 +624,18 @@ if __name__ == '__main__':
     kf = sklearn.model_selection.KFold(n_splits=cfg.n_splits, shuffle=False)
     skf = sklearn.model_selection.StratifiedKFold(cfg.n_splits, shuffle=False)
     scores = []
-    visualize_CV.visualize_cv(sklearn.model_selection.KFold,
+    visualize_CV.visualize_cv(sklearn.model_selection.StratifiedKFold,
                               inputs, labels, cfg)
     for train_index, val_index in skf.split(inputs, labels):
         print('train -  {}   |   test -  {}'.format(
             np.bincount(labels[train_index]), np.bincount(labels[val_index])))
-        # x_train, x_val = inputs[train_index], inputs[val_index]
-        # y_train, y_val = labels[train_index], labels[val_index]
-        # net.train_split = predefined_split(Dataset(x_val, y_val))
-        # net.fit(x_train, y_train)
-        # predictions = net.predict(x_val)
-        # scores.append(
-        #     balanced_accuracy_score(y_val, predictions, adjusted=True))
+        x_train, x_val = inputs[train_index], inputs[val_index]
+        y_train, y_val = labels[train_index], labels[val_index]
+        net.train_split = predefined_split(Dataset(x_val, y_val))
+        net.fit(x_train, y_train)
+        predictions = net.predict(x_val)
+        scores.append(
+            balanced_accuracy_score(y_val, predictions, adjusted=True))
     print('Scores from each Iteration: ', scores)
     print('Average K-Fold Score :', np.mean(scores))
 

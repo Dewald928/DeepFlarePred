@@ -53,7 +53,7 @@ def visualize_groups(classes, groups, name):
 
 def visualize_cv(cv, X, y, cfg):
     groups = np.hstack([[ii] * round(y.size/10) for ii in range(10)])[0:y.size]
-    visualize_groups(y, groups, 'blaps')
+    # visualize_groups(y, groups, 'blaps')
     this_cv = cv(n_splits=cfg.n_splits)
     fig, ax = plt.subplots(figsize=(9, 6))
     plot_cv_indices(this_cv, X, y, groups, ax, cfg.n_splits)
