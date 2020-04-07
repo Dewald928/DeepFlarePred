@@ -258,6 +258,13 @@ def infer_model(model, device, data_loader, args):
     return np.vstack(output_arr)
 
 
+def val_score(net, ds, y=None):
+    # score validation set
+    y_true = [y for _, y in ds]
+    y_pred = net.predict(ds)
+    return balanced_accuracy_score(y_true, y_pred, adjusted=True)
+
+
 if __name__ == '__main__':
     wandb.init(project="liu_pytorch_MLP", tags='MLP')
     cfg = wandb.config
@@ -552,7 +559,7 @@ if __name__ == '__main__':
     inputs = np.concatenate([inputs, X_valid_data], axis=0)
     inputs = inputs.astype(np.float32)
     labels = np.concatenate([labels, y_valid_tr], axis=0)
-    ds = Dataset(inputs,labels)
+    ds = Dataset(inputs, labels)
     labels = np.array([labels for _, labels in iter(ds)])
 
     # Metrics + Callbacks
@@ -570,9 +577,9 @@ if __name__ == '__main__':
                               lower_is_better=False, name='train_bacc',
                               use_caching=True, on_train=True)
 
-    earlystop = EarlyStopping(monitor='train_tss', lower_is_better=False,
-                              patience=20)
-    checkpoint = Checkpoint(monitor='train_tss_best',
+    earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
+                              patience=30)
+    checkpoint = Checkpoint(monitor='valid_tss_best',
                             dirname='./saved/models/cv')
 
     load_state = LoadInitState(checkpoint)
@@ -591,11 +598,11 @@ if __name__ == '__main__':
                               optimizer__weight_decay=cfg.weight_decay,
                               optimizer__amsgrad=False,
                               device=device,
-                              # train_split=skorch.dataset.CVSplit(cv=tscv,
-                              #                                    stratified=False),
+                              # train_split=skorch.dataset.CVSplit(
+                              #     cv=cfg.n_splits, stratified=False),
                               # train_split=predefined_split(valid_ds),
-                              train_split=None,
-                              callbacks=[train_tss, train_bacc,
+                              # train_split=None,
+                              callbacks=[train_tss, train_bacc, valid_tss,
                                          earlystop,
                                          checkpoint,
                                          # load_state,
@@ -609,19 +616,31 @@ if __name__ == '__main__':
     # net.fit(inputs, labels)
     # net.max_epochs = cfg.epochs
     # net.max_epochs = 15
-    score = sklearn.model_selection.cross_validate(net, inputs, labels,
-                                                   cv=5,
-                                                   scoring=make_scorer(
-                                                       skorch_utils.get_tss),
-                                                   return_train_score=True)
-    # Todo cross validates doesn't score on earlystop
-    print(score)
-    print("Accuracy: %0.2f (+/- %0.2f)" % (
-        score['test_score'].mean(), score['test_score'].std() * 2))
+    # score = sklearn.model_selection.cross_validate(net, inputs, labels,
+    #                                                cv=5,
+    #                                                scoring=make_scorer(
+    #                                                    skorch_utils.get_tss),
+    #                                                return_train_score=True)
+    # # Todo cross validates doesn't score on earlystop
+    # print(score)
+    # print("Accuracy: %0.2f (+/- %0.2f)" % (
+    #     score['test_score'].mean(), score['test_score'].std() * 2))
     '''
     K-fold cross val
     '''
-
+    kf = sklearn.model_selection.KFold(n_splits=cfg.n_splits, shuffle=False)
+    skf = sklearn.model_selection.StratifiedKFold(cfg.n_splits, shuffle=False)
+    scores = []
+    for train_index, val_index in kf.split(inputs):
+        x_train, x_val = inputs[train_index], inputs[val_index]
+        y_train, y_val = labels[train_index], labels[val_index]
+        net.train_split = predefined_split(Dataset(x_val, y_val))
+        net.fit(x_train, y_train)
+        predictions = net.predict(x_val)
+        scores.append(balanced_accuracy_score(y_val, predictions,
+                                              adjusted=True))
+    print('Scores from each Iteration: ', scores)
+    print('Average K-Fold Score :', np.mean(scores))
 
     '''
     Test Results
@@ -645,5 +664,5 @@ if __name__ == '__main__':
     print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
-    torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
+    # torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
     print('Finished')
