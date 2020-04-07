@@ -7,7 +7,7 @@ But the abundance of the rich will not permit him to sleep.
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
-from sklearn.metrics import make_scorer
+from sklearn.metrics import make_scorer, balanced_accuracy_score
 import sklearn.metrics
 import seaborn as sn
 
@@ -549,8 +549,11 @@ if __name__ == '__main__':
     valid_ds = Dataset(X_valid_data, y_valid_tr)
 
     # combined datasets
-    # inputs = np.concatenate([inputs, X_valid_data], axis=0)
-    # labels = np.concatenate([labels, y_valid_tr], axis=0)
+    inputs = np.concatenate([inputs, X_valid_data], axis=0)
+    inputs = inputs.astype(np.float32)
+    labels = np.concatenate([labels, y_valid_tr], axis=0)
+    ds = Dataset(inputs,labels)
+    labels = np.array([labels for _, labels in iter(ds)])
 
     # Metrics + Callbacks
     valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
@@ -562,15 +565,20 @@ if __name__ == '__main__':
     valid_hss = EpochScoring(scoring=make_scorer(skorch_utils.get_hss),
                              lower_is_better=False, name='valid_hss',
                              use_caching=True)
+    train_bacc = EpochScoring(scoring=make_scorer(balanced_accuracy_score,
+                                                  **{'adjusted': True}),
+                              lower_is_better=False, name='train_bacc',
+                              use_caching=True, on_train=True)
 
-    earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
-                              patience=40)
-    checkpoint = Checkpoint(monitor='valid_tss_best',
-                            dirname='./saved/models/exp1')
+    earlystop = EarlyStopping(monitor='train_tss', lower_is_better=False,
+                              patience=20)
+    checkpoint = Checkpoint(monitor='train_tss_best',
+                            dirname='./saved/models/cv')
 
-    mycheckpoint = skorch_utils.MyCheckpoint()
+    load_state = LoadInitState(checkpoint)
+    reload_at_end = skorch_utils.LoadBestCP(checkpoint)
 
-    tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=8)
+    tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=3)
 
     # noinspection PyArgumentList
     net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
@@ -585,45 +593,35 @@ if __name__ == '__main__':
                               device=device,
                               # train_split=skorch.dataset.CVSplit(cv=tscv,
                               #                                    stratified=False),
-                              train_split=predefined_split(valid_ds),
-                              # train_split=None,
-                              callbacks=[valid_tss, valid_hss,
+                              # train_split=predefined_split(valid_ds),
+                              train_split=None,
+                              callbacks=[train_tss, train_bacc,
                                          earlystop,
                                          checkpoint,
-                                         skorch_utils.LoggingCallback],
+                                         # load_state,
+                                         reload_at_end],
+                                         # skorch_utils.LoggingCallback],
                               # iterator_train__shuffle=True,
                               warm_start=False
                               )
 
     # net.max_epochs = 1
-    net.fit(inputs, labels)
+    # net.fit(inputs, labels)
     # net.max_epochs = cfg.epochs
-    # y_pred = sklearn.model_selection.cross_val_predict(net, inputs, labels,
-    #                                                    cv=5)
-    # net.initialize()
-    # score = sklearn.model_selection.cross_val_score(net, inputs, labels,
-    #                                                 cv=tscv,
-    #                                                 scoring=make_scorer(
-    #                                                     skorch_utils.get_tss))
-
     # net.max_epochs = 15
-    # score = sklearn.model_selection.cross_validate(net, inputs, labels,
-    #                                                cv=10,
-    #                                                scoring=make_scorer(
-    #                                                    skorch_utils.get_tss),
-    #                                                return_train_score=True)
-    # print(score)
-
+    score = sklearn.model_selection.cross_validate(net, inputs, labels,
+                                                   cv=5,
+                                                   scoring=make_scorer(
+                                                       skorch_utils.get_tss),
+                                                   return_train_score=True)
+    # Todo cross validates doesn't score on earlystop
+    print(score)
+    print("Accuracy: %0.2f (+/- %0.2f)" % (
+        score['test_score'].mean(), score['test_score'].std() * 2))
     '''
     K-fold cross val
     '''
 
-    # net.max_epochs = 0
-    #
-    # print(score)
-    # y_pred = sklearn.model_selection.cross_val_predict(net, inputs, labels,
-    #                                                    cv=8)
-    # print(y_pred)
 
     '''
     Test Results

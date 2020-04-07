@@ -91,6 +91,15 @@ class LoggingCallback(Callback):
              'Validation_Loss': h['valid_loss']}, step=h['epoch'])
 
 
+class LoadBestCP(Callback):
+    def __init__(self, checkpoint):
+        self.checkpoint = checkpoint
+        super(LoadBestCP, self).__init__()
+
+    def on_train_end(self, net, X=None, y=None, **kwargs):
+        net.load_params(checkpoint=self.checkpoint)
+
+
 # counter = 0
 #
 #

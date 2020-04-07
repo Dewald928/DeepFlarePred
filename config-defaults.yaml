@@ -1,13 +1,13 @@
 # Basic HP
 epochs:
   desc: Number of epochs to train over
-  value: 300
+  value: 100
 batch_size:
   desc: Size of each mini-batch
-  value: 16384
+  value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.0002
+  value: 0.001
 optim:
   desc: optimizer to use
   value: Adam
@@ -26,16 +26,16 @@ nhid:
   desc: number of filters
   value: 40
 seq_len:
-  desc: size of sequence
+  desc: size of sequence (Be 1 for MLP)
   value: 1
 
 # MLP
 layers:
   desc: MLP layers
-  value: 2
+  value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 100
+  value: 40
 
 # Regularizer
 dropout:
@@ -51,7 +51,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 5
+  value: 10
 cuda:
   desc: enables cuda training
   value: True

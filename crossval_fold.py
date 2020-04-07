@@ -15,7 +15,7 @@ from model.tcn import TemporalConvNet
 from model import metric
 from utils import early_stopping
 import main_TCN_Liu
-from main_TCN_Liu import TCN
+# from main_TCN_Liu import TCN
 
 import wandb
 
