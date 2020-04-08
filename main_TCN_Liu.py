@@ -4,6 +4,7 @@ Ecclesiastes 5:12 New King James Version (NKJV)
 Whether he eats little or much;
 But the abundance of the rich will not permit him to sleep.
 """
+import yaml
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
@@ -261,9 +262,23 @@ def infer_model(model, device, data_loader, args):
     return np.vstack(output_arr)
 
 
+def init_project():
+    with open('config-defaults.yaml', 'r') as ymlfile:
+        cfg = yaml.load(ymlfile)
+
+    model_type = cfg['model_type']['value']
+    project = 'liu_pytorch_MLP' if model_type == 'MLP' else \
+        'liu_pytorch_tcn'
+    tags = cfg['tag']['value']
+
+    return project, tags
+
+
 if __name__ == '__main__':
-    wandb.init(project="liu_pytorch_MLP", tags='Stratafied')
+    project, tags = init_project()
+    wandb.init(project=project, tags=tags)
     cfg = wandb.config
+
 
     # initialize parameters
     filepath = './Data/Liu/' + cfg.flare_label + '/'
@@ -406,7 +421,8 @@ if __name__ == '__main__':
     #     print(list(model.parameters())[i].size())
 
     # early stopping check
-    early_stop = early_stopping.EarlyStopping(mode='max', patience=40)
+    early_stop = early_stopping.EarlyStopping(mode='max',
+                                              patience=cfg.patience)
     best_tss = 0.0
     best_pr_auc = 0.0
     best_epoch = 0
@@ -536,15 +552,21 @@ if __name__ == '__main__':
     '''
         Skorch training
     '''
-    X_train_data = np.reshape(X_train_data, (
-    len(X_train_data), cfg.n_features))  # disable normal
+    if cfg.model_type == 'MLP':
+        X_train_data = np.reshape(X_train_data,
+                                  (len(X_train_data), cfg.n_features))
+        X_valid_data = np.reshape(X_valid_data,
+                                  (len(X_valid_data), cfg.n_features))
+    elif cfg.model_type == 'TCN':
+        X_train_data = torch.tensor(X_train_data).float()
+        X_train_data = X_train_data.permute(0, 2, 1)
+        X_valid_data = torch.tensor(X_valid_data).float()
+        X_valid_data = X_valid_data.permute(0, 2, 1)
+
+    # correct format for skorch
     inputs = torch.tensor(X_train_data).float()
-    # inputs = inputs.permute(0, 2, 1) # DISABLE FOR MLP
-    labels = torch.tensor(y_train_tr).long()
-    X_valid_data = np.reshape(X_valid_data, (
-    len(X_valid_data), cfg.n_features))  # disable normal
     X_valid_data = torch.tensor(X_valid_data).float()
-    # X_valid_data = X_valid_data.permute(0, 2, 1) # Disable for mlp
+    labels = torch.tensor(y_train_tr).long()
     y_valid_tr = torch.tensor(y_valid_tr).long()
 
     inputs = inputs.numpy()
@@ -577,14 +599,12 @@ if __name__ == '__main__':
         on_train=True)
 
     earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
-                              patience=30)
+                              patience=cfg.patience)
     checkpoint = Checkpoint(monitor='valid_tss_best',
-                            dirname='./saved/models/cv')
+                            dirname='./saved/models/skorch')
 
     load_state = LoadInitState(checkpoint)
     reload_at_end = skorch_utils.LoadBestCP(checkpoint)
-
-    tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=3)
 
     # noinspection PyArgumentList
     net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
@@ -598,46 +618,48 @@ if __name__ == '__main__':
                               optimizer__amsgrad=False, device=device,
                               # train_split=skorch.dataset.CVSplit(
                               #     cv=cfg.n_splits, stratified=False),
-                              # train_split=predefined_split(valid_ds),
+                              train_split=predefined_split(valid_ds),
                               # train_split=None,
-                              callbacks=[train_tss, train_bacc, valid_tss,
-                                         earlystop, checkpoint, # load_state,
-                                         reload_at_end],
-                              # skorch_utils.LoggingCallback],
+                              callbacks=[train_tss, valid_tss, earlystop,
+                                         checkpoint,  # load_state,
+                                         reload_at_end,
+                                         skorch_utils.LoggingCallback],
                               # iterator_train__shuffle=True,
                               warm_start=False)
 
-    # net.fit(inputs, labels)
+    if not cfg.cross_validation:
+        net.fit(inputs, labels)
 
     # score = sklearn.model_selection.cross_validate(net, inputs, labels,
     #                                                cv=5,
     #                                                scoring=make_scorer(
     #                                                    skorch_utils.get_tss),
     #                                                return_train_score=True)
-    # # Todo cross validates doesn't score on earlystop
     # print(score)
     # print("Accuracy: %0.2f (+/- %0.2f)" % (
     #     score['test_score'].mean(), score['test_score'].std() * 2))
-    '''
-    Cross Validation
-    '''
-    kf = sklearn.model_selection.KFold(n_splits=cfg.n_splits, shuffle=False)
-    skf = sklearn.model_selection.StratifiedKFold(cfg.n_splits, shuffle=False)
-    scores = []
-    visualize_CV.visualize_cv(sklearn.model_selection.StratifiedKFold,
-                              inputs, labels, cfg)
-    for train_index, val_index in skf.split(inputs, labels):
-        print('train -  {}   |   test -  {}'.format(
-            np.bincount(labels[train_index]), np.bincount(labels[val_index])))
-        x_train, x_val = inputs[train_index], inputs[val_index]
-        y_train, y_val = labels[train_index], labels[val_index]
-        net.train_split = predefined_split(Dataset(x_val, y_val))
-        net.fit(x_train, y_train)
-        predictions = net.predict(x_val)
-        scores.append(
-            balanced_accuracy_score(y_val, predictions, adjusted=True))
-    print('Scores from each Iteration: ', scores)
-    print('Average K-Fold Score :', np.mean(scores))
+    # '''
+    # Cross Validation
+    # '''
+    elif cfg.cross_validation:
+        kf = sklearn.model_selection.KFold(n_splits=cfg.n_splits, shuffle=False)
+        skf = sklearn.model_selection.StratifiedKFold(cfg.n_splits, shuffle=False)
+        tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=cfg.n_splits)
+        scores = []
+        visualize_CV.visualize_cv(sklearn.model_selection.TimeSeriesSplit,
+                                  inputs, labels, cfg)
+        for train_index, val_index in tscv.split(inputs, labels):
+            print('train -  {}   |   test -  {}'.format(
+                np.bincount(labels[train_index]), np.bincount(labels[val_index])))
+            x_train, x_val = inputs[train_index], inputs[val_index]
+            y_train, y_val = labels[train_index], labels[val_index]
+            net.train_split = predefined_split(Dataset(x_val, y_val))
+            net.fit(x_train, y_train)
+            predictions = net.predict(x_val)
+            scores.append(
+                balanced_accuracy_score(y_val, predictions, adjusted=True))
+        print('Scores from each Iteration: ', scores)
+        print('Average K-Fold Score :', np.mean(scores))
 
     '''
     Test Results
@@ -645,10 +667,14 @@ if __name__ == '__main__':
     net.initialize()
     net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
-    X_test_data = np.reshape(X_test_data, (len(X_test_data), cfg.n_features))
+    if cfg.model_type == 'MLP':
+        X_test_data = np.reshape(X_test_data,
+                                 (len(X_test_data), cfg.n_features))
+    elif cfg.model_type == 'TCN':
+        X_test_data = torch.tensor(X_test_data).float()
+        X_test_data = X_test_data.permute(0, 2, 1)  # disable for mlp
 
     inputs = torch.tensor(X_test_data).float()
-    # inputs = inputs.permute(0, 2, 1) # disable for mlp
     labels = torch.tensor(y_test_tr).long()
 
     inputs = inputs.numpy()
@@ -660,5 +686,5 @@ if __name__ == '__main__':
     print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
-    # torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
+    torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
     print('Finished')

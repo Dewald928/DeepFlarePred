@@ -87,7 +87,7 @@ class LoggingCallback(Callback):
         h = net.history[-1]
         wandb.log(
             {'Train_Loss': h['train_loss'], 'Validation_TSS': h['valid_tss'],
-             'Validation_HSS': h['valid_hss'],
+             'Train_TSS': h['train_tss'],
              'Validation_Loss': h['valid_loss']}, step=h['epoch'])
 
 

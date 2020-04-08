@@ -55,7 +55,7 @@ def visualize_cv(cv, X, y, cfg):
     groups = np.hstack([[ii] * round(y.size/10) for ii in range(10)])[0:y.size]
     # visualize_groups(y, groups, 'blaps')
     this_cv = cv(n_splits=cfg.n_splits)
-    fig, ax = plt.subplots(figsize=(9, 6))
+    fig, ax = plt.subplots()
     plot_cv_indices(this_cv, X, y, groups, ax, cfg.n_splits)
 
     # ax.legend([Patch(color=cmap_cv(.8)), Patch(color=cmap_cv(.02))],

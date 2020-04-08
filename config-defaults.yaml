@@ -1,13 +1,22 @@
 # Basic HP
+tag:
+  desc: wandb tags
+  value:
+    - TimeSeriesSplit
+    - Debug
+    - MLP
+model_type:
+  desc: which model to use (TCN/MLP)
+  value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 100
+  value: 400
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 4096
 learning_rate:
   desc: initial learning rate
-  value: 0.0002
+  value: 0.0004
 optim:
   desc: optimizer to use
   value: Adam
@@ -40,7 +49,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.7
+  value: 0.78
 weight_decay:
   desc: L2 regularizing
   value: 0.00001
@@ -64,14 +73,14 @@ training:
 num_workers:
   desc: number of gpu workers
   value: 9
-tag:
-  desc: wandb tags
-  value: MLP
-model_type:
-  desc: which model to use (TCN/MLP)
-  value: MLP
+patience:
+  desc: amount of epochs for early stopping
+  value: 40
 
 # Cross Validation
+cross_validation:
+  desc: if crossval should be performed
+  value: True
 n_splits:
   desc: number of splits
-  value: 5
+  value: 8
