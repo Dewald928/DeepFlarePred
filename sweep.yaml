@@ -43,7 +43,7 @@ parameters:
   seed:
     distribution: categorical
     values:
-    - 5
+    - 15
   model_type:
     distribution: categorical
     value: MLP
