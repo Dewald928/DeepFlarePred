@@ -2,7 +2,6 @@
 tag:
   desc: wandb tags
   value:
-    - TimeSeriesSplit
     - Debug
     - MLP
 model_type:
@@ -13,10 +12,10 @@ epochs:
   value: 400
 batch_size:
   desc: Size of each mini-batch
-  value: 4096
+  value: 150
 learning_rate:
   desc: initial learning rate
-  value: 0.0004
+  value: 0.001
 optim:
   desc: optimizer to use
   value: Adam
@@ -52,7 +51,7 @@ dropout:
   value: 0.78
 weight_decay:
   desc: L2 regularizing
-  value: 0.00001
+  value: 0.0
 
 # Environment
 flare_label:
@@ -60,7 +59,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 5
+  value: 15
 cuda:
   desc: enables cuda training
   value: True
@@ -80,7 +79,7 @@ patience:
 # Cross Validation
 cross_validation:
   desc: if crossval should be performed
-  value: True
+  value: False
 n_splits:
   desc: number of splits
-  value: 8
+  value: 5

@@ -86,8 +86,9 @@ class LoggingCallback(Callback):
     def on_epoch_end(self, net, dataset_trn=None, dataset_vld=None, **kwargs):
         h = net.history[-1]
         wandb.log(
-            {'Train_Loss': h['train_loss'], 'Validation_TSS': h['valid_tss'],
-             'Train_TSS': h['train_tss'],
+            {'Training_Loss': h['train_loss'], 'Validation_TSS': h[
+                'valid_tss'],
+             'Training_TSS': h['train_tss'],
              'Validation_Loss': h['valid_loss']}, step=h['epoch'])
 
 

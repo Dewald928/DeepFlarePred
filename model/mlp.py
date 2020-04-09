@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 
 class MLPModule(nn.Module):
     def __init__(
@@ -47,4 +49,4 @@ class MLPModule(nn.Module):
         X = self.sequential(X)
         if self.squeeze_output:
             X = X.squeeze(-1)
-        return X
+        return F.softmax(X, dim=1)

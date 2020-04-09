@@ -264,7 +264,7 @@ def infer_model(model, device, data_loader, args):
 
 def init_project():
     with open('config-defaults.yaml', 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.Loader)
 
     model_type = cfg['model_type']['value']
     project = 'liu_pytorch_MLP' if model_type == 'MLP' else \
@@ -278,7 +278,6 @@ if __name__ == '__main__':
     project, tags = init_project()
     wandb.init(project=project, tags=tags)
     cfg = wandb.config
-
 
     # initialize parameters
     filepath = './Data/Liu/' + cfg.flare_label + '/'
@@ -394,7 +393,7 @@ if __name__ == '__main__':
     if cfg.model_type == 'MLP':
         model = mlp.MLPModule(input_units=cfg.n_features,
                               hidden_units=cfg.hidden_units,
-                              num_hidden=cfg.layers)
+                              num_hidden=cfg.layers, dropout=cfg.dropout)
     elif cfg.model_type == "TCN":
         model = TCN(cfg.n_features, nclass, channel_sizes,
                     kernel_size=kernel_size, dropout=dropout).to(device)
@@ -577,11 +576,12 @@ if __name__ == '__main__':
     valid_ds = Dataset(X_valid_data, y_valid_tr)
 
     # combined datasets
-    inputs = np.concatenate([inputs, X_valid_data], axis=0)
-    inputs = inputs.astype(np.float32)
-    labels = np.concatenate([labels, y_valid_tr], axis=0)
-    ds = Dataset(inputs, labels)
-    labels = np.array([labels for _, labels in iter(ds)])
+    if cfg.cross_validation:
+        inputs = np.concatenate([inputs, X_valid_data], axis=0)
+        inputs = inputs.astype(np.float32)
+        labels = np.concatenate([labels, y_valid_tr], axis=0)
+        ds = Dataset(inputs, labels)
+        labels = np.array([labels for _, labels in iter(ds)])
 
     # Metrics + Callbacks
     valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
@@ -627,6 +627,9 @@ if __name__ == '__main__':
                               # iterator_train__shuffle=True,
                               warm_start=False)
 
+    net.initialize()
+    net.save_params(f_params='init.pkl')
+
     if not cfg.cross_validation:
         net.fit(inputs, labels)
 
@@ -646,14 +649,15 @@ if __name__ == '__main__':
         skf = sklearn.model_selection.StratifiedKFold(cfg.n_splits, shuffle=False)
         tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=cfg.n_splits)
         scores = []
-        visualize_CV.visualize_cv(sklearn.model_selection.TimeSeriesSplit,
+        visualize_CV.visualize_cv(sklearn.model_selection.StratifiedKFold,
                                   inputs, labels, cfg)
-        for train_index, val_index in tscv.split(inputs, labels):
+        for train_index, val_index in skf.split(inputs, labels):
             print('train -  {}   |   test -  {}'.format(
                 np.bincount(labels[train_index]), np.bincount(labels[val_index])))
             x_train, x_val = inputs[train_index], inputs[val_index]
             y_train, y_val = labels[train_index], labels[val_index]
             net.train_split = predefined_split(Dataset(x_val, y_val))
+            net.load_params(f_params='init.pkl')
             net.fit(x_train, y_train)
             predictions = net.predict(x_val)
             scores.append(
