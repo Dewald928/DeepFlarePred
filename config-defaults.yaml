@@ -3,19 +3,18 @@ tag:
   desc: wandb tags
   value:
     - Debug
-    - MLP
 model_type:
   desc: which model to use (TCN/MLP)
-  value: MLP
+  value: TCN
 epochs:
   desc: Number of epochs to train over
   value: 400
 batch_size:
   desc: Size of each mini-batch
-  value: 150
+  value: 4096
 learning_rate:
   desc: initial learning rate
-  value: 0.001
+  value: 0.0002
 optim:
   desc: optimizer to use
   value: Adam
@@ -53,13 +52,21 @@ weight_decay:
   desc: L2 regularizing
   value: 0.0
 
+# Cross Validation
+cross_validation:
+  desc: if crossval should be performed
+  value: False
+n_splits:
+  desc: number of splits
+  value: 5
+
 # Environment
 flare_label:
   desc: Types of flare class
   value: M5
 seed:
   desc: random seed
-  value: 15
+  value: 5
 cuda:
   desc: enables cuda training
   value: True
@@ -76,10 +83,4 @@ patience:
   desc: amount of epochs for early stopping
   value: 40
 
-# Cross Validation
-cross_validation:
-  desc: if crossval should be performed
-  value: False
-n_splits:
-  desc: number of splits
-  value: 5
+
