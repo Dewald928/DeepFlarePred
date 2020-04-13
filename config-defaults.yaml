@@ -9,13 +9,13 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 400
+  value: 300
 batch_size:
   desc: Size of each mini-batch
-  value: 4096
+  value: 512
 learning_rate:
   desc: initial learning rate
-  value: 0.0002
+  value: 0.00001
 optim:
   desc: optimizer to use
   value: Adam
@@ -48,7 +48,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.78
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -67,13 +67,13 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 5
+  value: 32
 cuda:
   desc: enables cuda training
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
+  value: False
 training:
   desc: Trains models, else only tests
   value: True

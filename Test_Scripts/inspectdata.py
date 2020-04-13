@@ -98,6 +98,8 @@ ARs_classified = concattable[(concattable['p'] == 1) & (concattable['label']
                                                         == 'Positive')]
 ARs_classified_NOAA = ARs_classified['NOAA'].unique()
 numberofAR = len(m5_flared_NOAA) - len(ARs_classified_NOAA)
+
+
 '''
 Tensorboard
 '''

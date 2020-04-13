@@ -578,12 +578,10 @@ if __name__ == '__main__':
     valid_ds = Dataset(X_valid_data, y_valid_tr)
 
     # combined datasets
-    if cfg.cross_validation:
-        inputs = np.concatenate([inputs, X_valid_data], axis=0)
-        inputs = inputs.astype(np.float32)
-        labels = np.concatenate([labels, y_valid_tr], axis=0)
-        ds = Dataset(inputs, labels)
-        labels = np.array([labels for _, labels in iter(ds)])
+    combined_inputs = np.concatenate([inputs, X_valid_data], axis=0).astype(np.float32)
+    combined_labels = np.concatenate([labels, y_valid_tr], axis=0)
+    ds = Dataset(inputs, labels)
+    combined_labels = np.array([labels for _, labels in iter(ds)])
 
     # Metrics + Callbacks
     valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
@@ -600,8 +598,11 @@ if __name__ == '__main__':
         lower_is_better=False, name='train_bacc', use_caching=True,
         on_train=True)
 
-    earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
-                              patience=cfg.patience)
+    if cfg.early_stop:
+        earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
+                                  patience=cfg.patience)
+    else:
+        earlystop = None
     checkpoint = Checkpoint(monitor='valid_tss_best',
                             dirname='./saved/models/skorch')
 
@@ -627,7 +628,7 @@ if __name__ == '__main__':
                                          reload_at_end,
                                          skorch_utils.LoggingCallback],
                               # iterator_train__shuffle=True,
-                              warm_start=False)
+                              warm_start=True)
 
     net.initialize()
     net.save_params(f_params='init.pkl')
@@ -659,7 +660,7 @@ if __name__ == '__main__':
             x_train, x_val = inputs[train_index], inputs[val_index]
             y_train, y_val = labels[train_index], labels[val_index]
             net.train_split = predefined_split(Dataset(x_val, y_val))
-            net.load_params(f_params='init.pkl')
+            net.load_params(f_params='init.pkl')  # Reload inital params
             net.fit(x_train, y_train)
             predictions = net.predict(x_val)
             scores.append(
@@ -670,6 +671,12 @@ if __name__ == '__main__':
     '''
     Test Results
     '''
+    # train on train and val set
+    if cfg.cross_validation:
+        net.load_params(f_params='init.pkl')
+        net.train_split = None
+        net.fit(combined_inputs, combined_labels)
+
     net.initialize()
     net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
