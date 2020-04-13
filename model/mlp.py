@@ -30,6 +30,7 @@ class MLPModule(nn.Module):
     def init_weights(m):
         if type(m) == nn.Linear:
             torch.nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+            print(m.weight)
             # m.bias.data.fill_(0.01)
 
     def reset_params(self):
@@ -49,7 +50,7 @@ class MLPModule(nn.Module):
             sequence.append(self.output_nonlin)
 
         self.sequential = nn.Sequential(*sequence)
-        self.sequential.apply(init_weights)
+        # self.sequential.apply(self.init_weights)
 
     def forward(self, X):  # pylint: disable=arguments-differ
         X = self.sequential(X)

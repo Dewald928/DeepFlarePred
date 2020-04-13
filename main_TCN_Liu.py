@@ -580,7 +580,7 @@ if __name__ == '__main__':
     # combined datasets
     combined_inputs = np.concatenate([inputs, X_valid_data], axis=0).astype(np.float32)
     combined_labels = np.concatenate([labels, y_valid_tr], axis=0)
-    ds = Dataset(inputs, labels)
+    ds = Dataset(combined_inputs, combined_labels)
     combined_labels = np.array([labels for _, labels in iter(ds)])
 
     # Metrics + Callbacks

@@ -1,5 +1,0 @@
-[default]
-entity = dewald123
-project = liu_pytorch_tcn
-base_url = https://api.wandb.ai
-
