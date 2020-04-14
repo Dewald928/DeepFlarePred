@@ -2,8 +2,8 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
     - Skorch
+    - BatchNorm
 model_type:
   desc: which model to use (TCN/MLP)
   value: MLP
