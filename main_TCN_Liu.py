@@ -653,12 +653,12 @@ if __name__ == '__main__':
         tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=cfg.n_splits)
         scores = []
         visualize_CV.visualize_cv(sklearn.model_selection.StratifiedKFold,
-                                  inputs, labels, cfg)
-        for train_index, val_index in skf.split(inputs, labels):
+                                  combined_inputs, combined_labels, cfg)
+        for train_index, val_index in skf.split(combined_inputs, combined_labels):
             print('train -  {}   |   test -  {}'.format(
-                np.bincount(labels[train_index]), np.bincount(labels[val_index])))
-            x_train, x_val = inputs[train_index], inputs[val_index]
-            y_train, y_val = labels[train_index], labels[val_index]
+                np.bincount(combined_labels[train_index]), np.bincount(combined_labels[val_index])))
+            x_train, x_val = combined_inputs[train_index], combined_inputs[val_index]
+            y_train, y_val = combined_labels[train_index], combined_labels[val_index]
             net.train_split = predefined_split(Dataset(x_val, y_val))
             net.load_params(f_params='init.pkl')  # Reload inital params
             net.fit(x_train, y_train)
@@ -675,7 +675,9 @@ if __name__ == '__main__':
     if cfg.cross_validation:
         net.load_params(f_params='init.pkl')
         net.train_split = None
+        net.callbacks_ = []
         net.fit(combined_inputs, combined_labels)
+        # todo not working
 
     net.initialize()
     net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
