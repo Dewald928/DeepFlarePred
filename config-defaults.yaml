@@ -15,7 +15,7 @@ batch_size:
   value: 512
 learning_rate:
   desc: initial learning rate
-  value: 0.0002
+  value: 0.00002
 optim:
   desc: optimizer to use
   value: Adam

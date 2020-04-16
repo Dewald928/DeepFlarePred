@@ -603,8 +603,10 @@ if __name__ == '__main__':
                                   patience=cfg.patience)
     else:
         earlystop = None
+    savename = '{}_{}_{}_{}'.format(cfg.model_type, cfg.layers,
+                                    cfg.hidden_units, cfg.seed)
     checkpoint = Checkpoint(monitor='valid_tss_best',
-                            dirname='./saved/models/skorch' + str(cfg.seed))
+                            dirname='./saved/models/' + savename)
 
     load_state = LoadInitState(checkpoint)
     reload_at_end = skorch_utils.LoadBestCP(checkpoint)
@@ -631,7 +633,8 @@ if __name__ == '__main__':
                               warm_start=False)
 
     net.initialize()
-    net.save_params(f_params='init.pkl')
+    init_savename = 'init_{}_{}'.format(cfg.model_type, cfg.seed)
+    net.save_params(f_params=init_savename)
 
     if not cfg.cross_validation:
         net.fit(inputs, labels)
@@ -660,7 +663,7 @@ if __name__ == '__main__':
             x_train, x_val = combined_inputs[train_index], combined_inputs[val_index]
             y_train, y_val = combined_labels[train_index], combined_labels[val_index]
             net.train_split = predefined_split(Dataset(x_val, y_val))
-            net.load_params(f_params='init.pkl')  # Reload inital params
+            net.load_params(f_params=init_savename)  # Reload inital params
             net.fit(x_train, y_train)
             predictions = net.predict(x_val)
             scores.append(
