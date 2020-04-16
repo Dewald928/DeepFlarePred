@@ -35,7 +35,7 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 3
+  value: 1
 
 # MLP
 layers:
