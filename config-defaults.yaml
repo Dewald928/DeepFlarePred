@@ -2,20 +2,21 @@
 tag:
   desc: wandb tags
   value:
+    - Debug
     - Skorch
     - BatchNorm
 model_type:
   desc: which model to use (TCN/MLP)
-  value: MLP
+  value: TCN
 epochs:
   desc: Number of epochs to train over
-  value: 300
+  value: 100
 batch_size:
   desc: Size of each mini-batch
   value: 512
 learning_rate:
   desc: initial learning rate
-  value: 0.00004
+  value: 0.0002
 optim:
   desc: optimizer to use
   value: Adam
@@ -29,13 +30,13 @@ levels:
   value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 2
+  value: 3
 nhid:
   desc: number of filters
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
@@ -67,13 +68,13 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 24
+  value: 50
 cuda:
   desc: enables cuda training
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: False
+  value: True
 training:
   desc: Trains models, else only tests
   value: True
@@ -82,6 +83,6 @@ num_workers:
   value: 9
 patience:
   desc: amount of epochs for early stopping
-  value: 40
+  value: 100
 
 

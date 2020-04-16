@@ -604,7 +604,7 @@ if __name__ == '__main__':
     else:
         earlystop = None
     checkpoint = Checkpoint(monitor='valid_tss_best',
-                            dirname='./saved/models/skorch')
+                            dirname='./saved/models/skorch' + str(cfg.seed))
 
     load_state = LoadInitState(checkpoint)
     reload_at_end = skorch_utils.LoadBestCP(checkpoint)
@@ -628,7 +628,7 @@ if __name__ == '__main__':
                                          reload_at_end,
                                          skorch_utils.LoggingCallback],
                               # iterator_train__shuffle=True,
-                              warm_start=True)
+                              warm_start=False)
 
     net.initialize()
     net.save_params(f_params='init.pkl')
@@ -667,16 +667,19 @@ if __name__ == '__main__':
                 balanced_accuracy_score(y_val, predictions, adjusted=True))
         print('Scores from each Iteration: ', scores)
         print('Average K-Fold Score :', np.mean(scores))
+        wandb.log({"Avg_CV_Score": np.mean(scores)})
 
     '''
     Test Results
     '''
     # train on train and val set
     if cfg.cross_validation:
+        net.initialize()
         net.load_params(f_params='init.pkl')
-        net.train_split = None
-        net.callbacks_ = []
-        net.fit(combined_inputs, combined_labels)
+        net.train_split = predefined_split(valid_ds)
+        net.callbacks = [valid_tss, Checkpoint(monitor='valid_tss_best',
+                                               dirname='./saved/models/skorch')]
+        net.fit(inputs, labels)
         # todo not working
 
     net.initialize()
