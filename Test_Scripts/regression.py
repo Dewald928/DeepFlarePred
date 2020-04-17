@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from skorch.dataset import Dataset
+from sklearn.preprocessing import MinMaxScaler
 
 
 def create_inout_sequences(input_data, tw):
@@ -95,15 +96,16 @@ if per_element:
 else:
     lstm_input_size = n_features
 # size of hidden layers
-h1 = 16
+h1 = 64
 output_dim = 1
 num_layers = 2
-learning_rate = 1e-3
-num_epochs = 500
+learning_rate = 1e-1
+num_epochs = 1000
 dtype = torch.float
 train_window = 12
 
-X, y = make_regression(100, n_features, n_informative=10, random_state=0)
+X, y = make_regression(100, n_features, n_informative=10, random_state=0,
+                       shuffle=False)
 X = X.astype(np.float32)
 y = y.astype(np.float32) / 100
 y = y.reshape(-1, 1)
@@ -113,14 +115,17 @@ ds = Dataset(X, y)
 y = np.array([y for _, y in iter(ds)])
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8,
                                                     random_state=1)
+# Normalize
+scaler = MinMaxScaler(feature_range=(-1, 1))
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
 # convert to sequences
 X_train_seq = create_inout_sequences(X_train, train_window)
+X_test_seq = create_inout_sequences(X_test, train_window)
 
-plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train)
-plt.plot(np.linspace(len(y_train), len(y_train) + len(y_test), len(y_test)),
-         y_test)
-plt.show()
+
+
 
 # model = NeuralNetRegressor(RegressorModule, max_epochs=20, lr=0.1,
 #     device='cuda',  # uncomment this to train with CUDA
@@ -128,18 +133,21 @@ plt.show()
 model = LSTM(lstm_input_size, h1, batch_size=batch_size, output_dim=output_dim,
              num_layers=num_layers)
 
-net = NeuralNetRegressor(model, lr=learning_rate, max_epochs=400,
+net = NeuralNetRegressor(model, lr=learning_rate, max_epochs=num_epochs,
                          criterion=nn.MSELoss, batch_size=32,
                          # callbacks=[bacc, train_acc, roc_auc,
                          #            EarlyStopping(monitor='train_bacc',
                          #                          lower_is_better=False,
                          #                          patience=100), checkpoint],
                          warm_start=False)
+X_test_seq = torch.tensor(X_test_seq).float()
+X_test_seq = X_test_seq.numpy()
 X_train_seq = torch.tensor(X_train_seq).float()
 X_train_seq = X_train_seq.numpy()
 net.fit(X_train_seq, y_train)
 
-y_pred = net.predict(X_test)
+y_pred = net.predict(X_test_seq)
+y_train_pred = net.predict(X_train_seq)
 
 # Plot prediction
 plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train)
@@ -147,4 +155,6 @@ plt.plot(np.linspace(len(y_train), len(y_train) + len(y_test), len(y_test)),
          y_test)
 plt.plot(np.linspace(len(y_train), len(y_train) + len(y_test), len(y_test)),
          y_pred)
+plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_pred)
+
 plt.show()
