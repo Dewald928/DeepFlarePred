@@ -4,24 +4,25 @@ tag:
   value:
     - Skorch
     - BatchNorm
+    - Debug
 model_type:
   desc: which model to use (TCN/MLP)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 100
+  value: 400
 batch_size:
   desc: Size of each mini-batch
   value: 512
 learning_rate:
   desc: initial learning rate
-  value: 0.00002
+  value: 0.00001
 optim:
   desc: optimizer to use
   value: Adam
 n_features:
   desc: number of features to include (max 40)
-  value: 40
+  value: 20
 
 # TCN HP
 levels:
@@ -43,12 +44,12 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 40
+  value: 20
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.4
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -56,7 +57,7 @@ weight_decay:
 # Cross Validation
 cross_validation:
   desc: if crossval should be performed
-  value: False
+  value: True
 n_splits:
   desc: number of splits
   value: 5
@@ -67,13 +68,13 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 50
+  value: 15
 cuda:
   desc: enables cuda training
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
+  value: False
 training:
   desc: Trains models, else only tests
   value: True

@@ -570,6 +570,11 @@ if __name__ == '__main__':
     labels = torch.tensor(y_train_tr).long()
     y_valid_tr = torch.tensor(y_valid_tr).long()
 
+    test_inputs = torch.tensor(X_test_data_tensor).float()
+    test_labels = torch.tensor(y_test_tr).long()
+
+    test_inputs = test_inputs.numpy()
+    test_labels = test_labels.numpy()
     inputs = inputs.numpy()
     labels = labels.numpy()
 
@@ -603,8 +608,9 @@ if __name__ == '__main__':
                                   patience=cfg.patience)
     else:
         earlystop = None
-    savename = '{}_{}_{}_{}'.format(cfg.model_type, cfg.layers,
-                                    cfg.hidden_units, cfg.seed)
+    savename = '{}_{}_{}_{}_{}_{}'.format(cfg.model_type, cfg.layers,
+                                    cfg.hidden_units, cfg.batch_size,
+                                          cfg.learning_rate, cfg.seed)
     checkpoint = Checkpoint(monitor='valid_tss_best',
                             dirname='./saved/models/' + savename)
 
@@ -637,7 +643,11 @@ if __name__ == '__main__':
     net.save_params(f_params=init_savename)
 
     if not cfg.cross_validation:
-        net.fit(inputs, labels)
+        for e in range(cfg.epochs):
+            net.fit_loop(inputs, labels, epochs=1)
+            y_test = net.predict(test_inputs)
+            tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+            wandb.log({'Test_TSS': tss_test_score})
 
     # score = sklearn.model_selection.cross_validate(net, inputs, labels,
     #                                                cv=5,
@@ -678,24 +688,19 @@ if __name__ == '__main__':
     # train on train and val set
     if cfg.cross_validation:
         net.initialize()
-        net.load_params(f_params='init.pkl')
-        net.train_split = predefined_split(valid_ds)
-        net.callbacks = [valid_tss, Checkpoint(monitor='valid_tss_best',
-                                               dirname='./saved/models/skorch')]
-        net.fit(inputs, labels)
+        net.load_params(f_params=init_savename)
+        net.train_split = None
+        net.callbacks = [train_tss, Checkpoint(monitor='train_tss_best',
+                                               dirname='./saved/models/' + savename)]
+        net.initialize_callbacks()
+        net.fit_loop(combined_inputs, combined_labels, epochs=100)
         # todo not working
 
     net.initialize()
     net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
-    inputs = torch.tensor(X_test_data_tensor).float()
-    labels = torch.tensor(y_test_tr).long()
-
-    inputs = inputs.numpy()
-    labels = labels.numpy()
-
-    y_test = net.predict(inputs)
-    tss_test_score = skorch_utils.get_tss(labels, y_test)
+    y_test = net.predict(test_inputs)
+    tss_test_score = skorch_utils.get_tss(test_labels, y_test)
     wandb.log({'Test_TSS': tss_test_score})
     print("Test TSS:" + str(tss_test_score))
 

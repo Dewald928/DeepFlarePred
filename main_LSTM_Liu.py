@@ -503,7 +503,7 @@ class LSTMModel(nn.Module):
 
 
 def train(model, device, train_loader, optimizer, epoch, criterion):
-    model.train(,,
+    model.train()
     confusion_matrix = torch.zeros(nclass, nclass)
     loss_epoch = 0
 

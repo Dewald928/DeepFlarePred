@@ -6,14 +6,38 @@ from tabulate import tabulate
 import seaborn as sns
 import scipy
 
-filepath = './Data/Liu/' + cfg.flare_label + '/'
+filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_test], axis=0)
+df = pd.concat([df_train, df_val, df_test], axis=0)
 df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
+
+'''
+flare to flux
+'''
+def flare_to_flux(flare_class):
+    flux = 1e-7
+    if flare_class == 'N':
+        flux = 1e-7
+    else:
+        class_label = flare_class[0]
+        class_mag = float(flare_class[1:])
+        if class_label=='B':
+            flux = 1e-7 * class_mag
+        if class_label=='C':
+            flux = 1e-6 * class_mag
+        if class_label=='M':
+            flux = 1e-5 * class_mag
+        if class_label=='X':
+            flux = 1e-4 * class_mag
+    return flux
+
+flux = df['flare'].apply(flare_to_flux)
+flux.name = 'flux'
+df_flux = pd.concat([flux, df], axis=1)
 
 '''
 Basic Stats
