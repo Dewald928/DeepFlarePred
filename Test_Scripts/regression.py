@@ -100,11 +100,11 @@ h1 = 64
 output_dim = 1
 num_layers = 2
 learning_rate = 1e-1
-num_epochs = 1000
+num_epochs = 300
 dtype = torch.float
 train_window = 12
 
-X, y = make_regression(100, n_features, n_informative=10, random_state=0,
+X, y = make_regression(1000, n_features, n_informative=2, random_state=0,
                        shuffle=False)
 X = X.astype(np.float32)
 y = y.astype(np.float32) / 100
@@ -123,9 +123,6 @@ X_test = scaler.transform(X_test)
 # convert to sequences
 X_train_seq = create_inout_sequences(X_train, train_window)
 X_test_seq = create_inout_sequences(X_test, train_window)
-
-
-
 
 # model = NeuralNetRegressor(RegressorModule, max_epochs=20, lr=0.1,
 #     device='cuda',  # uncomment this to train with CUDA
@@ -146,8 +143,8 @@ X_train_seq = torch.tensor(X_train_seq).float()
 X_train_seq = X_train_seq.numpy()
 net.fit(X_train_seq, y_train)
 
-y_pred = net.predict(X_test_seq)
 y_train_pred = net.predict(X_train_seq)
+y_pred = net.predict(X_test_seq)
 
 # Plot prediction
 plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train)

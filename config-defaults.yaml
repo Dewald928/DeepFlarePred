@@ -4,13 +4,12 @@ tag:
   value:
     - Skorch
     - BatchNorm
-    - Debug
 model_type:
   desc: which model to use (TCN/MLP)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 400
+  value: 600
 batch_size:
   desc: Size of each mini-batch
   value: 512
@@ -49,7 +48,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.4
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -57,7 +56,7 @@ weight_decay:
 # Cross Validation
 cross_validation:
   desc: if crossval should be performed
-  value: True
+  value: False
 n_splits:
   desc: number of splits
   value: 5
