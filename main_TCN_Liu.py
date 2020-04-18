@@ -565,21 +565,13 @@ if __name__ == '__main__':
         Skorch training
     '''
     # correct format for skorch
-    inputs = torch.tensor(X_train_data).float()
-    X_valid_data = torch.tensor(X_valid_data).float()
-    labels = torch.tensor(y_train_tr).long()
-    y_valid_tr = torch.tensor(y_valid_tr).long()
+    test_inputs = X_test_data_tensor.numpy()
+    test_labels = y_test_tr_tensor.numpy()
+    inputs = X_train_data_tensor.numpy()
+    labels = y_train_tr_tensor.numpy()
 
-    test_inputs = torch.tensor(X_test_data_tensor).float()
-    test_labels = torch.tensor(y_test_tr).long()
-
-    test_inputs = test_inputs.numpy()
-    test_labels = test_labels.numpy()
-    inputs = inputs.numpy()
-    labels = labels.numpy()
-
-    X_valid_data = X_valid_data.numpy()
-    y_valid_tr = y_valid_tr.numpy()
+    X_valid_data = X_valid_data_tensor.numpy()
+    y_valid_tr = y_valid_tr_tensor.numpy()
     valid_ds = Dataset(X_valid_data, y_valid_tr)
 
     # combined datasets
@@ -696,13 +688,13 @@ if __name__ == '__main__':
         net.fit_loop(combined_inputs, combined_labels, epochs=100)
         # todo not working
 
-    net.initialize()
-    net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
-
-    y_test = net.predict(test_inputs)
-    tss_test_score = skorch_utils.get_tss(test_labels, y_test)
-    wandb.log({'Test_TSS': tss_test_score})
-    print("Test TSS:" + str(tss_test_score))
+    # net.initialize()
+    # net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+    #
+    # y_test = net.predict(test_inputs)
+    # tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+    # wandb.log({'Test_TSS': tss_test_score})
+    # print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))

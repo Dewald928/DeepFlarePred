@@ -4,6 +4,7 @@ tag:
   value:
     - Skorch
     - BatchNorm
+    - Debug
 model_type:
   desc: which model to use (TCN/MLP)
   value: MLP
@@ -12,10 +13,10 @@ epochs:
   value: 600
 batch_size:
   desc: Size of each mini-batch
-  value: 512
+  value: 256
 learning_rate:
   desc: initial learning rate
-  value: 0.00001
+  value: 0.001
 optim:
   desc: optimizer to use
   value: Adam
@@ -67,7 +68,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 15
+  value: 335
 cuda:
   desc: enables cuda training
   value: True
