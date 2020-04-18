@@ -67,7 +67,9 @@ def get_hss(y_true, y_pred):
 
 
 class LoggingCallback(Callback):
-    def __init__(self, ):
+    def __init__(self, test_inputs, test_labels):
+        self.test_inputs = test_inputs
+        self.test_labels = test_labels
         super(LoggingCallback, self).__init__()
 
     # def initialize(self):
@@ -84,6 +86,9 @@ class LoggingCallback(Callback):
                    'Best_Validation_epoch': best_tss_epoch})
 
     def on_epoch_end(self, net, dataset_trn=None, dataset_vld=None, **kwargs):
+        y_test = net.predict(self.test_inputs)
+        tss_test_score = get_tss(self.test_labels, y_test)
+        wandb.log({'Test_TSS_curve': tss_test_score})
         h = net.history[-1]
         wandb.log(
             {'Training_Loss': h['train_loss'], 'Validation_TSS': h[

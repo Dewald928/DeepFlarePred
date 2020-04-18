@@ -74,7 +74,7 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: False
+  value: True
 training:
   desc: Trains models, else only tests
   value: True
@@ -83,6 +83,6 @@ num_workers:
   value: 9
 patience:
   desc: amount of epochs for early stopping
-  value: 100
+  value: 2
 
 

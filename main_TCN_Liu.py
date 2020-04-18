@@ -606,6 +606,8 @@ if __name__ == '__main__':
     checkpoint = Checkpoint(monitor='valid_tss_best',
                             dirname='./saved/models/' + savename)
 
+    logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
+
     load_state = LoadInitState(checkpoint)
     reload_at_end = skorch_utils.LoadBestCP(checkpoint)
 
@@ -626,7 +628,7 @@ if __name__ == '__main__':
                               callbacks=[train_tss, valid_tss, earlystop,
                                          checkpoint,  # load_state,
                                          reload_at_end,
-                                         skorch_utils.LoggingCallback],
+                                         logger],
                               # iterator_train__shuffle=True,
                               warm_start=False)
 
@@ -635,11 +637,8 @@ if __name__ == '__main__':
     net.save_params(f_params=init_savename)
 
     if not cfg.cross_validation:
-        for e in range(cfg.epochs):
-            net.fit_loop(inputs, labels, epochs=1)
-            y_test = net.predict(test_inputs)
-            tss_test_score = skorch_utils.get_tss(test_labels, y_test)
-            wandb.log({'Test_TSS': tss_test_score})
+        net.fit(inputs, labels)
+
 
     # score = sklearn.model_selection.cross_validate(net, inputs, labels,
     #                                                cv=5,
@@ -688,13 +687,13 @@ if __name__ == '__main__':
         net.fit_loop(combined_inputs, combined_labels, epochs=100)
         # todo not working
 
-    # net.initialize()
-    # net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
-    #
-    # y_test = net.predict(test_inputs)
-    # tss_test_score = skorch_utils.get_tss(test_labels, y_test)
-    # wandb.log({'Test_TSS': tss_test_score})
-    # print("Test TSS:" + str(tss_test_score))
+    net.initialize()
+    net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+
+    y_test = net.predict(test_inputs)
+    tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+    wandb.log({'Test_TSS': tss_test_score})
+    print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
