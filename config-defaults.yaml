@@ -10,7 +10,7 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 600
+  value: 100
 batch_size:
   desc: Size of each mini-batch
   value: 512
@@ -36,7 +36,7 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
@@ -57,7 +57,7 @@ weight_decay:
 # Cross Validation
 cross_validation:
   desc: if crossval should be performed
-  value: True
+  value: False
 n_splits:
   desc: number of splits
   value: 5
@@ -71,7 +71,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 335
+  value: 64
 cuda:
   desc: enables cuda training
   value: True

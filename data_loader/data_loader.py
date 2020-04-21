@@ -271,3 +271,57 @@ def partition_10_folds(X, y, num_of_fold):
     return X_output, y_output
 
 
+def flare_to_flux(flare_class):
+    flux = 1e-7
+    if flare_class == 'N':
+        flux = 1e-7
+    else:
+        class_label = flare_class[0]
+        class_mag = float(flare_class[1:])
+        if class_label=='B':
+            flux = 1e-7 * class_mag
+        if class_label=='C':
+            flux = 1e-6 * class_mag
+        if class_label=='M':
+            flux = 1e-5 * class_mag
+        if class_label=='X':
+            flux = 1e-4 * class_mag
+    return flux
+
+
+def load_reg_data(datafile, flare_label, series_len, start_feature, n_features,
+              mask_value):
+    df = pd.read_csv(datafile)
+    df = df.sort_values(by=['NOAA', 'timestamp'])  # I added this, valid?
+    df_values = df.values
+
+    flux = df['flare'].apply(flare_to_flux)
+    flux.name = 'flux'
+    df_flux = pd.concat([flux, df], axis=1)
+    df_flux = df_flux.drop(columns='label')
+
+    X = df_flux.iloc[:, start_feature: start_feature+n_features]
+    X = create_inout_sequences(X, series_len, n_features)
+    y = df_flux['flux']
+
+    X_arr = np.array(X)
+    y_arr = np.array(y)
+    print(X_arr.shape)
+    return X_arr, y_arr
+
+
+def create_inout_sequences(input_data, tw, n_features):
+    inout_seq = []
+    L = len(input_data)
+    for i in range(1, L+1):
+        train_seq = []
+        if i <= tw:
+            train_seq = np.zeros((tw-i, n_features))
+            train_seq = np.concatenate((train_seq, input_data[0:i]), axis=0)
+        elif i > tw:
+            train_seq = input_data[i-tw:i]
+        inout_seq.append(np.asarray(train_seq))
+    return inout_seq
+
+
+
