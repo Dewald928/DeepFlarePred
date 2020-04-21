@@ -440,96 +440,97 @@ if __name__ == '__main__':
     best_epoch = 0
     epoch = 0
 
-    print('{:<11s}{:^9s}{:^9s}{:^9s}'
-          '{:^9s}{:^9s}{:^9s}{:^9s}'
-          '{:^9s}{:^9s}'
-          '{:^9s}{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch', 'Runtime',
-                                            'TSS', 'PR_AUC', 'HSS', 'BACC',
-                                            'ACC', 'Precision', 'Recall', 'F1',
-                                            'Loss', 'MCC', 'CP'))
+    if not cfg.skorch:
+        print('{:<11s}{:^9s}{:^9s}{:^9s}'
+              '{:^9s}{:^9s}{:^9s}{:^9s}'
+              '{:^9s}{:^9s}'
+              '{:^9s}{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch',
+                                                'Runtime', 'TSS', 'PR_AUC',
+                                                'HSS', 'BACC', 'ACC',
+                                                'Precision', 'Recall', 'F1',
+                                                'Loss', 'MCC', 'CP'))
 
-    # if cfg.training:
-    #
-    #     while epoch < cfg.epochs:
-    #         train_tss = train(model, device, train_loader, optimizer, epoch,
-    #                           criterion, cfg)[5]
-    #         stopping_metric, best_tss, best_pr_auc, best_epoch = validate(
-    #             model, device, valid_loader, criterion, epoch, best_tss,
-    #             best_pr_auc, best_epoch, cfg)[0:4]
-    #
-    #         if early_stop.step(stopping_metric) and cfg.early_stop:
-    #             print('[INFO] Early Stopping')
-    #             break
-    #
-    #         # # Continue training if recently improved
-    #         # if epoch == cfg.epochs-1 and early_stop.num_bad_epochs < 2:
-    #         #     cfg.epochs += 5
-    #         #     print("[INFO] not finished training...")
-    #         epoch += 1
-    #
-    # wandb.log(
-    #     {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
-    #     best_epoch,
-    #      'Best_Validation_PR_AUC': best_pr_auc})
-    #
-    # # reload best tss checkpoint and test
-    # print("[INFO] Loading model at epoch:" + str(best_epoch))
-    # # noinspection PyBroadException
-    # try:
-    #     model.load_state_dict(
-    #         torch.load(os.path.join(wandb.run.dir, 'model_tss.pt')))
-    # except:
-    #     print('No model loaded... Loading default')
-    #     weights_file = wandb.restore('model.pt',
-    #                                run_path="dewald123/liu_pytorch_MLP/4n071bzv")
-    #     model.load_state_dict(torch.load(weights_file.name))
-    #
-    # test_tss = test(model, device, test_loader, criterion, epoch)[5]
-    #
-    # '''
-    # PR Curves
-    # '''
-    # # Train
-    # yhat = infer_model(model, device, train_loader, cfg)
-    #
-    # f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
-    #                                          'Train')[2:4]
-    # metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
-    # tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
-    #
-    # # Validation
-    # yhat = infer_model(model, device, valid_loader, cfg)
-    #
-    # f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
-    #                                    'Validation')[2:4]
-    # metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
-    # tss = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[4]
-    # th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
-    # roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
-    #                          'Validation')
-    # th_norm = pdf.plot_density_estimation(yhat, y_valid_tr_tensor,
-    #                                       'Validation')
-    #
-    # # Test
-    # yhat = infer_model(model, device, test_loader, cfg)
-    # cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
-    #                                       metric.to_labels(yhat[:, 1],
-    #                                                        th))  # watch
-    # tss_th = metric.calculate_metrics(cm, 2)[4]
-    #
-    # f1, pr_auc = metric.plot_precision_recall(model, yhat,
-    # y_test_tr_tensor, 'Test')[2:4]
-    # metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
-    # tss = metric.get_metrics_threshold(yhat, y_test_tr_tensor)[4]
-    #
-    # roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
-    #
-    # print('Test TSS from validation threshold ({:0.3f}): {:0.3f}'.format(th,
-    #                                                                 tss_th))
-    # wandb.log({'Test_TSS_Th': tss_th})
-    #
-    # th_norm_test = pdf.plot_density_estimation(yhat, y_test_tr_tensor,
-    # 'Test')
+        if cfg.training:
+            while epoch < cfg.epochs:
+                train_tss = train(model, device, train_loader, optimizer, epoch,
+                                  criterion, cfg)[5]
+                stopping_metric, best_tss, best_pr_auc, best_epoch = validate(
+                    model, device, valid_loader, criterion, epoch, best_tss,
+                    best_pr_auc, best_epoch, cfg)[0:4]
+
+                if early_stop.step(stopping_metric) and cfg.early_stop:
+                    print('[INFO] Early Stopping')
+                    break
+
+                # # Continue training if recently improved
+                # if epoch == cfg.epochs-1 and early_stop.num_bad_epochs < 2:
+                #     cfg.epochs += 5
+                #     print("[INFO] not finished training...")
+                epoch += 1
+
+        wandb.log(
+            {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
+            best_epoch,
+             'Best_Validation_PR_AUC': best_pr_auc})
+
+        # reload best tss checkpoint and test
+        print("[INFO] Loading model at epoch:" + str(best_epoch))
+        # noinspection PyBroadException
+        try:
+            model.load_state_dict(
+                torch.load(os.path.join(wandb.run.dir, 'model_tss.pt')))
+        except:
+            print('No model loaded... Loading default')
+            weights_file = wandb.restore('model.pt',
+                                       run_path="dewald123/liu_pytorch_tcn/3tcj8ahy")
+            model.load_state_dict(torch.load(weights_file.name))
+
+        test_tss = test(model, device, test_loader, criterion, epoch)[5]
+
+        '''
+        PR Curves
+        '''
+        # Train
+        yhat = infer_model(model, device, train_loader, cfg)
+
+        f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
+                                                 'Train')[2:4]
+        metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
+        tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
+
+        # Validation
+        yhat = infer_model(model, device, valid_loader, cfg)
+
+        f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
+                                           'Validation')[2:4]
+        metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
+        tss = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[4]
+        th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
+        roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
+                                 'Validation')
+        th_norm = pdf.plot_density_estimation(yhat, y_valid_tr_tensor,
+                                              'Validation')
+
+        # Test
+        yhat = infer_model(model, device, test_loader, cfg)
+        cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
+                                              metric.to_labels(yhat[:, 1],
+                                                               th))  # watch
+        tss_th = metric.calculate_metrics(cm, 2)[4]
+
+        f1, pr_auc = metric.plot_precision_recall(model, yhat,
+        y_test_tr_tensor, 'Test')[2:4]
+        metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
+        tss = metric.get_metrics_threshold(yhat, y_test_tr_tensor)[4]
+
+        roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
+
+        print('Test TSS from validation threshold ({:0.3f}): {:0.3f}'.format(th,
+                                                                        tss_th))
+        wandb.log({'Test_TSS_Th': tss_th})
+
+        th_norm_test = pdf.plot_density_estimation(yhat, y_test_tr_tensor,
+        'Test')
 
     '''
     Model interpretation
@@ -561,139 +562,133 @@ if __name__ == '__main__':
     # plt.close('all')
     # get_shap(model, test_loader, device, cfg, feature_names, start_feature)
 
-    '''
-        Skorch training
-    '''
-    # correct format for skorch
-    test_inputs = X_test_data_tensor.numpy()
-    test_labels = y_test_tr_tensor.numpy()
-    inputs = X_train_data_tensor.numpy()
-    labels = y_train_tr_tensor.numpy()
+    if cfg.skorch:
+        '''
+            Skorch training
+        '''
+        # correct format for skorch
+        test_inputs = X_test_data_tensor.numpy()
+        test_labels = y_test_tr_tensor.numpy()
+        inputs = X_train_data_tensor.numpy()
+        labels = y_train_tr_tensor.numpy()
 
-    X_valid_data = X_valid_data_tensor.numpy()
-    y_valid_tr = y_valid_tr_tensor.numpy()
-    valid_ds = Dataset(X_valid_data, y_valid_tr)
+        X_valid_data = X_valid_data_tensor.numpy()
+        y_valid_tr = y_valid_tr_tensor.numpy()
+        valid_ds = Dataset(X_valid_data, y_valid_tr)
 
-    # combined datasets
-    combined_inputs = np.concatenate([inputs, X_valid_data], axis=0).astype(np.float32)
-    combined_labels = np.concatenate([labels, y_valid_tr], axis=0)
-    ds = Dataset(combined_inputs, combined_labels)
-    combined_labels = np.array([labels for _, labels in iter(ds)])
+        # combined datasets
+        combined_inputs = np.concatenate([inputs, X_valid_data], axis=0).astype(np.float32)
+        combined_labels = np.concatenate([labels, y_valid_tr], axis=0)
+        ds = Dataset(combined_inputs, combined_labels)
+        combined_labels = np.array([labels for _, labels in iter(ds)])
 
-    # Metrics + Callbacks
-    valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
-                             lower_is_better=False, name='valid_tss',
-                             use_caching=True)
-    train_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
-                             lower_is_better=False, name='train_tss',
-                             use_caching=True, on_train=True)
-    valid_hss = EpochScoring(scoring=make_scorer(skorch_utils.get_hss),
-                             lower_is_better=False, name='valid_hss',
-                             use_caching=True)
-    train_bacc = EpochScoring(
-        scoring=make_scorer(balanced_accuracy_score, **{'adjusted': True}),
-        lower_is_better=False, name='train_bacc', use_caching=True,
-        on_train=True)
+        # Metrics + Callbacks
+        valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
+                                 lower_is_better=False, name='valid_tss',
+                                 use_caching=True)
+        train_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
+                                 lower_is_better=False, name='train_tss',
+                                 use_caching=True, on_train=True)
+        valid_hss = EpochScoring(scoring=make_scorer(skorch_utils.get_hss),
+                                 lower_is_better=False, name='valid_hss',
+                                 use_caching=True)
+        train_bacc = EpochScoring(
+            scoring=make_scorer(balanced_accuracy_score, **{'adjusted': True}),
+            lower_is_better=False, name='train_bacc', use_caching=True,
+            on_train=True)
 
-    if cfg.early_stop:
-        earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
-                                  patience=cfg.patience)
-    else:
-        earlystop = None
-    savename = '{}_{}_{}_{}_{}_{}'.format(cfg.model_type, cfg.layers,
-                                    cfg.hidden_units, cfg.batch_size,
-                                          cfg.learning_rate, cfg.seed)
-    checkpoint = Checkpoint(monitor='valid_tss_best',
-                            dirname='./saved/models/' + savename)
+        if cfg.early_stop:
+            earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
+                                      patience=cfg.patience)
+        else:
+            earlystop = None
+        savename = '{}_{}_{}_{}_{}_{}'.format(cfg.model_type, cfg.layers,
+                                        cfg.hidden_units, cfg.batch_size,
+                                              cfg.learning_rate, cfg.seed)
+        checkpoint = Checkpoint(monitor='valid_tss_best',
+                                dirname='./saved/models/' + savename)
 
-    logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
+        logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
 
-    load_state = LoadInitState(checkpoint)
-    reload_at_end = skorch_utils.LoadBestCP(checkpoint)
+        load_state = LoadInitState(checkpoint)
+        reload_at_end = skorch_utils.LoadBestCP(checkpoint)
 
-    # noinspection PyArgumentList
-    net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
-                              batch_size=cfg.batch_size,
-                              criterion=nn.CrossEntropyLoss,
-                              criterion__weight=torch.FloatTensor(
-                                  class_weights).to(device),
-                              optimizer=torch.optim.Adam,
-                              optimizer__lr=cfg.learning_rate,
-                              optimizer__weight_decay=cfg.weight_decay,
-                              optimizer__amsgrad=False, device=device,
-                              # train_split=skorch.dataset.CVSplit(
-                              #     cv=cfg.n_splits, stratified=False),
-                              train_split=predefined_split(valid_ds),
-                              # train_split=None,
-                              callbacks=[train_tss, valid_tss, earlystop,
-                                         checkpoint,  # load_state,
-                                         reload_at_end,
-                                         logger],
-                              # iterator_train__shuffle=True,
-                              warm_start=False)
+        # noinspection PyArgumentList
+        net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
+                                  batch_size=cfg.batch_size,
+                                  criterion=nn.CrossEntropyLoss,
+                                  criterion__weight=torch.FloatTensor(
+                                      class_weights).to(device),
+                                  optimizer=torch.optim.Adam,
+                                  optimizer__lr=cfg.learning_rate,
+                                  optimizer__weight_decay=cfg.weight_decay,
+                                  optimizer__amsgrad=False, device=device,
+                                  # train_split=skorch.dataset.CVSplit(
+                                  #     cv=cfg.n_splits, stratified=False),
+                                  train_split=predefined_split(valid_ds),
+                                  # train_split=None,
+                                  callbacks=[train_tss, valid_tss, earlystop,
+                                             checkpoint,  # load_state,
+                                             reload_at_end,
+                                             logger],
+                                  # iterator_train__shuffle=True,
+                                  warm_start=False)
 
-    net.initialize()
-    init_savename = 'init_{}_{}'.format(cfg.model_type, cfg.seed)
-    net.save_params(f_params=init_savename)
-
-    if not cfg.cross_validation:
-        net.fit(inputs, labels)
-
-
-    # score = sklearn.model_selection.cross_validate(net, inputs, labels,
-    #                                                cv=5,
-    #                                                scoring=make_scorer(
-    #                                                    skorch_utils.get_tss),
-    #                                                return_train_score=True)
-    # print(score)
-    # print("Accuracy: %0.2f (+/- %0.2f)" % (
-    #     score['test_score'].mean(), score['test_score'].std() * 2))
-    # '''
-    # Cross Validation
-    # '''
-    elif cfg.cross_validation:
-        kf = sklearn.model_selection.KFold(n_splits=cfg.n_splits, shuffle=False)
-        skf = sklearn.model_selection.StratifiedKFold(cfg.n_splits, shuffle=False)
-        tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=cfg.n_splits)
-        scores = []
-        visualize_CV.visualize_cv(sklearn.model_selection.StratifiedKFold,
-                                  combined_inputs, combined_labels, cfg)
-        for train_index, val_index in skf.split(combined_inputs, combined_labels):
-            print('train -  {}   |   test -  {}'.format(
-                np.bincount(combined_labels[train_index]), np.bincount(combined_labels[val_index])))
-            x_train, x_val = combined_inputs[train_index], combined_inputs[val_index]
-            y_train, y_val = combined_labels[train_index], combined_labels[val_index]
-            net.train_split = predefined_split(Dataset(x_val, y_val))
-            net.load_params(f_params=init_savename)  # Reload inital params
-            net.fit(x_train, y_train)
-            predictions = net.predict(x_val)
-            scores.append(
-                balanced_accuracy_score(y_val, predictions, adjusted=True))
-        print('Scores from each Iteration: ', scores)
-        print('Average K-Fold Score :', np.mean(scores))
-        wandb.log({"Avg_CV_Score": np.mean(scores)})
-
-    '''
-    Test Results
-    '''
-    # train on train and val set
-    if cfg.cross_validation:
         net.initialize()
-        net.load_params(f_params=init_savename)
-        net.train_split = None
-        net.callbacks = [train_tss, Checkpoint(monitor='train_tss_best',
-                                               dirname='./saved/models/' + savename)]
-        net.initialize_callbacks()
-        net.fit_loop(combined_inputs, combined_labels, epochs=100)
-        # todo not working
+        init_savename = 'init_{}_{}'.format(cfg.model_type, cfg.seed)
+        net.save_params(f_params=init_savename)
 
-    net.initialize()
-    net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+        if not cfg.cross_validation:
+            net.fit(inputs, labels)
 
-    y_test = net.predict(test_inputs)
-    tss_test_score = skorch_utils.get_tss(test_labels, y_test)
-    wandb.log({'Test_TSS': tss_test_score})
-    print("Test TSS:" + str(tss_test_score))
+        # '''
+        # Cross Validation
+        # '''
+        elif cfg.cross_validation:
+            kf = sklearn.model_selection.KFold(n_splits=cfg.n_splits, shuffle=False)
+            skf = sklearn.model_selection.StratifiedKFold(cfg.n_splits, shuffle=False)
+            tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=cfg.n_splits)
+            rkf = sklearn.model_selection.RepeatedKFold(n_splits=5,
+                                                        n_repeats=2)
+            scores = []
+            visualize_CV.visualize_cv(sklearn.model_selection.RepeatedKFold,
+                                      combined_inputs, combined_labels, cfg)
+            for train_index, val_index in rkf.split(combined_inputs,
+                                                  combined_labels):
+                print('train -  {}   |   test -  {}'.format(
+                    np.bincount(combined_labels[train_index]), np.bincount(combined_labels[val_index])))
+                x_train, x_val = combined_inputs[train_index], combined_inputs[val_index]
+                y_train, y_val = combined_labels[train_index], combined_labels[val_index]
+                net.train_split = predefined_split(Dataset(x_val, y_val))
+                net.load_params(f_params=init_savename)  # Reload inital params
+                net.fit(x_train, y_train)
+                predictions = net.predict(x_val)
+                scores.append(
+                    balanced_accuracy_score(y_val, predictions, adjusted=True))
+            print('Scores from each Iteration: ', scores)
+            print('Average K-Fold Score :', np.mean(scores))
+            wandb.log({"Avg_CV_Score": np.mean(scores)})
+
+        '''
+        Test Results
+        '''
+        # train on train and val set
+        if cfg.cross_validation:
+            net.initialize()
+            net.load_params(f_params=init_savename)
+            net.train_split = None
+            net.callbacks = [train_tss, Checkpoint(monitor='train_tss_best',
+                                                   dirname='./saved/models/' + savename)]
+            net.initialize_callbacks()
+            net.fit_loop(combined_inputs, combined_labels, epochs=100)
+
+        net.initialize()
+        net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+
+        y_test = net.predict(test_inputs)
+        tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+        wandb.log({'Test_TSS': tss_test_score})
+        print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))

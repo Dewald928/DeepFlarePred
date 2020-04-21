@@ -13,7 +13,7 @@ epochs:
   value: 600
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 512
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -22,7 +22,7 @@ optim:
   value: Adam
 n_features:
   desc: number of features to include (max 40)
-  value: 20
+  value: 40
 
 # TCN HP
 levels:
@@ -30,7 +30,7 @@ levels:
   value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 3
+  value: 2
 nhid:
   desc: number of filters
   value: 40
@@ -44,7 +44,7 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 20
+  value: 100
 
 # Regularizer
 dropout:
@@ -57,12 +57,15 @@ weight_decay:
 # Cross Validation
 cross_validation:
   desc: if crossval should be performed
-  value: False
+  value: True
 n_splits:
   desc: number of splits
   value: 5
 
 # Environment
+skorch:
+  desc: if skorch should be used to train (Faster, fewer metrics)
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
@@ -83,6 +86,6 @@ num_workers:
   value: 9
 patience:
   desc: amount of epochs for early stopping
-  value: 2
+  value: 100
 
 

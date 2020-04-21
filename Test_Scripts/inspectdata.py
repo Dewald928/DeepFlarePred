@@ -5,12 +5,13 @@ import main_TCN_Liu
 from tabulate import tabulate
 import seaborn as sns
 import scipy
+import matplotlib.pyplot as plt
 
 filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_train, df_val, df_test], axis=0)
+df = pd.concat([df_val], axis=0)
 df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
@@ -39,6 +40,7 @@ flux = df['flare'].apply(flare_to_flux)
 flux.name = 'flux'
 df_flux = pd.concat([flux, df], axis=1)
 
+
 '''
 Basic Stats
 '''
@@ -52,6 +54,18 @@ desc = df.describe(include=include)
 m5_flares = df[df['label'].str.match('Positive')]
 m5_flared_NOAA = m5_flares['NOAA'].unique()
 x_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
+
+# add flux
+flux = x_flares_data['flare'].apply(flare_to_flux)
+flux.name = 'flux'
+df_flux = pd.concat([flux, x_flares_data], axis=1)
+
+fig, ax = plt.subplots()
+ax.set(yscale='log')
+sns.lineplot(x='timestamp', y='flux', hue='NOAA',
+             data=df_flux,
+             ax=ax, sort=False)
+plt.show()
 
 # get average duration of sunspot
 samples_per_AR = df['NOAA'].value_counts()

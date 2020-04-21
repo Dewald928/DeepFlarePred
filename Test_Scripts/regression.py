@@ -104,7 +104,7 @@ num_epochs = 300
 dtype = torch.float
 train_window = 12
 
-X, y = make_regression(1000, n_features, n_informative=2, random_state=0,
+X, y = make_regression(1000, n_features, n_informative=1, random_state=0,
                        shuffle=False)
 X = X.astype(np.float32)
 y = y.astype(np.float32) / 100
