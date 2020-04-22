@@ -602,11 +602,15 @@ if __name__ == '__main__':
                                       patience=cfg.patience)
         else:
             earlystop = None
-        savename = '{}_{}_{}_{}_{}_{}'.format(cfg.model_type, cfg.layers,
-                                        cfg.hidden_units, cfg.batch_size,
-                                              cfg.learning_rate, cfg.seed)
+        savename = os.path.join(wandb.run.dir,
+                                '{}_{}_{}_{}_{}_{}'.format(cfg.model_type,
+                                                           cfg.layers,
+                                                           cfg.hidden_units,
+                                                           cfg.batch_size,
+                                                           cfg.learning_rate,
+                                                           cfg.seed))
         checkpoint = Checkpoint(monitor='valid_tss_best',
-                                dirname='./saved/models/' + savename)
+                                dirname=savename)
 
         logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
 
@@ -635,7 +639,9 @@ if __name__ == '__main__':
                                   warm_start=False)
 
         net.initialize()
-        init_savename = 'init_{}_{}'.format(cfg.model_type, cfg.seed)
+        init_savename = os.path.join(wandb.run.dir,
+                                     'init_{}_{}'.format(cfg.model_type,
+                                                         cfg.seed))
         net.save_params(f_params=init_savename)
 
         if not cfg.cross_validation:
@@ -678,7 +684,7 @@ if __name__ == '__main__':
             net.load_params(f_params=init_savename)
             net.train_split = None
             net.callbacks = [train_tss, Checkpoint(monitor='train_tss_best',
-                                                   dirname='./saved/models/' + savename)]
+                                                   dirname=savename)]
             net.initialize_callbacks()
             net.fit_loop(combined_inputs, combined_labels, epochs=100)
 
