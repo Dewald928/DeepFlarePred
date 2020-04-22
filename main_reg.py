@@ -5,12 +5,14 @@ import torch.nn as nn
 import torch.utils.data
 import wandb
 import yaml
+import sklearn
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from skorch import NeuralNetRegressor
 from skorch.dataset import Dataset
 from skorch.helper import predefined_split
+from skorch.callbacks import *
 
 from data_loader import data_loader
 
@@ -51,9 +53,9 @@ class LSTM(nn.Module):
         # y_pred = self.linear(lstm_out[-1].view(self.batch_size, -1))
 
         h0 = torch.zeros(self.num_layers, input.size(0),
-                         self.hidden_dim).requires_grad_()
+                         self.hidden_dim).requires_grad_().to(device)
         c0 = torch.zeros(self.num_layers, input.size(0),
-                         self.hidden_dim).requires_grad_()
+                         self.hidden_dim).requires_grad_().to(device)
         out, (hn, cn) = self.lstm(input, (h0, c0))
         out = self.linear(out[:, -1, :])
         return out
@@ -140,22 +142,20 @@ if __name__ == '__main__':
     # size of hidden layers
     h1 = 64
     output_dim = 1
-    num_layers = 2
+    num_layers = 1
     dtype = torch.float
 
     X_train = torch.tensor(X_train_data).float()
-    X_train = X_train.permute(0, 1, 2)
     y_train = y_train_data.reshape(-1, 1)
     y_train = torch.tensor(y_train).float()
 
     X_valid = torch.tensor(X_valid_data).float()
-    X_valid = X_valid.permute(0, 1, 2)
     y_valid = y_valid_data.reshape(-1, 1)
     y_valid = torch.tensor(y_valid).float()
 
     X_test = torch.tensor(X_test_data).float()
-    X_test = X_test.permute(0, 1, 2)
-    y_test = torch.tensor(y_test_data).float()
+    y_test = y_test_data.reshape(-1, 1)
+    y_test = torch.tensor(y_test).float()
 
     X_train = X_train.numpy()
     X_valid = X_valid.numpy()
@@ -164,8 +164,23 @@ if __name__ == '__main__':
     y_valid = y_valid.numpy()
     y_test = y_test.numpy()
 
+    # normalize
+    scaler = MinMaxScaler()
+    y_train = scaler.fit_transform(y_train)
+    y_valid = scaler.transform(y_valid)
+    y_test = scaler.transform(y_test)
+
     # valid set
     valid_ds = Dataset(X_valid, y_valid)
+
+    # scoring
+    valid_r2 = EpochScoring(scoring='r2',
+                             lower_is_better=False, name='valid_r2',
+                             use_caching=True)
+    train_r2 = EpochScoring(scoring='r2', lower_is_better=False,
+                            name='train_r2', use_caching=True, on_train=True)
+    train_mse = EpochScoring(scoring='neg_mean_squared_error',
+                             on_train=True, lower_is_better=False)
 
     model = LSTM(lstm_input_size, h1, batch_size=cfg.batch_size,
                  output_dim=output_dim, num_layers=num_layers)
@@ -174,30 +189,30 @@ if __name__ == '__main__':
                              max_epochs=cfg.epochs,
                              criterion=nn.MSELoss, batch_size=cfg.batch_size,
                              train_split=predefined_split(valid_ds),
-                             # callbacks=[bacc, train_acc, roc_auc,
-                             #            EarlyStopping(monitor='train_bacc',
-                             #                          lower_is_better=False,
-                             #                          patience=100),
-                             #                          checkpoint],
-                             # device='cuda',
+                             callbacks=[train_r2, valid_r2, train_mse],
+                             device=device,
                              warm_start=False)
-    # X_test_seq = torch.tensor(X_test_seq).float()
-    # X_test_seq = X_test_seq.numpy()
-    # X_train_seq = torch.tensor(X_train_seq).float()
-    # X_train_seq = X_train_seq.numpy()
+
     net.fit(X_train, y_train)
 
     y_train_pred = net.predict(X_train)
-    y_pred = net.predict(X_test)
+    y_valid_pred = net.predict(X_valid)
+    y_test_pred = net.predict(X_test)
 
     # Plot prediction
     plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train)
-    plt.plot(
-        np.linspace(len(y_train), len(y_train) + len(y_test), len(y_test)),
-        y_test)
-    plt.plot(
-        np.linspace(len(y_train), len(y_train) + len(y_test), len(y_test)),
-        y_pred)
-    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_pred)
+    plt.plot(np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
+             y_valid)
+    plt.plot(np.linspace(len(y_train) + len(y_valid),
+                         len(y_train) + len(y_valid) + len(y_test),
+                         len(y_test)), y_test)
 
+    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_pred)
+    plt.plot(np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
+             y_valid_pred)
+    plt.plot(np.linspace(len(y_train) + len(y_valid),
+                         len(y_train) + len(y_valid) + len(y_test),
+                         len(y_test)), y_test_pred)
+
+    plt.yscale('log')
     plt.show()
