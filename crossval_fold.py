@@ -13,6 +13,7 @@ from data_loader import data_loader
 from data_loader import CustomDataset
 from model.tcn import TemporalConvNet
 from model import metric
+from model import mlp
 from utils import early_stopping
 import main_TCN_Liu
 # from main_TCN_Liu import TCN
@@ -21,7 +22,7 @@ import wandb
 
 
 def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
-                    y_valid_fold, X_test_fold, y_test_fold, args, nclass,
+                    y_valid_fold, X_test_fold, y_test_fold, cfg, nclass,
                     device):
     max_recall0 = []
     max_precision0 = []
@@ -86,17 +87,29 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             y_valid_tr = data_loader.label_transform(y_valid)
             y_test_tr = data_loader.label_transform(y_test)
 
+            if cfg.model_type == 'MLP':
+                X_train_data = np.reshape(X_train,
+                                          (len(X_train), cfg.n_features))
+                X_valid_data = np.reshape(X_valid,
+                                          (len(X_valid), cfg.n_features))
+                X_test_data = np.reshape(X_test,
+                                         (len(X_test), cfg.n_features))
+            elif cfg.model_type == 'TCN':
+                X_train_data = torch.tensor(X_train).float()
+                X_train_data = X_train_data.permute(0, 2, 1)
+                X_valid_data = torch.tensor(X_valid).float()
+                X_valid_data = X_valid_data.permute(0, 2, 1)
+                X_test_data = torch.tensor(X_test).float()
+                X_test_data = X_test_data.permute(0, 2, 1)
+
             # (samples, seq_len, features) -> (samples, features, seq_len)
-            X_train_data_tensor = torch.tensor(X_train).float()
-            X_train_data_tensor = X_train_data_tensor.permute(0, 2, 1)
+            X_train_data_tensor = torch.tensor(X_train_data).float()
             y_train_tr_tensor = torch.tensor(y_train_tr).long()
 
-            X_valid_data_tensor = torch.tensor(X_valid).float()
-            X_valid_data_tensor = X_valid_data_tensor.permute(0, 2, 1)
+            X_valid_data_tensor = torch.tensor(X_valid_data).float()
             y_valid_tr_tensor = torch.tensor(y_valid_tr).long()
 
-            X_test_data_tensor = torch.tensor(X_test).float()
-            X_test_data_tensor = X_test_data_tensor.permute(0, 2, 1)
+            X_test_data_tensor = torch.tensor(X_test_data).float()
             y_test_tr_tensor = torch.tensor(y_test_tr).long()
 
             # ready custom dataset
@@ -107,32 +120,42 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                 'test': main_TCN_Liu.preprocess_customdataset(
                     X_test_data_tensor, y_test_tr_tensor)}
 
-            kwargs = {'num_workers': args.num_workers,
-                      'pin_memory': True} if args.cuda else {}
+            kwargs = {'num_workers': cfg.num_workers,
+                      'pin_memory': True} if cfg.cuda else {}
 
             train_loader = torch.utils.data.DataLoader(datasets['train'],
-                                                       args.batch_size,
+                                                       cfg.batch_size,
                                                        shuffle=False,
                                                        drop_last=False,
                                                        **kwargs)
             valid_loader = torch.utils.data.DataLoader(datasets['valid'],
-                                                       args.batch_size,
+                                                       cfg.batch_size,
                                                        shuffle=False,
                                                        drop_last=False,
                                                        **kwargs)
             test_loader = torch.utils.data.DataLoader(datasets['test'],
-                                                      args.batch_size,
+                                                      cfg.batch_size,
                                                       shuffle=False,
                                                       drop_last=False,
                                                       **kwargs)
             # Shape: (batch size, features, seq_len)
             # make model
-            channel_sizes = [args.nhid] * args.levels
-            kernel_size = args.ksize
-            dropout = args.dropout
+            channel_sizes = [cfg.nhid] * cfg.levels
+            kernel_size = cfg.ksize
+            dropout = cfg.dropout
 
-            model = TCN(args.n_features, nclass, channel_sizes,
-                        kernel_size=kernel_size, dropout=dropout).to(device)
+            # Create model
+            if cfg.model_type == 'MLP':
+                model = mlp.MLPModule(input_units=cfg.n_features,
+                                      hidden_units=cfg.hidden_units,
+                                      num_hidden=cfg.layers,
+                                      dropout=cfg.dropout).to(device)
+            elif cfg.model_type == "TCN":
+                model = TCN(cfg.n_features, nclass, channel_sizes,
+                            kernel_size=kernel_size, dropout=dropout).to(
+                    device)
+                summary(model, input_size=(cfg.n_features, cfg.seq_len))
+
             wandb.watch(model, log='all')
 
             # optimizers
@@ -146,13 +169,13 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                 weight=torch.FloatTensor(class_weights).to(
                     device))  # weighted cross entropy
             optimizer = torch.optim.Adam(model.parameters(),
-                                         lr=args.learning_rate,
-                                         weight_decay=args.weight_decay,
+                                         lr=cfg.learning_rate,
+                                         weight_decay=cfg.weight_decay,
                                          amsgrad=False)
 
             # print model parameters
             print("Receptive Field: " + str(
-                1 + 2 * (args.ksize - 1) * (2 ** args.levels - 1)))
+                1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)))
 
             # early stopping check
             early_stop = early_stopping.EarlyStopping(mode='max', patience=30)
@@ -174,12 +197,12 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                                               'Precision', 'Recall', 'F1',
                                               'Loss', 'CP'))
 
-            if args.training:
-                while epoch < args.epochs:
+            if cfg.training:
+                while epoch < cfg.epochs:
                     train_recall, train_precision, train_accuracy, \
                     train_bacc, train_hss, train_tss = main_TCN_Liu.train(
                         model, device, train_loader, optimizer, epoch,
-                        criterion, args)
+                        criterion, cfg)
 
                     stopping_metric, best_tss, best_pr_auc, best_epoch, \
                     val_recall, val_precision, val_accuracy, val_bacc, \
@@ -188,9 +211,9 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                                                              criterion, epoch,
                                                              best_tss,
                                                              best_pr_auc,
-                                                             best_epoch, args)
+                                                             best_epoch, cfg)
 
-                    if early_stop.step(stopping_metric) and args.early_stop:
+                    if early_stop.step(stopping_metric) and cfg.early_stop:
                         print('[INFO] Early Stopping')
                         break
                     epoch += 1
@@ -207,9 +230,9 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                     torch.load(os.path.join(wandb.run.dir, 'model_tss.pt')))
             except:
                 print('No model loaded... Loading default')
-                # model.load_state_dict(torch.load(
-                #     os.path.join('saved/models/TCN_3_4_8_0.91',
-                #                  'model_tss.pt')))
+                weights_file = wandb.restore('model.pt',
+                                             run_path="dewald123/liu_pytorch_tcn/3tcj8ahy")
+                model.load_state_dict(torch.load(weights_file.name))
 
             test_recall, test_precision, test_accuracy, test_bacc, \
             test_hss, test_tss = main_TCN_Liu.test(model, device, test_loader,

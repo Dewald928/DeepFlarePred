@@ -29,7 +29,7 @@ class LSTM(nn.Module):
 
         # Define the LSTM layer
         self.lstm = nn.LSTM(self.input_dim, self.hidden_dim, self.num_layers,
-                            batch_first=True)
+                            batch_first=True, dropout=cfg.dropout)
 
         # Define the output layer
         self.linear = nn.Linear(self.hidden_dim, output_dim)
@@ -140,9 +140,9 @@ if __name__ == '__main__':
     else:
         lstm_input_size = cfg.n_features
     # size of hidden layers
-    h1 = 64
+    h1 = 128
     output_dim = 1
-    num_layers = 1
+    num_layers = cfg.seq_len
     dtype = torch.float
 
     X_train = torch.tensor(X_train_data).float()
@@ -174,24 +174,22 @@ if __name__ == '__main__':
     valid_ds = Dataset(X_valid, y_valid)
 
     # scoring
-    valid_r2 = EpochScoring(scoring='r2',
-                             lower_is_better=False, name='valid_r2',
-                             use_caching=True)
+    valid_r2 = EpochScoring(scoring='r2', lower_is_better=False,
+                            name='valid_r2', use_caching=True)
     train_r2 = EpochScoring(scoring='r2', lower_is_better=False,
                             name='train_r2', use_caching=True, on_train=True)
-    train_mse = EpochScoring(scoring='neg_mean_squared_error',
-                             on_train=True, lower_is_better=False)
+    train_mse = EpochScoring(scoring='neg_mean_squared_error', on_train=True,
+                             lower_is_better=False)
 
     model = LSTM(lstm_input_size, h1, batch_size=cfg.batch_size,
                  output_dim=output_dim, num_layers=num_layers)
 
     net = NeuralNetRegressor(model, lr=cfg.learning_rate,
-                             max_epochs=cfg.epochs,
-                             criterion=nn.MSELoss, batch_size=cfg.batch_size,
+                             max_epochs=cfg.epochs, criterion=nn.MSELoss,
+                             batch_size=cfg.batch_size,
                              train_split=predefined_split(valid_ds),
                              callbacks=[train_r2, valid_r2, train_mse],
-                             device=device,
-                             warm_start=False)
+                             device=device, warm_start=False)
 
     net.fit(X_train, y_train)
 
@@ -199,20 +197,32 @@ if __name__ == '__main__':
     y_valid_pred = net.predict(X_valid)
     y_test_pred = net.predict(X_test)
 
-    # Plot prediction
-    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train)
-    plt.plot(np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
-             y_valid)
-    plt.plot(np.linspace(len(y_train) + len(y_valid),
-                         len(y_train) + len(y_valid) + len(y_test),
-                         len(y_test)), y_test)
+    # get real flare values
+    y_train_true = scaler.inverse_transform(y_train)
+    y_train_pred_true = scaler.inverse_transform(y_train_pred)
+    y_valid_true = scaler.inverse_transform(y_valid)
+    y_valid_pred_true = scaler.inverse_transform(y_valid_pred)
+    y_test_true = scaler.inverse_transform(y_test)
+    y_test_pred_true = scaler.inverse_transform(y_test_pred)
 
-    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_pred)
-    plt.plot(np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
-             y_valid_pred)
+    # Plot prediction
+    fig = plt.figure()
+    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_true)
+    plt.plot(
+        np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
+        y_valid_true)
     plt.plot(np.linspace(len(y_train) + len(y_valid),
                          len(y_train) + len(y_valid) + len(y_test),
-                         len(y_test)), y_test_pred)
+                         len(y_test)), y_test_true)
+
+    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_pred_true)
+    plt.plot(
+        np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
+        y_valid_pred_true)
+    plt.plot(np.linspace(len(y_train) + len(y_valid),
+                         len(y_train) + len(y_valid) + len(y_test),
+                         len(y_test)), y_test_pred_true)
 
     plt.yscale('log')
-    plt.show()
+    fig.show()
+    wandb.log({'Regression_Plot': wandb.Image(fig)})

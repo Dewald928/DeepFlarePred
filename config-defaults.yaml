@@ -3,7 +3,9 @@ tag:
   desc: wandb tags
   value:
     - Skorch
+    - Liu_Fold
     - BatchNorm
+    - Debug
 model_type:
   desc: which model to use (TCN/MLP)
   value: MLP
@@ -70,7 +72,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 64
+  value: 46
 cuda:
   desc: enables cuda training
   value: True
@@ -85,6 +87,6 @@ num_workers:
   value: 9
 patience:
   desc: amount of epochs for early stopping
-  value: 100
+  value: 10
 
 
