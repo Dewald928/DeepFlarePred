@@ -92,8 +92,7 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                                           (len(X_train), cfg.n_features))
                 X_valid_data = np.reshape(X_valid,
                                           (len(X_valid), cfg.n_features))
-                X_test_data = np.reshape(X_test,
-                                         (len(X_test), cfg.n_features))
+                X_test_data = np.reshape(X_test, (len(X_test), cfg.n_features))
             elif cfg.model_type == 'TCN':
                 X_train_data = torch.tensor(X_train).float()
                 X_train_data = X_train_data.permute(0, 2, 1)
@@ -184,9 +183,8 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             best_epoch = 0
             epoch = 0
 
-            val_recall, val_precision, val_accuracy,\
-            val_bacc, val_hss, val_tss = 0, 0, 0, 0, 0, 0
-
+            val_recall, val_precision, val_accuracy, val_bacc, val_hss, \
+            val_tss = 0, 0, 0, 0, 0, 0
 
             print('{:<11s}{:^9s}{:^9s}{:^9s}'
                   '{:^9s}{:^9s}{:^9s}{:^9s}'
@@ -206,12 +204,9 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
 
                     stopping_metric, best_tss, best_pr_auc, best_epoch, \
                     val_recall, val_precision, val_accuracy, val_bacc, \
-                    val_hss, val_tss = main_TCN_Liu.validate(model, device,
-                                                             valid_loader,
-                                                             criterion, epoch,
-                                                             best_tss,
-                                                             best_pr_auc,
-                                                             best_epoch, cfg)
+                    val_hss, val_tss = main_TCN_Liu.validate(
+                        model, device, valid_loader, criterion, epoch,
+                        best_tss, best_pr_auc, best_epoch, cfg)
 
                     if early_stop.step(stopping_metric) and cfg.early_stop:
                         print('[INFO] Early Stopping')
@@ -234,9 +229,9 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                                              run_path="dewald123/liu_pytorch_tcn/3tcj8ahy")
                 model.load_state_dict(torch.load(weights_file.name))
 
-            test_recall, test_precision, test_accuracy, test_bacc, \
-            test_hss, test_tss = main_TCN_Liu.test(model, device, test_loader,
-                                                   criterion, epoch)
+            test_recall, test_precision, test_accuracy, test_bacc, test_hss,\
+            test_tss = main_TCN_Liu.test(
+                model, device, test_loader, criterion, epoch)
 
             val_recall1list.append(val_recall)
             val_precision1list.append(val_precision)
@@ -251,7 +246,17 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             test_tsslist.append(test_tss)
             test_hsslist.append(test_hss)
 
-
+    wandb.log({"val_recall1list": val_recall1list,
+               'val_precision1list': val_precision1list,
+               'val_acclist': val_acclist,
+               'val_tsslist': val_tsslist,
+               'val_hsslist': val_hsslist,
+               'test_recall1list': test_recall1list,
+               'test_precision1list': test_precision1list,
+               'test_acclist': test_acclist,
+               'test_bacclist': test_bacclist,
+               'test_tsslist': test_tsslist,
+               'test_hsslist': test_hsslist})
 
     avg_recall0_list = []
     std_recall0_list = []
@@ -265,14 +270,3 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
     std_hss_list = []
     avg_tss_list = []
     std_tss_list = []
-
-
-
-
-
-
-
-
-
-
-
