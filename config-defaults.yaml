@@ -3,9 +3,6 @@ tag:
   desc: wandb tags
   value:
     - Skorch
-    - Liu_Fold
-    - BatchNorm
-    - Debug
 model_type:
   desc: which model to use (TCN/MLP)
   value: MLP
@@ -14,7 +11,7 @@ epochs:
   value: 600
 batch_size:
   desc: Size of each mini-batch
-  value: 512
+  value: 4096
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -45,7 +42,7 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 100
+  value: 40
 
 # Regularizer
 dropout:
@@ -72,7 +69,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 46
+  value: 15
 cuda:
   desc: enables cuda training
   value: True
@@ -87,6 +84,6 @@ num_workers:
   value: 9
 patience:
   desc: amount of epochs for early stopping
-  value: 10
+  value: 30
 
 

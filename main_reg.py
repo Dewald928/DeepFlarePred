@@ -181,6 +181,7 @@ if __name__ == '__main__':
     train_mse = EpochScoring(scoring='neg_mean_squared_error', on_train=True,
                              lower_is_better=False)
 
+    # Make model
     model = LSTM(lstm_input_size, h1, batch_size=cfg.batch_size,
                  output_dim=output_dim, num_layers=num_layers)
 
