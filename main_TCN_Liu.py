@@ -603,13 +603,25 @@ if __name__ == '__main__':
                                       patience=cfg.patience)
         else:
             earlystop = None
-        savename = os.path.join(wandb.run.dir,
-                                '{}_{}_{}_{}_{}_{}'.format(cfg.model_type,
-                                                           cfg.layers,
-                                                           cfg.hidden_units,
-                                                           cfg.batch_size,
-                                                           cfg.learning_rate,
-                                                           cfg.seed))
+
+        savename = ''
+        if cfg.model_type == 'MLP':
+            savename = os.path.join(wandb.run.dir,
+                                    '{}_{}_{}_{}_{}_{}'.format(cfg.model_type,
+                                                               cfg.layers,
+                                                               cfg.hidden_units,
+                                                               cfg.batch_size,
+                                                               cfg.learning_rate,
+                                                               cfg.seed))
+        elif cfg.model_type == 'TCN':
+            savename = os.path.join(wandb.run.dir,
+                                    '{}_{}_{}_{}_{}_{}'.format(cfg.model_type,
+                                                               cfg.levels,
+                                                               cfg.nhid,
+                                                               cfg.batch_size,
+                                                               cfg.learning_rate,
+                                                               cfg.seed))
+
         checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
 
