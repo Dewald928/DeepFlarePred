@@ -23,7 +23,7 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 # Data prepare
-X, y = make_classification(n_samples=1000, n_features=2, n_redundant=0,
+X, y = make_classification(n_samples=10000, n_features=2, n_redundant=0,
                            n_informative=1, n_clusters_per_class=1,
                            weights=[0.1, 0.9], class_sep=1)
 X = X.astype(np.float32)
@@ -50,7 +50,7 @@ checkpoint = Checkpoint(monitor='train_bacc_best')
 # Model
 model = make_classifier(**{"input_units": 2})
 # noinspection PyArgumentList
-net = NeuralNetClassifier(model, lr=1,
+net = NeuralNetClassifier(model, lr=2,
                           max_epochs=400,
                           criterion=nn.CrossEntropyLoss,
                           criterion__weight=torch.FloatTensor(

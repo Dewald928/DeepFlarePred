@@ -5,16 +5,16 @@ tag:
     - Skorch
 model_type:
   desc: which model to use (TCN/MLP)
-  value: MLP
+  value: TCN
 epochs:
   desc: Number of epochs to train over
   value: 600
 batch_size:
   desc: Size of each mini-batch
-  value: 4096
+  value: 1024
 learning_rate:
   desc: initial learning rate
-  value: 0.001
+  value: 0.0001
 optim:
   desc: optimizer to use
   value: Adam
@@ -34,7 +34,7 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
@@ -69,7 +69,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 15
+  value: 17
 cuda:
   desc: enables cuda training
   value: True
@@ -84,6 +84,6 @@ num_workers:
   value: 9
 patience:
   desc: amount of epochs for early stopping
-  value: 30
+  value: 40
 
 

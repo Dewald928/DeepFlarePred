@@ -85,10 +85,10 @@ Tested, but not sweeped
 
 ### Main Objectives
 * [ ] ~~Create MLP that is equivalent to Nishzuka et al paper~~
-* [ ] ~~Establish a baseline MLP~~
-* [ ] Understand TCN operation
+* [x] Establish a baseline MLP
+* [x] Understand TCN operation
 * [ ] Synthetic dataset
-* [ ] Change sequence length
+* [x] Change sequence length with TCN
 * [x] LSTM vs. TCN?
 * [ ] TCN baseline (Liu dataset (20/40 features?))
 * [x] ROC + Precision Recall curves, with AUC (train, val & test set)
