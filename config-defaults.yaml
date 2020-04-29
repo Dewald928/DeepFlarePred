@@ -5,16 +5,16 @@ tag:
     - Skorch
 model_type:
   desc: which model to use (TCN/MLP)
-  value: TCN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 600
+  value: 200
 batch_size:
   desc: Size of each mini-batch
-  value: 1024
+  value: 512
 learning_rate:
   desc: initial learning rate
-  value: 0.0001
+  value: 0.001
 optim:
   desc: optimizer to use
   value: Adam
@@ -31,10 +31,10 @@ ksize:
   value: 2
 nhid:
   desc: number of filters
-  value: 40
+  value: 60
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 3
+  value: 1
 
 # MLP
 layers:
@@ -42,7 +42,7 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 40
+  value: 100
 
 # Regularizer
 dropout:
@@ -63,27 +63,30 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 flare_label:
   desc: Types of flare class
   value: M5
 seed:
   desc: random seed
-  value: 17
+  value: 335
 cuda:
   desc: enables cuda training
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
-training:
-  desc: Trains models, else only tests
-  value: True
-num_workers:
-  desc: number of gpu workers
-  value: 9
+  value: False
 patience:
   desc: amount of epochs for early stopping
   value: 40
+training:
+  desc: Trains models, else only tests
+  value: False
+model_name:
+  dsec: The model used for evaluation
+  value: dewald123/liu_pytorch_MLP/bh1e5y1r
+num_workers:
+  desc: number of gpu workers
+  value: 9
 
 
