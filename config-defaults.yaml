@@ -2,19 +2,19 @@
 tag:
   desc: wandb tags
   value:
-    - Skorch
+    - Debug
 model_type:
   desc: which model to use (TCN/MLP)
-  value: MLP
+  value: TCN
 epochs:
   desc: Number of epochs to train over
-  value: 200
+  value: 10
 batch_size:
   desc: Size of each mini-batch
-  value: 512
+  value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.001
+  value: 0.0005
 optim:
   desc: optimizer to use
   value: Adam
@@ -47,7 +47,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.4
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -63,27 +63,27 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: False
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
 seed:
   desc: random seed
-  value: 335
+  value: 4
 cuda:
   desc: enables cuda training
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: False
+  value: True
 patience:
   desc: amount of epochs for early stopping
   value: 40
 training:
   desc: Trains models, else only tests
-  value: False
+  value: True
 model_name:
-  dsec: The model used for evaluation
+  dsec: The model used for evaluation (if training disabled)
   value: dewald123/liu_pytorch_MLP/bh1e5y1r
 num_workers:
   desc: number of gpu workers

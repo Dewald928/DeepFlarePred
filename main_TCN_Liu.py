@@ -459,14 +459,13 @@ if __name__ == '__main__':
                     model, device, valid_loader, criterion, epoch, best_tss,
                     best_pr_auc, best_epoch, cfg)[0:4]
 
+                test_tss = test(model, device, test_loader, criterion, epoch)[
+                    5]
+
                 if early_stop.step(stopping_metric) and cfg.early_stop:
                     print('[INFO] Early Stopping')
                     break
 
-                # # Continue training if recently improved
-                # if epoch == cfg.epochs-1 and early_stop.num_bad_epochs < 2:
-                #     cfg.epochs += 5
-                #     print("[INFO] not finished training...")
                 epoch += 1
 
         wandb.log(
@@ -509,7 +508,7 @@ if __name__ == '__main__':
         th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
         roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
                                  'Validation')
-        th_norm = pdf.plot_density_estimation(yhat, y_valid_tr_tensor,
+        th_norm = pdf.plot_density_estimation(model, yhat, y_valid_tr_tensor,
                                               'Validation')
 
         # Test
@@ -530,44 +529,44 @@ if __name__ == '__main__':
                                                                         tss_th))
         wandb.log({'Test_TSS_Th': tss_th})
 
-        th_norm_test = pdf.plot_density_estimation(yhat, y_test_tr_tensor,
-        'Test')
+        th_norm_test = pdf.plot_density_estimation(model, yhat,
+                                                   y_test_tr_tensor, 'Test')
 
     '''
     Model interpretation
     '''
-    # todo interpret on test set?
-
-    test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
-    int(
-        cfg.batch_size / 6), shuffle=False, drop_last=False)
-
-    # X_test_data_tensor = X_test_data_tensor.to(device)
-    # from captum.attr import IntegratedGradients
-    # ig = IntegratedGradients(model.to(device))
-    # attr, delta = ig.attribute(X_test_data_tensor[0:10], target=1,
-    #                            return_convergence_delta=True)
-
-    attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-        model, device, test_loader_interpret, cfg.n_features, cfg)
-
-    interpreter.visualize_importance(
-        np.array(feature_names[start_feature:start_feature +
-        cfg.n_features]),
-        np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
-        cfg.n_features,
-        title="Integrated Gradient Features")
-
-    interpreter.visualize_importance(
-        np.array(feature_names[start_feature:start_feature +
-        cfg.n_features]),
-        np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-        cfg.n_features, title="Saliency Features")
-
-    '''SHAP'''
-    plt.close('all')
-    interpreter.get_shap(model, test_loader, device, cfg, feature_names,
-                         start_feature)
+    # # todo interpret on test set?
+    #
+    # test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
+    # int(
+    #     cfg.batch_size / 6), shuffle=False, drop_last=False)
+    #
+    # # X_test_data_tensor = X_test_data_tensor.to(device)
+    # # from captum.attr import IntegratedGradients
+    # # ig = IntegratedGradients(model.to(device))
+    # # attr, delta = ig.attribute(X_test_data_tensor[0:10], target=1,
+    # #                            return_convergence_delta=True)
+    #
+    # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
+    #     model, device, test_loader_interpret, cfg.n_features, cfg)
+    #
+    # interpreter.visualize_importance(
+    #     np.array(feature_names[start_feature:start_feature +
+    #     cfg.n_features]),
+    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
+    #     cfg.n_features,
+    #     title="Integrated Gradient Features")
+    #
+    # interpreter.visualize_importance(
+    #     np.array(feature_names[start_feature:start_feature +
+    #     cfg.n_features]),
+    #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
+    #     cfg.n_features, title="Saliency Features")
+    #
+    # '''SHAP'''
+    # plt.close('all')
+    # interpreter.get_shap(model, test_loader, device, cfg, feature_names,
+    #                      start_feature)
 
     if cfg.skorch:
         '''
@@ -590,19 +589,22 @@ if __name__ == '__main__':
         combined_labels = np.array([labels for _, labels in iter(ds)])
 
         # Metrics + Callbacks
-        valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
+        valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
+                                                     needs_proba=False),
                                  lower_is_better=False, name='valid_tss',
                                  use_caching=True)
-        train_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss),
+        train_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
+                                                     needs_proba=False),
                                  lower_is_better=False, name='train_tss',
                                  use_caching=True, on_train=True)
-        valid_hss = EpochScoring(scoring=make_scorer(skorch_utils.get_hss),
+        valid_hss = EpochScoring(scoring=make_scorer(skorch_utils.get_hss,
+                                                     needs_proba=False),
                                  lower_is_better=False, name='valid_hss',
                                  use_caching=True)
         train_bacc = EpochScoring(
-            scoring=make_scorer(balanced_accuracy_score, **{'adjusted': True}),
-            lower_is_better=False, name='train_bacc', use_caching=True,
-            on_train=True)
+            scoring=make_scorer(balanced_accuracy_score, **{'adjusted': True},
+                                needs_proba=False), lower_is_better=False,
+            name='train_bacc', use_caching=True, on_train=True)
 
         if cfg.early_stop:
             earlystop = EarlyStopping(monitor='valid_tss', lower_is_better=False,
@@ -709,6 +711,10 @@ if __name__ == '__main__':
 
         net.initialize()
         net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+
+        # pdf.plot_calibration_curve(net, "Test", X_valid_data,
+        #                            y_valid_tr,
+        #                            test_inputs, test_labels)
 
         y_test = net.predict(test_inputs)
         tss_test_score = skorch_utils.get_tss(test_labels, y_test)
