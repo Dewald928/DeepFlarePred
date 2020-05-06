@@ -2,13 +2,14 @@ import numpy as np
 import pandas as pd
 import wandb
 import os.path
+import seaborn as sns
 api = wandb.Api()
 
 # Get runs from a specific sweep
 sweep0 = api.sweep("dewald123/liu_pytorch_MLP/xris1c8z")
 sweep1 = api.sweep("dewald123/liu_pytorch_MLP/0iihk32s")
 sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
-sweep = api.sweep("dewald123/liu_pytorch_MLP/u8kq0stw")
+sweep = api.sweep("dewald123/liu_pytorch_MLP/xris1c8z")
 sweeps = [sweep, sweep1, sweep2]
 
 # Get all runs validation_TSS,
@@ -41,6 +42,11 @@ for i in range(len(sweep.runs)):
     history = sweep.runs[i].history(samples=1000)
     val_tss = history["Validation_TSS"]
     run_config = sweep.runs[i].config
+    run_config = {k: run_config[k] for k in
+                  run_config.keys() & {'layers', 'hidden_units', 'batch_size',
+                                       'learning_rate', 'seed',
+                                       'n_features', 'dropout',
+                                       'weight_decay'}}
     run_id = sweep.runs[i].id
     run_config.update({'id': run_id})
     val_tss.name = run_id
@@ -55,7 +61,7 @@ for i in range(len(sweep.runs)):
     runs_avg = pd.concat([runs_avg, moving_avg], axis=1, sort=False)
     runs_std = pd.concat([runs_std, moving_std], axis=1, sort=False)
     if (i == 0) and (os.path.isfile('runs_cfg') is False):
-        runs_cfg = pd.DataFrame.from_dict(run_config, orient='columns')
+        runs_cfg = pd.DataFrame.from_dict(run_config, orient='index').T
     else:
         runs_cfg = pd.concat(
             [runs_cfg, pd.DataFrame.from_dict(run_config, orient='index').T],
@@ -68,11 +74,8 @@ runs_avg.to_csv('runs_avg')
 runs_std.to_csv('runs_std')
 runs_cfg.to_csv('runs_cfg')
 
-    # log to original run
-    # for s in range(len(val_tss)-1):
-    #     wandb.log({'moving_avg_tss': moving_avg.to_numpy()[s]}, step=s)
-    #     wandb.log({'moving_std_tss': moving_std.to_numpy()[s]}, step=s)
-    # sweep.runs[i].update()
+
+
 
 
 
