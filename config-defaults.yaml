@@ -3,54 +3,55 @@ tag:
   desc: wandb tags
   value:
     - Debug
+    - LSTM
 model_type:
-  desc: which model to use (TCN/MLP)
-  value: TCN
+  desc: which model to use (TCN/MLP/RNN)
+  value: RNN
 epochs:
   desc: Number of epochs to train over
-  value: 10
+  value: 600
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 256
 learning_rate:
   desc: initial learning rate
-  value: 0.0005
+  value: 0.001
 optim:
   desc: optimizer to use
   value: Adam
 n_features:
   desc: number of features to include (max 40)
-  value: 40
+  value: 20
 
 # TCN HP
 levels:
   desc: num of tcn blocks
-  value: 1
+  value: 10
 ksize:
   desc: kernel size (smallest is 2)
   value: 2
 nhid:
   desc: number of filters
-  value: 60
+  value: 10
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 10
 
 # MLP
 layers:
   desc: MLP layers
-  value: 1
+  value: 10
 hidden_units:
   desc: number hidden nodes in layer
-  value: 100
+  value: 1000
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.4
+  value: 0.5
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.0001
 
 # Cross Validation
 cross_validation:
@@ -58,7 +59,7 @@ cross_validation:
   value: False
 n_splits:
   desc: number of splits
-  value: 5
+  value: 10
 
 # Environment
 skorch:
@@ -69,7 +70,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 4
+  value: 9
 cuda:
   desc: enables cuda training
   value: True

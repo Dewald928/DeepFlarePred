@@ -37,6 +37,7 @@ from data_loader import CustomDataset
 from data_loader import data_loader
 from utils import early_stopping
 from model.tcn import TemporalConvNet
+from model import lstm
 from model import metric
 from model import mlp
 from interpret import interpreter
@@ -365,7 +366,8 @@ if __name__ == '__main__':
         X_valid_data = X_valid_data.permute(0, 2, 1)
         X_test_data = torch.tensor(X_test_data).float()
         X_test_data = X_test_data.permute(0, 2, 1)
-
+    elif cfg.model_type == 'RNN':
+        pass
     # (samples, seq_len, features) -> (samples, features, seq_len)
     X_train_data_tensor = torch.tensor(X_train_data).float()
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
@@ -400,7 +402,6 @@ if __name__ == '__main__':
     # make model
     channel_sizes = [cfg.nhid] * cfg.levels
     kernel_size = cfg.ksize
-    dropout = cfg.dropout
 
     # Create model
     if cfg.model_type == 'MLP':
@@ -410,8 +411,14 @@ if __name__ == '__main__':
                               dropout=cfg.dropout).to(device)
     elif cfg.model_type == "TCN":
         model = TCN(cfg.n_features, nclass, channel_sizes,
-                    kernel_size=kernel_size, dropout=dropout).to(device)
+                    kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
+    elif cfg.model_type == 'RNN':
+        model = lstm.LSTMModel(cfg.n_features, cfg.nhid, cfg.levels,
+                    output_dim=nclass, dropout=cfg.dropout, device=device,
+                               rnn_module='LSTM')
+        # summary(model, input_size=(cfg.seq_len,
+        #                            cfg.n_features))
 
     wandb.watch(model, log='all')
 
@@ -678,9 +685,9 @@ if __name__ == '__main__':
             rkf = sklearn.model_selection.RepeatedKFold(n_splits=5,
                                                         n_repeats=2)
             scores = []
-            visualize_CV.visualize_cv(sklearn.model_selection.RepeatedKFold,
+            visualize_CV.visualize_cv(sklearn.model_selection.KFold,
                                       combined_inputs, combined_labels, cfg)
-            for train_index, val_index in rkf.split(combined_inputs,
+            for train_index, val_index in kf.split(combined_inputs,
                                                   combined_labels):
                 print('train -  {}   |   test -  {}'.format(
                     np.bincount(combined_labels[train_index]), np.bincount(combined_labels[val_index])))
