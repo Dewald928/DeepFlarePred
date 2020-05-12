@@ -96,7 +96,7 @@ def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
                              & (all_runs['hidden_units'] == hidden_units)
                              & (all_runs['batch_size'] == batch_size)
                              & (all_runs['learning_rate'] == learning_rate)]
-        savefile = 'std_avg_{}_{}_{}_{}_{}'.format(layers, hidden_units,
+        savefile = 'std_avg_{}_{}_{}_{:.0e}_{}'.format(layers, hidden_units,
                                                batch_size, learning_rate, seed)
     else:
         run_data = all_runs[(all_runs['layers'] == layers)
@@ -104,7 +104,7 @@ def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
                             & (all_runs['batch_size'] == batch_size)
                             & (all_runs['learning_rate'] == learning_rate)
                             & (all_runs['seed'] == seed)]
-        savefile = 'std_{}_{}_{}_{}_{}'.format(layers, hidden_units,
+        savefile = 'std_{}_{}_{}_{:.0e}_{}'.format(layers, hidden_units,
                                                batch_size, learning_rate, seed)
 
     # get best validation epoch and test score at that point
@@ -147,15 +147,14 @@ def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
                'seed:{}'
                ''.format(layers, hidden_units, batch_size, learning_rate,
                          seed)], loc=4)
+    plt.savefig(pathname + savefile + '.png', bbox_inches='tight')
     plt.show()
-    plt.savefig(os.path.join(pathname, savefile),
-                format='png')
 
 
 layers = 1
 hidden_units = 100
 batch_size = 8192
-learning_rate = 1e-2
+learning_rate = 1e-3
 seed = 49
 seeds = [335, 49, 124, 15, 273]
 
