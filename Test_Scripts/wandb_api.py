@@ -2,10 +2,12 @@ import numpy as np
 import pandas as pd
 import wandb
 import os.path
+import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 api = wandb.Api()
 filename = 'all_runs.csv'
+pathname = os.path.expanduser('~/Dropbox/_Meesters/figures/moving_std_val_tss/')
 all_runs = pd.read_csv(filename) if os.path.isfile(
     filename) is True else pd.DataFrame()
 
@@ -86,15 +88,25 @@ all_runs = pd.read_csv(filename) if os.path.isfile(
 #     all_runs.to_csv(filename)
 
 
-
-
-def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed):
+def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
+                 avg=False):
     # select run values
-    run_data = all_runs[(all_runs['layers'] == layers)
-                                     & (all_runs['hidden_units'] == hidden_units)
-                                     & (all_runs['batch_size'] == batch_size)
-                                     & (all_runs['learning_rate'] == learning_rate)
-                                     & (all_runs['seed'] == seed)]
+    if avg:
+        run_data = all_runs[(all_runs['layers'] == layers)
+                             & (all_runs['hidden_units'] == hidden_units)
+                             & (all_runs['batch_size'] == batch_size)
+                             & (all_runs['learning_rate'] == learning_rate)]
+        savefile = 'std_avg_{}_{}_{}_{}_{}'.format(layers, hidden_units,
+                                               batch_size, learning_rate, seed)
+    else:
+        run_data = all_runs[(all_runs['layers'] == layers)
+                            & (all_runs['hidden_units'] == hidden_units)
+                            & (all_runs['batch_size'] == batch_size)
+                            & (all_runs['learning_rate'] == learning_rate)
+                            & (all_runs['seed'] == seed)]
+        savefile = 'std_{}_{}_{}_{}_{}'.format(layers, hidden_units,
+                                               batch_size, learning_rate, seed)
+
     # get best validation epoch and test score at that point
     test_tss = run_data.groupby('seed').apply(lambda x: x[
         'Test_TSS'].unique())
@@ -114,7 +126,7 @@ def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed):
     for i in range(len(test_tss)):
         test_str = test_str + '{}. {} ({})\n'.format(i, test_tss.iloc[i],
                                              test_tss.index[i])
-    plt.legend(['[Test TSS] (seed) \n' + test_str], loc=7)
+    plt.legend(['[Test TSS] (seed) \n' + test_str], loc=1)
     for i in range(len(best_epoch)):
         ax1.text(best_epoch.iloc[i] + 1, test_tss.iloc[i], '{}'.format(i), c='g',
                  size=10)
@@ -134,16 +146,22 @@ def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed):
     plt.legend(['layers:{} \nnodes:{} \nbatch_size:{} \nlearning_rate:{} \n'
                'seed:{}'
                ''.format(layers, hidden_units, batch_size, learning_rate,
-                         'all')], loc=4)
+                         seed)], loc=4)
     plt.show()
+    plt.savefig(os.path.join(pathname, savefile),
+                format='png')
 
 
-layers = 2
-hidden_units = 40
-batch_size = 4096
-learning_rate = 1e-3
+layers = 1
+hidden_units = 100
+batch_size = 8192
+learning_rate = 1e-2
 seed = 49
-seeds = [335,49,124,15,273]
+seeds = [335, 49, 124, 15, 273]
 
 for seed in seeds:
-    plot_val_std(layers, hidden_units, batch_size, learning_rate, seed)
+    plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
+                 avg=False)
+
+plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
+                 avg=True)
