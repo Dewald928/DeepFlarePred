@@ -10,7 +10,7 @@ all_runs = pd.read_csv(filename) if os.path.isfile(
     filename) is True else pd.DataFrame()
 
 
-# Get runs from a specific sweep
+# # Get runs from a specific sweep
 # sweep0 = api.sweep("dewald123/liu_pytorch_MLP/xris1c8z")
 # sweep1 = api.sweep("dewald123/liu_pytorch_MLP/0iihk32s")
 # sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
@@ -84,73 +84,66 @@ all_runs = pd.read_csv(filename) if os.path.isfile(
 #
 #     # dataframe to csv
 #     all_runs.to_csv(filename)
-#
-#
 
 
 
-# seaborn plots
+
+def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed):
+    # select run values
+    run_data = all_runs[(all_runs['layers'] == layers)
+                                     & (all_runs['hidden_units'] == hidden_units)
+                                     & (all_runs['batch_size'] == batch_size)
+                                     & (all_runs['learning_rate'] == learning_rate)
+                                     & (all_runs['seed'] == seed)]
+    # get best validation epoch and test score at that point
+    test_tss = run_data.groupby('seed').apply(lambda x: x[
+        'Test_TSS'].unique())
+    best_epoch_idx = run_data.groupby('seed').apply(lambda x: x[
+        'Validation_TSS'].idxmax())
+    best_epoch = run_data['epoch'][best_epoch_idx]
+    std_at_epoch = run_data['moving_std_w'][best_epoch_idx]
+
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    color = 'tab:blue'
+    ax1.set_title('Validation TSS and standard deviations', fontsize=16)
+    ax1.set_xlabel('Epoch', fontsize=16)
+    ax1.set_ylabel('Validation TSS', fontsize=16, color=color)
+    ax1.set_ylim(0, 1)
+    plt.scatter(best_epoch.to_numpy(), test_tss.to_numpy(), c='g')
+    test_str = ''
+    for i in range(len(test_tss)):
+        test_str = test_str + '{}. {} ({})\n'.format(i, test_tss.iloc[i],
+                                             test_tss.index[i])
+    plt.legend(['[Test TSS] (seed) \n' + test_str], loc=7)
+    for i in range(len(best_epoch)):
+        ax1.text(best_epoch.iloc[i] + 1, test_tss.iloc[i], '{}'.format(i), c='g',
+                 size=10)
+
+    ax2 = sns.lineplot(x='epoch', y='Validation_TSS', color=color,
+                       data=run_data)
+
+    ax1.tick_params(axis='y')
+    ax2 = ax1.twinx()
+    color = 'tab:red'
+    ax2.set_ylabel('Moving STD Gradient', fontsize=16, color=color)
+    ax2.set_ylim(None, 0.3)
+    ax2 = sns.lineplot(x='epoch', y='moving_std_w',
+                       color=color,
+                       data=run_data)
+    ax2.tick_params(axis='y', color=color)
+    plt.legend(['layers:{} \nnodes:{} \nbatch_size:{} \nlearning_rate:{} \n'
+               'seed:{}'
+               ''.format(layers, hidden_units, batch_size, learning_rate,
+                         'all')], loc=4)
+    plt.show()
+
+
 layers = 2
 hidden_units = 40
-batch_size = 8192
+batch_size = 4096
 learning_rate = 1e-3
-seed = 335
+seed = 49
+seeds = [335,49,124,15,273]
 
-# select run values
-run_data = all_runs[(all_runs['layers'] == layers)
-                                 & (all_runs['hidden_units'] == hidden_units)
-                                 & (all_runs['batch_size'] == batch_size)
-                                 & (all_runs['learning_rate'] == learning_rate)
-                                 ]
-# get best validation epoch and test score at that point
-test_tss = run_data.groupby('seed').apply(lambda x: x[
-    'Test_TSS'].unique())
-best_epoch_idx = run_data.groupby('seed').apply(lambda x: x[
-    'Validation_TSS'].idxmax())
-best_epoch = run_data['epoch'][best_epoch_idx]
-std_at_epoch = run_data['moving_std_w'][best_epoch_idx]
-
-
-fig, ax1 = plt.subplots(figsize=(10, 6))
-color = 'tab:blue'
-ax1.set_title('Validation TSS and standard deviations', fontsize=16)
-ax1.set_xlabel('Epoch', fontsize=16)
-ax1.set_ylabel('Validation TSS', fontsize=16, color=color)
-ax1.set_ylim(0, 1)
-# ax3 = sns.scatterplot(best_epoch, test_tss, color='g', ax=ax1)
-plt.scatter(best_epoch.to_numpy(), test_tss.to_numpy(), c='g')
-test_str = ''
-for i in range(len(test_tss)):
-    test_str = test_str + '{}. {} ({})\n'.format(i, test_tss.iloc[i],
-                                         test_tss.index[i])
-plt.legend(['[Test TSS] (seed) \n' + test_str], loc=7)
-# ax3 = ax2.twinx()
-for i in range(len(best_epoch)):
-    ax1.text(best_epoch.iloc[i] + 1, test_tss.iloc[i], '{}'.format(i), c='g',
-             size=10)
-ax2 = sns.lineplot(x='epoch', y='Validation_TSS', color=color,
-                   data=run_data)
-#
-ax1.tick_params(axis='y')
-ax2 = ax1.twinx()
-color = 'tab:red'
-ax2.set_ylabel('Moving STD Gradient', fontsize=16, color=color)
-ax2.set_ylim(None, 0.3)
-ax2 = sns.lineplot(x='epoch', y='moving_std_w',
-                   color=color,
-                   data=run_data)
-ax2.tick_params(axis='y', color=color)
-plt.legend(['layers:{} \nnodes:{} \nbatch_size:{} \nlearning_rate:{} \n'
-           'seed:{}'
-           ''.format(layers, hidden_units, batch_size, learning_rate,
-                     'all')], loc=4)
-plt.show()
-
-
-
-
-
-
-
-
-
+for seed in seeds:
+    plot_val_std(layers, hidden_units, batch_size, learning_rate, seed)

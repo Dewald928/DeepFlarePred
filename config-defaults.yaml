@@ -6,13 +6,13 @@ tag:
     - LSTM
 model_type:
   desc: which model to use (TCN/MLP/RNN)
-  value: RNN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
   value: 600
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 8192
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -35,23 +35,23 @@ nhid:
   value: 10
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 10
+  value: 1
 
 # MLP
 layers:
   desc: MLP layers
-  value: 10
+  value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 1000
+  value: 100
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.5
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.0001
+  value: 0.0
 
 # Cross Validation
 cross_validation:
@@ -64,7 +64,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 flare_label:
   desc: Types of flare class
   value: M5
@@ -82,10 +82,10 @@ patience:
   value: 200
 training:
   desc: Trains models, else only tests
-  value: True
+  value: False
 model_name:
-  dsec: The model used for evaluation (if training disabled)
-  value: dewald123/liu_pytorch_MLP/bh1e5y1r
+  dsec: The model used for evaluation (if training disabled, 1_100_8192_1e-3)
+  value: dewald123/liu_pytorch_MLP/ogkzvcf0
 num_workers:
   desc: number of gpu workers
   value: 9

@@ -503,6 +503,8 @@ if __name__ == '__main__':
         f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
                                                  'Train')[2:4]
         metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
+        roc_auc = metric.get_roc(model, yhat, y_train_tr_tensor, device,
+                                 'Train')
         tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
 
         # Validation
@@ -538,6 +540,8 @@ if __name__ == '__main__':
 
         th_norm_test = pdf.plot_density_estimation(model, yhat,
                                                    y_test_tr_tensor, 'Test')
+        pdf.plot_calibration_curve(model, 'Test', [], [], test_loader,
+                                   y_test_tr_tensor, yhat)
 
     '''
     Model interpretation

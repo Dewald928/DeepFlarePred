@@ -47,7 +47,8 @@ def plot_density_estimation(net, yhat, labels, dataset_name):
     return x[idx]
 
 
-def plot_calibration_curve(est, name, X_valid, y_valid, X_test, y_test):
+def plot_calibration_curve(est, name, X_valid, y_valid, X_test, y_test,
+                           y_pred):
     # plot calibration curve
     """Plot calibration curve for est w/o and with calibration. """
     # Calibrated with isotonic calibration
@@ -64,12 +65,12 @@ def plot_calibration_curve(est, name, X_valid, y_valid, X_test, y_test):
     # todo apply calibration (make a function)
     # Logistic regression with no calibration as baseline
     # lr = LogisticRegression(C=1.)
+    # (isotonic, name + ' + Isotonic'),
+    # (sigmoid, name + ' + Sigmoid')
 
-    for clf, name in [(est, name),
-                      (isotonic, name + ' + Isotonic'),
-                      (sigmoid, name + ' + Sigmoid')]:
-        clf.fit(X_valid, y_valid)
-        y_pred = clf.predict(X_test)
+    # for clf, name in [(est, name)]:
+    #     clf.fit(X_valid, y_valid)
+    #     y_pred = clf.predict(X_test)
 
     fraction_of_positives, mean_predicted_value = calibration_curve(y_test,
                                                                     y_pred[:,
@@ -78,7 +79,7 @@ def plot_calibration_curve(est, name, X_valid, y_valid, X_test, y_test):
     ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
              label="%s" % (name))
 
-    ax2.hist(yhat[:, 1], range=(0, 1), bins=20, label=name,
+    ax2.hist(y_pred[:, 1], range=(0, 1), bins=20, label=name,
              histtype="step", lw=2)
     ax1.set_ylabel("Fraction of positives")
     ax1.set_ylim([-0.05, 1.05])
