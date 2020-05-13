@@ -151,16 +151,105 @@ def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
     plt.show()
 
 
-layers = 1
-hidden_units = 100
-batch_size = 8192
-learning_rate = 1e-3
-seed = 49
+def check_network(layers, hidden_units, batch_size, learning_rate, seed,
+                      hp_list=pd.DataFrame()):
+    # is network above 0.79 val tss
+    # is moving_std_w < 0.05
+    # if true, return/flag the network
+    column_names = ['layers', 'hidden_units', 'batch_size', 'learning_rate',
+                    'seed', 'Test_TSS']
+
+    run_data = all_runs[(all_runs['layers'] == layers)
+                        & (all_runs['hidden_units'] == hidden_units)
+                        & (all_runs['batch_size'] == batch_size)
+                        & (all_runs['learning_rate'] == learning_rate)
+                        & (all_runs['seed'] == seed)]
+
+    max_val_tss = run_data['Validation_TSS'].max()
+    max_val_idx = run_data['Validation_TSS'].idxmax()
+    max_val_epoch = run_data['epoch'][max_val_idx]
+    max_moving_std_w = run_data['moving_std_w'][max_val_idx]
+
+    if (max_val_tss > 0.79) and (max_moving_std_w < 0.03):
+        flag = True
+        # add hp to dataframe
+
+        hps = '{}_{}_{}_{:.0e}_{}'.format(layers, hidden_units, batch_size,
+                                          learning_rate, seed)
+        hp_list.loc[len(hp_list)] = [layers, hidden_units, batch_size,
+                                     learning_rate, seed,
+                                     run_data['Test_TSS'][run_data.index[0]]]
+    else:
+        flag = False
+
+    return flag, hp_list
+
+
+def count_valid_network(layers, hidden_units, batch_size, learning_rate, seed):
+    # if 3 out of 5 seeds are valid
+    # then flag those HPs
+
+    run_data = all_runs[(all_runs['layers'] == layers)
+                        & (all_runs['hidden_units'] == hidden_units)
+                        & (all_runs['batch_size'] == batch_size)
+                        & (all_runs['learning_rate'] == learning_rate)]
+
+
+
+
+    flag = False
+    return flag
+
+
+def list_generalization_ability(id):
+    # Check if the network has a test TSS > 0.85
+    run = all_runs[all_runs['id'] == id]
+    fidx = run.index[0]
+
+    if run['Test_TSS'][fidx] > 0.85:
+        return True
+    else:
+        return False
+
+
+def get_hp_from_id(id):
+    run = all_runs[all_runs['id'] == id]
+    fidx = run.index[0]
+    run_layers = run['layers'][fidx]
+    run_hidden_units = run['hidden_units'][fidx]
+    run_batch_size = run['batch_size'][fidx]
+    run_learning_rate = run['learning_rate'][fidx]
+    run_seed = run['seed'][fidx]
+
+    return run_layers, run_hidden_units, run_batch_size, run_learning_rate, run_seed
+
+# create HP loop
+# for each unique id, get hps
 seeds = [335, 49, 124, 15, 273]
+id_list = all_runs['id'].unique()
+column_names = ['layers', 'hidden_units', 'batch_size', 'learning_rate',
+                'seed', 'Test_TSS']
+hp_list = pd.DataFrame(columns=column_names)
+for id in id_list:
+    layers, hidden_units, batch_size, learning_rate, seed = get_hp_from_id(id)
+    flag, hp_list = check_network(layers, hidden_units, batch_size,
+                               learning_rate, seed, hp_list)
+    bad_runs = hp_list[hp_list['Test_TSS'] < 0.85]
 
-for seed in seeds:
-    plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
-                 avg=False)
 
-plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
-                 avg=True)
+
+
+# # plot val moving std
+# layers = 1
+# hidden_units = 100
+# batch_size = 512
+# learning_rate = 1e-3
+# seed = 49
+seeds = [335, 49, 124, 15, 273]
+#
+# for seed in seeds:
+#     plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
+#                  avg=False)
+#
+# plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
+#                  avg=True)
