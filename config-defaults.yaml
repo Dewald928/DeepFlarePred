@@ -3,7 +3,6 @@ tag:
   desc: wandb tags
   value:
     - Debug
-    - LSTM
 model_type:
   desc: which model to use (TCN/MLP/RNN)
   value: MLP
@@ -12,7 +11,7 @@ epochs:
   value: 600
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 512
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -64,7 +63,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: False
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
@@ -82,7 +81,7 @@ patience:
   value: 200
 training:
   desc: Trains models, else only tests
-  value: False
+  value: True
 model_name:
   dsec: The model used for evaluation (if training disabled, 1_100_8192_1e-3)
   value: dewald123/liu_pytorch_MLP/ogkzvcf0
