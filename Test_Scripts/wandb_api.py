@@ -164,8 +164,6 @@ def check_network(layers, hidden_units, batch_size, learning_rate, seed,
     # is network above 0.79 val tss
     # is moving_std_w < 0.05
     # if true, return/flag the network
-    column_names = ['layers', 'hidden_units', 'batch_size', 'learning_rate',
-                    'seed', 'Test_TSS']
 
     run_data = all_runs[(all_runs['layers'] == layers)
                         & (all_runs['hidden_units'] == hidden_units)
@@ -181,15 +179,12 @@ def check_network(layers, hidden_units, batch_size, learning_rate, seed,
     if (max_val_tss > 0.79) and (max_moving_std_w < 0.02):
         flag = True
         # add hp to dataframe
-
-        hps = '{}_{}_{}_{:.0e}_{}'.format(layers, hidden_units, batch_size,
-                                          learning_rate, seed)
         hp_list.loc[len(hp_list)] = [layers, hidden_units, batch_size,
-                                     learning_rate, seed,
-                                     run_data['Test_TSS'][run_data.index[0]]]
+                                     learning_rate, seed, max_val_tss,
+                                     run_data['Test_TSS'][run_data.index[0]]
+                                     ]
     else:
         flag = False
-
     return flag, hp_list
 
 
@@ -216,6 +211,8 @@ def final_model_scores(hps, hp_list):
                               & (hp_list['hidden_units'] == hidden_units)
                               & (hp_list['batch_size'] == batch_size)
                               & (hp_list['learning_rate'] == learning_rate)]
+        val_se = all_entries['Validation_TSS'].sem()
+        test_se = all_entries['Validation_TSS'].sem()
         final_scores = pd.concat([final_scores, all_entries])
     return final_scores
 
@@ -234,12 +231,19 @@ def get_hp_from_id(id):
 
 
 ''' 
+Get wandb runs, save to csv
+'''
+# get_wandb_runs()
+
+all_runs = pd.read_csv(filename) if os.path.isfile(
+    filename) is True else pd.DataFrame()
+
+''' 
 Get best nets
 '''
-
 id_list = all_runs['id'].unique()
 column_names = ['layers', 'hidden_units', 'batch_size', 'learning_rate',
-                'seed', 'Test_TSS']
+                'seed', 'Best_Val_TSS', 'Test_TSS']
 hp_list = pd.DataFrame(columns=column_names)
 for id in id_list:
     layers, hidden_units, batch_size, learning_rate, seed = get_hp_from_id(id)
@@ -253,15 +257,30 @@ final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
 # Check test performance of final networks
 final_net_scores = final_model_scores(final_possible_hps, hp_list)
 
-# print(tabulate(final_possible_hps, headers="keys", tablefmt="github",
-#                floatfmt=('', ".0f", ".0f", '.0f', '.0e', '.0f')
-#                ))
+print(tabulate(final_net_scores, headers="keys", tablefmt="github",
+               floatfmt=(".0f", ".0f", '.0f', '.0e','.4f', '.4f')
+               , showindex=False))
 
+# create final tables with average and standard errors
+final_tabel = final_net_scores.groupby(['layers', 'hidden_units', 'batch_size',
+                                   'learning_rate']).mean().reset_index().drop(
+    columns='seed').rename(
+    columns={'Best_Val_TSS': 'avg_val_TSS', 'Test_TSS': 'avg_test_TSS'})
+hp_se = final_net_scores.groupby(['layers', 'hidden_units', 'batch_size',
+                                  'learning_rate']).sem().reset_index().rename(
+    columns={'Best_Val_TSS': 'val_se', 'Test_TSS': 'test_se'})
+final_tabel.insert(5, 'val_se', hp_se['val_se'])
+final_tabel.insert(7, 'test_se', hp_se['test_se'])
 
+sorted_ft = final_tabel.sort_values(['avg_val_TSS', 'val_se'], ascending=[
+    False, True])
+
+print(tabulate(final_tabel, headers="keys", tablefmt="github",
+               floatfmt=(".0f", ".0f", '.0f', '.0e', '.4f', '.4f', '.4f', '.4f')
+               , showindex=False))
 '''
 plot val moving std
 '''
-
 # layers = 2
 # hidden_units = 100
 # batch_size = 8192
