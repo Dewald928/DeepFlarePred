@@ -211,8 +211,8 @@ def final_model_scores(hps, hp_list):
                               & (hp_list['hidden_units'] == hidden_units)
                               & (hp_list['batch_size'] == batch_size)
                               & (hp_list['learning_rate'] == learning_rate)]
-        val_se = all_entries['Validation_TSS'].sem()
-        test_se = all_entries['Validation_TSS'].sem()
+        # val_se = all_entries['Validation_TSS'].sem()
+        # test_se = all_entries['Validation_TSS'].sem()
         final_scores = pd.concat([final_scores, all_entries])
     return final_scores
 
@@ -258,24 +258,31 @@ final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
 final_net_scores = final_model_scores(final_possible_hps, hp_list)
 
 print(tabulate(final_net_scores, headers="keys", tablefmt="github",
-               floatfmt=(".0f", ".0f", '.0f', '.0e','.4f', '.4f')
+               floatfmt=(".0f", ".0f", '.0f', '.0e', '.4f', '.4f')
                , showindex=False))
 
 # create final tables with average and standard errors
-final_tabel = final_net_scores.groupby(['layers', 'hidden_units', 'batch_size',
-                                   'learning_rate']).mean().reset_index().drop(
+top3_tbl = final_net_scores.groupby(
+    ['layers', 'hidden_units', 'batch_size', 'learning_rate']).apply(
+    lambda x: x.nlargest(3, ['Best_Val_TSS', 'Test_TSS'])).reset_index(
+    drop=True)
+
+final_table = top3_tbl.groupby(['layers', 'hidden_units', 'batch_size',
+                                        'learning_rate']).mean().reset_index(
+).drop(
     columns='seed').rename(
     columns={'Best_Val_TSS': 'avg_val_TSS', 'Test_TSS': 'avg_test_TSS'})
-hp_se = final_net_scores.groupby(['layers', 'hidden_units', 'batch_size',
+
+hp_se = top3_tbl.groupby(['layers', 'hidden_units', 'batch_size',
                                   'learning_rate']).sem().reset_index().rename(
     columns={'Best_Val_TSS': 'val_se', 'Test_TSS': 'test_se'})
-final_tabel.insert(5, 'val_se', hp_se['val_se'])
-final_tabel.insert(7, 'test_se', hp_se['test_se'])
+final_table.insert(5, 'val_se', hp_se['val_se'])
+final_table.insert(7, 'test_se', hp_se['test_se'])
 
-sorted_ft = final_tabel.sort_values(['avg_val_TSS', 'val_se'], ascending=[
+sorted_ft = final_table.sort_values(['avg_val_TSS', 'val_se'], ascending=[
     False, True])
 
-print(tabulate(final_tabel, headers="keys", tablefmt="github",
+print(tabulate(sorted_ft, headers="keys", tablefmt="github",
                floatfmt=(".0f", ".0f", '.0f', '.0e', '.4f', '.4f', '.4f', '.4f')
                , showindex=False))
 '''
@@ -291,3 +298,12 @@ plot val moving std
 #                  avg=False)
 # plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
 #                  avg=True)
+
+
+'''
+Get system metrics
+'''
+import wandb
+api = wandb.Api()
+run = api.run("dewald123/liu_pytorch_MLP/5zpfen0g")
+system_metrics = run.history(stream='events')

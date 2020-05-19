@@ -2,16 +2,16 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - Liu_Fold
 model_type:
   desc: which model to use (TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 600
+  value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 512
+  value: 8192
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -78,7 +78,7 @@ early_stop:
   value: True
 patience:
   desc: amount of epochs for early stopping
-  value: 200
+  value: 30
 training:
   desc: Trains models, else only tests
   value: True

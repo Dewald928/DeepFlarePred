@@ -246,17 +246,18 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             test_tsslist.append(test_tss)
             test_hsslist.append(test_hss)
 
-    wandb.log({"val_recall1list": val_recall1list,
-               'val_precision1list': val_precision1list,
-               'val_acclist': val_acclist,
-               'val_tsslist': val_tsslist,
-               'val_hsslist': val_hsslist,
-               'test_recall1list': test_recall1list,
-               'test_precision1list': test_precision1list,
-               'test_acclist': test_acclist,
-               'test_bacclist': test_bacclist,
-               'test_tsslist': test_tsslist,
-               'test_hsslist': test_hsslist})
+            wandb.log({"val_recall1list": val_recall,
+                       'val_precision1list': val_precision,
+                       'val_acclist': val_accuracy,
+                       'val_bacclist': val_bacc,
+                       'val_tsslist': val_tss,
+                       'val_hsslist': val_hss,
+                       'test_recall1list': test_recall,
+                       'test_precision1list': test_precision,
+                       'test_acclist': test_accuracy,
+                       'test_bacclist': test_bacc,
+                       'test_tsslist': test_tss,
+                       'test_hsslist': test_hss})
 
     avg_recall0_list = []
     std_recall0_list = []
