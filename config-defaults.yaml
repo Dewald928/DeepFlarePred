@@ -2,13 +2,13 @@
 tag:
   desc: wandb tags
   value:
-    - Liu_Fold
+    - Debug
 model_type:
   desc: which model to use (TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 600
 batch_size:
   desc: Size of each mini-batch
   value: 8192
@@ -69,7 +69,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 6
+  value: 335
 cuda:
   desc: enables cuda training
   value: True

@@ -344,9 +344,9 @@ if __name__ == '__main__':
                                                               y_test_data,
                                                               num_of_fold)
 
-    crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
-                                  X_valid_fold, y_valid_fold, X_test_fold,
-                                  y_test_fold, cfg, nclass, device)
+    # crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
+    #                               X_valid_fold, y_valid_fold, X_test_fold,
+    #                               y_test_fold, cfg, nclass, device)
 
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)

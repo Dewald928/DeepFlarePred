@@ -177,7 +177,8 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                 1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)))
 
             # early stopping check
-            early_stop = early_stopping.EarlyStopping(mode='max', patience=30)
+            early_stop = early_stopping.EarlyStopping(mode='max',
+                                                      patience=cfg.patience)
             best_tss = 0.0
             best_pr_auc = 0.0
             best_epoch = 0
