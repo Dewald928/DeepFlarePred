@@ -160,9 +160,10 @@ def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
 
 
 def check_network(layers, hidden_units, batch_size, learning_rate, seed,
+                  val_tss_th, val_std_th,
                   hp_list=pd.DataFrame()):
     # is network above 0.79 val tss
-    # is moving_std_w < 0.05
+    # is moving_std_w < 0.02
     # if true, return/flag the network
 
     run_data = all_runs[(all_runs['layers'] == layers)
@@ -176,7 +177,7 @@ def check_network(layers, hidden_units, batch_size, learning_rate, seed,
     max_val_epoch = run_data['epoch'][max_val_idx]
     max_moving_std_w = run_data['moving_std_w'][max_val_idx]
 
-    if (max_val_tss > 0.79) and (max_moving_std_w < 0.02):
+    if (max_val_tss > val_tss_th) and (max_moving_std_w < val_std_th):
         flag = True
         # add hp to dataframe
         hp_list.loc[len(hp_list)] = [layers, hidden_units, batch_size,
@@ -238,6 +239,27 @@ Get wandb runs, save to csv
 all_runs = pd.read_csv(filename) if os.path.isfile(
     filename) is True else pd.DataFrame()
 
+# get the validation tss threshold at 30% of the top values.
+sorted_tss = all_runs.groupby('id')[
+    'Validation_TSS'].max().reset_index().sort_values(by='Validation_TSS',
+                                                      ascending=False).reset_index(
+    drop=True)
+val_tss_th = sorted_tss.quantile(0.7)['Validation_TSS']
+# get std threshold at 70% of smallest values.
+sorted_std_idx = all_runs.groupby('id')['Validation_TSS'].idxmax()
+sorted_std = all_runs['moving_std_w'][
+    sorted_std_idx].sort_values().reset_index(drop=True)
+val_std_th = sorted_std.quantile(0.7)
+
+# plot all runs tss and mvg_std_w
+plt.plot(sorted_std)
+plt.plot(350, 0.02, 'bo', label='STD Threshold')
+plt.plot(sorted_tss['Validation_TSS'])
+plt.plot(150, 0.79, 'ro', label='TSS Threshold')
+plt.legend()
+plt.title('TSS and moving_std Threshold Selection')
+plt.show()
+
 ''' 
 Get best nets
 '''
@@ -248,7 +270,8 @@ hp_list = pd.DataFrame(columns=column_names)
 for id in id_list:
     layers, hidden_units, batch_size, learning_rate, seed = get_hp_from_id(id)
     flag, hp_list = check_network(layers, hidden_units, batch_size,
-                                  learning_rate, seed, hp_list)
+                                  learning_rate, seed, val_tss_th,
+                                  val_std_th, hp_list)
     bad_runs = hp_list[hp_list['Test_TSS'] < 0.85]
     good_runs = hp_list[hp_list['Test_TSS'] > 0.85]
 
@@ -288,7 +311,7 @@ print(tabulate(sorted_ft, headers="keys", tablefmt="github",
 '''
 plot val moving std
 '''
-# layers = 2
+# layers = 1
 # hidden_units = 100
 # batch_size = 8192
 # learning_rate = 1e-3
@@ -303,7 +326,7 @@ plot val moving std
 '''
 Get system metrics
 '''
-import wandb
-api = wandb.Api()
-run = api.run("dewald123/liu_pytorch_MLP/5zpfen0g")
-system_metrics = run.history(stream='events')
+# import wandb
+# api = wandb.Api()
+# run = api.run("dewald123/liu_pytorch_MLP/5zpfen0g")
+# system_metrics = run.history(stream='events')

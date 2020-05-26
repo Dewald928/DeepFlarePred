@@ -2,7 +2,6 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
 model_type:
   desc: which model to use (TCN/MLP/RNN)
   value: MLP
