@@ -253,9 +253,9 @@ val_std_th = sorted_std.quantile(0.7)
 
 # plot all runs tss and mvg_std_w
 plt.plot(sorted_std)
-plt.plot(350, 0.02, 'bo', label='STD Threshold')
+plt.plot(0.7*len(all_runs), val_std_th, 'bo', label='STD Threshold')
 plt.plot(sorted_tss['Validation_TSS'])
-plt.plot(150, 0.79, 'ro', label='TSS Threshold')
+plt.plot(0.3*len(all_runs), val_tss_th, 'ro', label='TSS Threshold')
 plt.legend()
 plt.title('TSS and moving_std Threshold Selection')
 plt.show()
