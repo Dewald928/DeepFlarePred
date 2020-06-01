@@ -8,6 +8,7 @@ import numpy as np
 from data_loader import data_loader
 import pandas as pd
 from tabulate import tabulate
+import seaborn as sns
 
 '''
 F-score selection
@@ -22,7 +23,7 @@ X_train_data, y_train_data = data_loader.load_data(
 X_train_data = np.reshape(X_train_data, (len(X_train_data), cfg.n_features))
 selector = SelectKBest(f_classif, k=20)
 selected_features = selector.fit_transform(X_train_data, y_train_tr)
-plt.plot(data_loader.get_feature_names(
+plt.bar(data_loader.get_feature_names(
         filepath + 'normalized_training.csv')[5:], selector.scores_)
 plt.title('ANOVA F-score vs. Features')
 plt.xlabel('Features')
@@ -31,6 +32,16 @@ plt.ylabel('Importance')
 plt.show()
 f_score_indexes = (-selector.scores_).argsort()[:40]
 
+sort_df = pd.concat([pd.DataFrame(data_loader.get_feature_names(
+        filepath + 'normalized_training.csv')[5:], columns=['Features']),
+                     pd.DataFrame(
+        selector.scores_, columns=['Importance'])], axis=1).sort_values(
+        by='Importance', ascending=False).reset_index()
+sns.barplot(x='Features', y='Importance', data=sort_df, order=sort_df[
+    'Features'])
+plt.xticks(rotation=90)
+plt.title('Sorted ANOVA F-score vs. Features')
+plt.show()
 
 '''
 Recursive Feature Elimination

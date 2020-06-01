@@ -2,9 +2,10 @@
 tag:
   desc: wandb tags
   value:
+    - Debug
 model_type:
   desc: which model to use (TCN/MLP/RNN)
-  value: MLP
+  value: TCN
 epochs:
   desc: Number of epochs to train over
   value: 600
@@ -27,13 +28,13 @@ levels:
   value: 10
 ksize:
   desc: kernel size (smallest is 2)
-  value: 2
+  value: 3
 nhid:
   desc: number of filters
-  value: 10
+  value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 10
 
 # MLP
 layers:
@@ -46,10 +47,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.5
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.0001
 
 # Cross Validation
 cross_validation:
@@ -68,7 +69,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 335
+  value: 50
 cuda:
   desc: enables cuda training
   value: True
@@ -77,7 +78,7 @@ early_stop:
   value: True
 patience:
   desc: amount of epochs for early stopping
-  value: 30
+  value: 40
 training:
   desc: Trains models, else only tests
   value: True

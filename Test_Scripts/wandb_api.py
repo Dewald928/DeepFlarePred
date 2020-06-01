@@ -8,19 +8,19 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 
 api = wandb.Api()
-filename = 'all_runs.csv'
+filename = '20_feat.csv'
 pathname = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/moving_std_val_tss/')
+    '~/Dropbox/_Meesters/figures/moving_std_val_tss/20feat/')
 all_runs = pd.read_csv(filename) if os.path.isfile(
     filename) is True else pd.DataFrame()
 
+
 def get_wandb_runs():
     # Get runs from a specific sweep
-    sweep0 = api.sweep("dewald123/liu_pytorch_MLP/xris1c8z")
-    sweep1 = api.sweep("dewald123/liu_pytorch_MLP/0iihk32s")
-    sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
-    # sweep = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
-    sweeps = [sweep0, sweep1, sweep2]
+    sweep0 = api.sweep("dewald123/liu_pytorch_MLP/r6b6hb8i")
+    # sweep1 = api.sweep("dewald123/liu_pytorch_MLP/0iihk32s")
+    # sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
+    sweeps = [sweep0]
 
 
     for sweep in sweeps:
@@ -33,7 +33,7 @@ def get_wandb_runs():
             run_data = pd.DataFrame()
             # wandb.init(project='liu_pytorch_MLP', entity='dewald123',
             #            name=sweep.runs[i].name, id=sweep.runs[i].id,
-            resume=True,
+            # resume=True,
             #            config=sweep.runs[i].config)
             # sweep.runs[i].update()
             # get val tss for run
@@ -244,22 +244,32 @@ sorted_tss = all_runs.groupby('id')[
     'Validation_TSS'].max().reset_index().sort_values(by='Validation_TSS',
                                                       ascending=False).reset_index(
     drop=True)
-val_tss_th = sorted_tss.quantile(0.7)['Validation_TSS']
+ax = sns.regplot(x=sorted_tss.index, y="Validation_TSS", data=sorted_tss)
+line = ax.lines[0]
+tss_min = line.get_ydata()[-1]
+val_tss_th = sorted_tss["Validation_TSS"].max() - ((sorted_tss[
+                                                     "Validation_TSS"].max()
+                                                    - tss_min)*0.3)
+# val_tss_th = sorted_tss.quantile(0.8)['Validation_TSS']
 # get std threshold at 70% of smallest values.
 sorted_std_idx = all_runs.groupby('id')['Validation_TSS'].idxmax()
 sorted_std = all_runs['moving_std_w'][
     sorted_std_idx].sort_values().reset_index(drop=True)
-val_std_th = sorted_std.quantile(0.7)
+# val_std_th = sorted_std.quantile(0.85)
+val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min())*0.1)
 
 # plot all runs tss and mvg_std_w
 plt.plot(sorted_std)
-plt.plot(0.7*len(sorted_std), val_std_th, 'bo', label='STD Threshold')
+plt.plot(sorted_std.iloc[
+             (sorted_std - val_std_th).abs().argsort()[:1]].index.tolist(),
+         val_std_th, 'bo', label='STD Threshold')
 plt.plot(sorted_tss['Validation_TSS'])
-plt.plot(0.3*len(sorted_tss), val_tss_th, 'ro', label='TSS Threshold')
+plt.plot(sorted_tss.iloc[(sorted_tss['Validation_TSS'] - val_tss_th).abs(
+
+).argsort()[:1]].index.tolist(), val_tss_th, 'ro', label='TSS Threshold')
 plt.legend()
 plt.title('TSS and moving_std Threshold Selection')
 plt.show()
-
 ''' 
 Get best nets
 '''
@@ -272,15 +282,13 @@ for id in id_list:
     flag, hp_list = check_network(layers, hidden_units, batch_size,
                                   learning_rate, seed, val_tss_th,
                                   val_std_th, hp_list)
-    bad_runs = hp_list[hp_list['Test_TSS'] < 0.85]
-    good_runs = hp_list[hp_list['Test_TSS'] > 0.85]
 
 counted_valid_hps = count_valid_network(hp_list)
 final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
 # Check test performance of final networks
 final_net_scores = final_model_scores(final_possible_hps, hp_list)
 
-print(tabulate(final_net_scores, headers="keys", tablefmt="github",
+print(tabulate(counted_valid_hps, headers="keys", tablefmt="github",
                floatfmt=(".0f", ".0f", '.0f', '.0e', '.4f', '.4f')
                , showindex=False))
 
@@ -312,9 +320,9 @@ print(tabulate(sorted_ft, headers="keys", tablefmt="github",
 plot val moving std
 '''
 # layers = 1
-# hidden_units = 100
-# batch_size = 8192
-# learning_rate = 1e-3
+# hidden_units = 40
+# batch_size = 4096
+# learning_rate = 1e-4
 # seeds = [335, 49, 124, 15, 273]
 # for seed in seeds:
 #     plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,

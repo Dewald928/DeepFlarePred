@@ -659,8 +659,6 @@ if __name__ == '__main__':
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
                                   optimizer__amsgrad=False, device=device,
-                                  # train_split=skorch.dataset.CVSplit(
-                                  #     cv=cfg.n_splits, stratified=False),
                                   train_split=predefined_split(valid_ds),
                                   # train_split=None,
                                   callbacks=[train_tss, valid_tss, earlystop,
@@ -705,7 +703,7 @@ if __name__ == '__main__':
                     balanced_accuracy_score(y_val, predictions, adjusted=True))
             print('Scores from each Iteration: ', scores)
             print('Average K-Fold Score :', np.mean(scores))
-            wandb.log({"Avg_CV_Score": np.mean(scores)})
+            wandb.log({"CV_Score": scores})
 
         '''
         Test Results
