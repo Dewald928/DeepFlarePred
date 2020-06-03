@@ -1,8 +1,11 @@
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif, mutual_info_classif, chi2
 from sklearn.feature_selection import RFE
+from sklearn.metrics import average_precision_score
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import LinearSVC
+from sklearn.utils import class_weight
+from sklearn.metrics import precision_recall_curve, balanced_accuracy_score
+from sklearn.svm import LinearSVC, SVC
 import matplotlib.pyplot as plt
 import numpy as np
 from data_loader import data_loader
@@ -21,7 +24,7 @@ X_train_data, y_train_data = data_loader.load_data(
         start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value)
 X_train_data = np.reshape(X_train_data, (len(X_train_data), cfg.n_features))
-selector = SelectKBest(f_classif, k=20)
+selector = SelectKBest(f_classif, k=40)
 selected_features = selector.fit_transform(X_train_data, y_train_tr)
 plt.bar(data_loader.get_feature_names(
         filepath + 'normalized_training.csv')[5:], selector.scores_)
@@ -46,8 +49,17 @@ plt.show()
 '''
 Recursive Feature Elimination
 '''
-clf = LinearSVC(C=0.01, penalty="l1", dual=False, verbose=1)
+class_weights = class_weight.compute_class_weight('balanced',
+                                                  np.unique(y_train_data),
+                                                  y_train_data)
+clf = LinearSVC(C=4, penalty="l1", dual=False, verbose=1, max_iter=10000,
+                random_state=1, class_weight=dict(enumerate(class_weights)))
 clf.fit(X_train_data, y_train_tr)
+
+y_score = clf.predict(X_train_data)
+average_tss = balanced_accuracy_score(y_train_tr, y_score, adjusted=True)
+print('Average tss score: {0:0.2f}'.format(
+      average_tss))
 
 rfe_selector = RFE(clf, 20)
 rfe_selector = rfe_selector.fit(X_train_data, y_train_tr)

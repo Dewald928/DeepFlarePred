@@ -5,7 +5,7 @@ tag:
     - Debug
 model_type:
   desc: which model to use (TCN/MLP/RNN)
-  value: TCN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
   value: 600
@@ -34,7 +34,7 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 10
+  value: 1
 
 # MLP
 layers:
@@ -47,10 +47,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.5
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.0001
+  value: 0.0
 
 # Cross Validation
 cross_validation:
@@ -75,7 +75,7 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
+  value: False
 patience:
   desc: amount of epochs for early stopping
   value: 40
