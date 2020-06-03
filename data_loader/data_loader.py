@@ -12,6 +12,7 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features,
     df = df.sort_values(by=['NOAA', 'timestamp'])  # I added this, valid?
     df_values = df.values
     feature_names = list(df.columns)
+    # todo Sort custom features
     X = []
     y = []
     tmp = []
@@ -322,6 +323,12 @@ def create_inout_sequences(input_data, tw, n_features):
             train_seq = input_data[i-tw:i]
         inout_seq.append(np.asarray(train_seq))
     return inout_seq
+
+
+def feature_select(feature_list):
+    # pass the required feature names, returns sorted df
+    
+    return feature_list
 
 
 

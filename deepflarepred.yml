@@ -250,4 +250,3 @@ dependencies:
     - wandb==0.8.36
     - watchdog==0.9.0
 prefix: /home/fuzzy/local/miniconda3/envs/DeepFlarePred
-
