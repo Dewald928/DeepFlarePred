@@ -316,12 +316,23 @@ if __name__ == '__main__':
     torch.backends.cudnn.benchmark = True
     np.random.seed(cfg.seed)
 
+    # feature select list
+    sharps = ['USFLUX', 'MEANGBT', 'MEANJZH', 'MEANPOT', 'SHRGT45', 'TOTUSJH',
+              'MEANGBH', 'MEANALP', 'MEANGAM', 'MEANGBZ', 'MEANJZD', 'TOTUSJZ',
+              'SAVNCPP', 'TOTPOT', 'MEANSHR', 'AREA_ACR', 'R_VALUE',
+              'ABSNJZH']
+    lorentz = ['TOTBSQ','TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY', 'EPSZ']
+    history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
+                        'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
+                        'Mhis1d', 'Xhis1d', 'Xmax1d']
+    feature_list = sharps + lorentz
+
     # setup dataloaders
     X_train_data, y_train_data = data_loader.load_data(
         datafile=filepath + 'normalized_training.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
-        mask_value=mask_value)
+        mask_value=mask_value, feature_list=feature_list)
     X_train_fold, y_train_fold = data_loader.partition_10_folds(X_train_data,
                                                                 y_train_data,
                                                                 num_of_fold)
@@ -330,7 +341,7 @@ if __name__ == '__main__':
         datafile=filepath + 'normalized_validation.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
-        mask_value=mask_value)
+        mask_value=mask_value, feature_list=feature_list)
     X_valid_fold, y_valid_fold = data_loader.partition_10_folds(X_valid_data,
                                                                 y_valid_data,
                                                                 num_of_fold)
@@ -339,7 +350,7 @@ if __name__ == '__main__':
         datafile=filepath + 'normalized_testing.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
-        mask_value=mask_value)
+        mask_value=mask_value, feature_list=feature_list)
     X_test_fold, y_test_fold = data_loader.partition_10_folds(X_test_data,
                                                               y_test_data,
                                                               num_of_fold)

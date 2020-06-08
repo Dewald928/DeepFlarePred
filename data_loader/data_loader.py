@@ -5,14 +5,28 @@ from itertools import accumulate
 from torch.nn.utils.rnn import pad_sequence
 import torch
 
+sharps = ['USFLUX', 'MEANGBT', 'MEANJZH', 'MEANPOT', 'SHRGT45', 'TOTUSJH',
+          'MEANGBH', 'MEANALP', 'MEANGAM', 'MEANGBZ', 'MEANJZD', 'TOTUSJZ',
+          'SAVNCPP', 'TOTPOT', 'MEANSHR', 'AREA_ACR', 'R_VALUE', 'ABSNJZH']
+lorentz = ['TOTBSQ', 'TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY', 'EPSZ']
+history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec', 'Bhis',
+                    'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d', 'Mhis1d',
+                    'Xhis1d', 'Xmax1d']
+physical_features = sharps + lorentz
+
 
 def load_data(datafile, flare_label, series_len, start_feature, n_features,
-              mask_value):
+              mask_value, feature_list=None):
     df = pd.read_csv(datafile)
     df = df.sort_values(by=['NOAA', 'timestamp'])  # I added this, valid?
-    df_values = df.values
-    feature_names = list(df.columns)
+    df = feature_select(feature_list, df, start_feature)
+    n_features = df.shape[1]-start_feature
+    feature_names = df.columns
+    physical_features_idx = [feature_names.get_loc(physical_features[x]) for x
+                          in range(len(physical_features))]
     # todo Sort custom features
+
+    df_values = df.values
     X = []
     y = []
     tmp = []
@@ -102,23 +116,7 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features,
             if float(row[42]) == 0.0:
                 has_zero_record = True
         elif flare_label == 'M5':
-            for k in range(5, 12):
-                if float(row[k]) == 0.0:
-                    has_zero_record = True
-                    break
-            for k in range(19, 21):
-                if float(row[k]) == 0.0:
-                    has_zero_record = True
-                    break
-            for k in range(22, 31):
-                if float(row[k]) == 0.0:
-                    has_zero_record = True
-                    break
-            for k in range(32, 37):
-                if float(row[k]) == 0.0:
-                    has_zero_record = True
-                    break
-            for k in range(40, 42):
+            for k in physical_features_idx:
                 if float(row[k]) == 0.0:
                     has_zero_record = True
                     break
@@ -193,27 +191,10 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features,
                     if float(row[42]) == 0.0:
                         has_zero_record_tmp = True
                 elif flare_label == 'M5':
-                    for k in range(5, 12):
+                    for k in physical_features_idx:
                         if float(row[k]) == 0.0:
                             has_zero_record_tmp = True
                             break
-                    for k in range(19, 21):
-                        if float(row[k]) == 0.0:
-                            has_zero_record_tmp = True
-                            break
-                    for k in range(22, 31):
-                        if float(row[k]) == 0.0:
-                            has_zero_record_tmp = True
-                            break
-                    for k in range(32, 37):
-                        if float(row[k]) == 0.0:
-                            has_zero_record_tmp = True
-                            break
-                    for k in range(40, 42):
-                        if float(row[k]) == 0.0:
-                            has_zero_record_tmp = True
-                            break
-
                 if len(
                         each_series_data) < series_len and \
                         has_zero_record_tmp is True:
@@ -235,6 +216,7 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features,
                 X.append(np.array(each_series_data).reshape(series_len,
                                                             n_features).tolist())
                 y.append(label)
+    # select features
     X_arr = np.array(X)
     y_arr = np.array(y)
     print(X_arr.shape)
@@ -325,10 +307,17 @@ def create_inout_sequences(input_data, tw, n_features):
     return inout_seq
 
 
-def feature_select(feature_list):
+def feature_select(feature_list, df, start_feature):
     # pass the required feature names, returns sorted df
-    
-    return feature_list
+    if feature_list == None:
+        return df
+    else:
+        df_config = df.iloc[:, :start_feature]
+        df_new_features = df.loc[:, feature_list]
+        df_new = pd.concat([df_config, df_new_features], axis=1)
+        # global n_features
+        # n_features = df_new_features.shape[1]
+        return df_new
 
 
 

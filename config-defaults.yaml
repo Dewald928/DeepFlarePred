@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - BathcNorm
+    - Skorch
 model_type:
   desc: which model to use (TCN/MLP/RNN)
   value: MLP
@@ -20,7 +20,7 @@ optim:
   value: Adam
 n_features:
   desc: number of features to include (max 40)
-  value: 40
+  value: 25
 
 # TCN HP
 levels:
