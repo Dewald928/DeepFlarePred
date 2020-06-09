@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install pandas && \
     pip3 install numpy && \
     pip3 install scipy && \
-    pip3 install scikit-learn && \
+    pip3 install scikit-learn==21.3 && \
     pip3 install argparse && \
     pip3 install wandb && \
     pip3 install matplotlib && \

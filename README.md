@@ -23,7 +23,7 @@ Activate environment:
 The Liu data should be downloaded from [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction).
 For the ```main_LSTM_Liu.py``` and ```main_TCN_Liu.py``` the Liu dataset needs to be downloaded and extracted to the
  "/Data/Liu" folder such that:
- ```bash
+ ```
 ./Data/
 ├── Liu
 │   ├── C
@@ -35,9 +35,8 @@ To run the script, you can either do a Weight & Biases sweep, or just simply run
 
 ```python main_TCN_Liu.py```
 
-The default args can be changed or passed inline e.g.
+The default configurations can be changed in ```config-defaults.yaml```.
 
-```python main_TCN_Liu.py --learning_rate 0.001```
 
 
 ## Docker cloud gpu setup
@@ -51,12 +50,34 @@ Follow instructions [here](https://docs.paperspace.com/gradient/notebooks/notebo
  [Link2](https://github.com/anibali/docker-pytorch/blob/master/cuda-10.0/Dockerfile))
 
 ### Dockerhub container
-`dvd928/deep_flare_pred:1`
+`dvd928/deep_flare_pred:latest`
 
 ### Example of runstring on paperspace
-`paperspace jobs create --container dvd928/deep_flare_pred:1 --machineType
+`paperspace jobs create --container dvd928/deep_flare_pred:latest --machineType
  P4000 --command wandb agent 5ks0xbql --ports 5000:5000 --project Liu_pytorch`
  
+
+## Test/Analysis Scripts
+| Script | Description |
+|---|---|
+|```cme_svm_updated_for_pyastro.ipynb``` | Example notebook of Bobra's CME SVM
+|```data_aquisition_pipeline.ipynb```| Notebook for generating Liu et al. data (WIP)
+|`feature_selection.py`| For Univariate Feature selection and RFE
+|`inspectdata.py`| Basic data analysis & Pair plot generation
+|`nested_crossval.py`| Example script for nested crossval
+|`plot_classifier_comparison.py`| Sklearn script
+|`plot_cv_indices.py`| Sklearn script
+|`regression.py`| Synthetic LSTM regression testing
+|`roc_test.py`| ROC vs. PR for imbalanced dataset
+|`skorchCV.py`| Used for generating [Toy Unbalanced Classification](https://app.wandb.ai/dewald123/skorchcv/reports/Toy-Unbalanced-Classification--Vmlldzo3NTkxMA)
+|`test_tcn.py`| For analysis of TCN and 1D convolution using sequences
+|`Titanic_Basic_Interpret.py`| Captum Example
+|`moving_std_protocol.py`| Protocol for downloading wandb runs and model selection, based on smooth training
+|`WNBtestscript.py`| wandb setup script
+|`workers_test.py`| Pytorch optimal workers test
+
+
+
 
 
 ## Plans for the Project
@@ -65,7 +86,7 @@ Follow instructions [here](https://docs.paperspace.com/gradient/notebooks/notebo
 * [ ] Copy Liu architecture completely
 * [x] Cross-validation: [Skorch library](https://skorch.readthedocs.io/en/stable/user/dataset.html)
 * [x] Regularization: L2 + Dropout
-* [ ] Shuffled vs. Unshuffled
+* [X] Shuffled vs. Unshuffled. Shuffling is not very advers.
 * [x] GPU integration
 * [x] GPU optimization, just use larger batch sizes
 * [x] Implement Weight and Biases
@@ -98,7 +119,7 @@ Tested, but not sweeped
 * [ ] SHARP only TCN
 * [ ] Case studies
 * [ ] What does TSS mean in this context?
-* [ ] How to interpret W&B parameters?
+* [x] How to interpret W&B parameters?
 
 
 
@@ -107,11 +128,10 @@ Tested, but not sweeped
 * [ ] Incorporate SHARP magnetogram images like Chen article
 * [ ] Use GAN for detecting anomalies
 * [ ] MLP/LSTM attention models
-* [ ] See a regression problem?
+* [x] See a regression problem? LSTM regression is possible.
 
 ### Questions
-* The sliding window, how to know how many hours ahead is predicted
-* Best way to test?
+
 
 ### Data sets
 * [Chen et al. 2019 data (some of it)](https://deepblue.lib.umich.edu/data/concern/data_sets/0r967377q?locale=en)

@@ -22,10 +22,13 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features,
     df = feature_select(feature_list, df, start_feature)
     n_features = df.shape[1]-start_feature
     feature_names = df.columns
-    physical_features_idx = [feature_names.get_loc(physical_features[x]) for x
-                          in range(len(physical_features))]
-    # todo Sort custom features
-
+    physical_features_idx = []
+    for i in range(len(physical_features)):
+        try:
+            physical_features_idx.append(feature_names.get_loc(
+                physical_features[i]))
+        except:
+            continue
     df_values = df.values
     X = []
     y = []

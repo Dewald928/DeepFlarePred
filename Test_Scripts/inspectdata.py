@@ -96,7 +96,7 @@ def corr(x, y, **kwargs):
     # Add the label to the plot
     ax = plt.gca()
     ax.annotate(label, xy=(0.2, 0.95), size=20, xycoords=ax.transAxes)
-    if coef > 0.86:
+    if coef > 0.80:
         # get axis
         xlabel = ax.xaxis.get_label_text()
         ylabel = ax.yaxis.get_label_text()
