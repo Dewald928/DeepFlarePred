@@ -9,7 +9,7 @@ from tabulate import tabulate
 
 api = wandb.Api()
 # specify HPs
-model_type = 'MLP'  # or 'MLP'
+model_type = 'TCN'  # 'TCN 'or 'MLP'
 if model_type == 'MLP':
     HP_list = ['layers', 'hidden_units', 'batch_size', 'learning_rate', 'seed',
                'n_features']
@@ -17,9 +17,10 @@ if model_type == 'MLP':
 elif model_type == 'TCN':
     HP_list = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
           'batch_size', 'learning_rate', 'weight_decay', 'seed']
-    HP_groupby = ['levels', 'ksize', 'seq_len', 'batch_size', 'learning_rate']
+    HP_groupby = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
+          'batch_size', 'learning_rate', 'weight_decay']
 
-filename = '20_feat.csv'
+filename = 'TCN_bayes.csv'
 pathname = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/moving_std_val_tss/TCN/40feat')
 all_runs = pd.read_csv(filename).drop(columns="Unnamed: 0") if os.path.isfile(
@@ -62,8 +63,8 @@ def get_wandb_runs():
                                            ignore_index=True)
 
             # calculate moving avg and std
-            moving_avg = val_tss.expanding(min_periods=1).mean()
-            moving_std = val_tss.expanding(min_periods=1).std()
+            moving_avg = val_tss.expanding(min_periods=2).mean()
+            moving_std = val_tss.expanding(min_periods=2).std()
             # window averages
             moving_avg_w = val_tss.rolling(window=w).mean()
             moving_std_w = val_tss.rolling(window=w).std()
@@ -101,7 +102,7 @@ def get_wandb_runs():
         all_runs.to_csv(filename)
 
 
-def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
+def plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
                  avg=False):
     # select run values
     if avg:
@@ -166,6 +167,67 @@ def plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
     plt.show()
 
 
+def plot_val_std(run_hp, avg=False):
+    # get run id from run_hp
+    id = get_id_from_hp(run_hp).iloc[0]
+    # select run values
+    if avg:
+        run_data = all_runs[(all_runs['id'] == id)]
+        savefile = 'std_avg_{}_{}_{}_{:.0e}_{}'.format(layers, hidden_units,
+                                                       batch_size,
+                                                       learning_rate, seed)
+    else:
+        run_data = all_runs[(all_runs['id'] == id)]
+        hp_string = ''
+        for i in range(run_data[HP_list].shape[1]):
+            if len(str(run_data[HP_list].iloc[0][i])) < 4:
+                tmp_string = f'_{run_data[HP_list].iloc[0][i]:.0f}'
+            else:
+                tmp_string = f'_{run_data[HP_list].iloc[0][i]:.1e}'
+            hp_string = hp_string + tmp_string
+        savefile = 'std{}'.format(hp_string)
+
+    # get best validation epoch and test score at that point
+    test_tss = run_data.groupby('seed').apply(lambda x: x['Test_TSS'].unique())
+    best_epoch_idx = run_data.groupby('seed').apply(
+        lambda x: x['Validation_TSS'].idxmax())
+    best_epoch = run_data['epoch'][best_epoch_idx]
+    std_at_epoch = run_data['moving_std_w'][best_epoch_idx]
+
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    color = 'tab:blue'
+    ax1.set_title('Validation TSS and standard deviations', fontsize=16)
+    ax1.set_xlabel('Epoch', fontsize=16)
+    ax1.set_ylabel('Validation TSS', fontsize=16, color=color)
+    ax1.set_ylim(0, 1)
+    plt.scatter(best_epoch.to_numpy(), test_tss.to_numpy(), c='g')
+    test_str = ''
+    for i in range(len(test_tss)):
+        test_str = test_str + '{}. {} ({})\n'.format(i, test_tss.iloc[i],
+                                                     test_tss.index[i])
+    plt.legend(['[Test TSS] (seed) \n' + test_str], loc=1)
+    for i in range(len(best_epoch)):
+        ax1.text(best_epoch.iloc[i] + 1, test_tss.iloc[i], '{}'.format(i),
+                 c='g', size=10)
+
+    ax2 = sns.lineplot(x='epoch', y='Validation_TSS', color=color,
+                       data=run_data)
+
+    ax1.tick_params(axis='y')
+    ax2 = ax1.twinx()
+    color = 'tab:red'
+    ax2.set_ylabel('Moving STD Gradient', fontsize=16, color=color)
+    ax2.set_ylim(None, 0.3)
+    ax2 = sns.lineplot(x='epoch', y='moving_std_w', color=color, data=run_data)
+    ax2.tick_params(axis='y', color=color)
+    # plt.legend(['layers:{} \nnodes:{} \nbatch_size:{} \nlearning_rate:{} \n'
+    #             'seed:{}'
+    #             ''.format(layers, hidden_units, batch_size, learning_rate,
+    #                       seed)], loc=4)
+    plt.savefig(pathname + savefile + '.png', bbox_inches='tight')
+    plt.show()
+
+
 def check_network(id, val_tss_th, val_std_th, HP_list, hp_df=pd.DataFrame()):
     # is network above 0.79 val tss
     # is moving_std_w < 0.02
@@ -215,8 +277,14 @@ def final_model_scores(hps, hp_df):
 def get_hp_from_id(id, HP_list):
     run = all_runs[all_runs['id'] == id]
     run_hp = run[HP_list].iloc[0]
-
     return run_hp
+
+
+def get_id_from_hp(hp_series_toget):
+    hp_series_toget = pd.DataFrame(hp_series_toget).T
+    possible_run = pd.merge(all_runs, hp_series_toget,
+                            on=list(hp_series_toget.columns), how='inner')
+    return possible_run['id']
 
 
 ''' 
@@ -241,7 +309,7 @@ sorted_std_idx = all_runs.groupby('id')['Validation_TSS'].idxmax()
 sorted_std = all_runs['moving_std_w'][
     sorted_std_idx].sort_values().reset_index(drop=True)
 # val_std_th = sorted_std.quantile(0.85)
-val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min())*0.1)
+val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min())*0.01)
 
 # plot all runs tss and mvg_std_w
 plt.plot(sorted_std)
@@ -266,7 +334,7 @@ for id in id_list:
     flag, hp_df = check_network(id, val_tss_th, val_std_th, HP_list, hp_df)
 
 counted_valid_hps = count_valid_network(hp_df)
-final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
+final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 1]
 # Check test performance of final networks
 final_net_scores = final_model_scores(final_possible_hps, hp_df)
 
@@ -297,7 +365,7 @@ print(tabulate(sorted_ft, headers="keys", tablefmt="github",
                          '.4f','.4f')
                , showindex=False))
 '''
-plot val moving std
+plot val moving std std
 '''
 # layers = 1
 # hidden_units = 40
@@ -305,10 +373,18 @@ plot val moving std
 # learning_rate = 1e-4
 # seeds = [335, 49, 124, 15, 273]
 # for seed in seeds:
-#     plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
+#     plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
 #                  avg=False)
-# plot_val_std(layers, hidden_units, batch_size, learning_rate, seed,
+# plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
 #                  avg=True)
+
+
+'''
+plot val moving std std TCN
+'''
+run_hp = get_hp_from_id(final_net_scores['id'].iloc[2], HP_list)
+plot_val_std(run_hp)
+
 
 
 '''

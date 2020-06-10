@@ -325,7 +325,7 @@ if __name__ == '__main__':
     history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
                         'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
                         'Mhis1d', 'Xhis1d', 'Xmax1d']
-    feature_list = history_features  # can be None, need to change
+    feature_list = None  # can be None, need to change
     # cfg_nfeature to match length
 
     # setup dataloaders

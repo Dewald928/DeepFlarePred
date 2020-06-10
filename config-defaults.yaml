@@ -2,10 +2,10 @@
 tag:
   desc: wandb tags
   value:
-    - Skorch
+    - Debug
 model_type:
   desc: which model to use (TCN/MLP/RNN)
-  value: MLP
+  value: TCN
 epochs:
   desc: Number of epochs to train over
   value: 2000
@@ -14,27 +14,27 @@ batch_size:
   value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.001
+  value: 0.00033
 optim:
   desc: optimizer to use
   value: Adam
 n_features:
   desc: number of features to include (max 40)
-  value: 15
+  value: 40
 
 # TCN HP
 levels:
   desc: num of tcn blocks
-  value: 10
+  value: 1
 ksize:
   desc: kernel size (smallest is 2)
   value: 3
 nhid:
   desc: number of filters
-  value: 40
+  value: 44
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
@@ -47,10 +47,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.2
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.0004
 
 # Cross Validation
 cross_validation:
@@ -69,7 +69,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 50
+  value: 100
 cuda:
   desc: enables cuda training
   value: True
