@@ -8,7 +8,7 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 30
+  value: 2000
 batch_size:
   desc: Size of each mini-batch
   value: 256

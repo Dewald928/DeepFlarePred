@@ -19,8 +19,7 @@ def load_data(datafile, flare_label, series_len, start_feature, n_features,
               mask_value, feature_list=None):
     df = pd.read_csv(datafile)
     df = df.sort_values(by=['NOAA', 'timestamp'])  # I added this, valid?
-    df = feature_select(feature_list, df, start_feature)
-    n_features = df.shape[1]-start_feature
+    df, n_features = feature_select(feature_list, df, start_feature, n_features)
     feature_names = df.columns
     physical_features_idx = []
     for i in range(len(physical_features)):
@@ -310,17 +309,18 @@ def create_inout_sequences(input_data, tw, n_features):
     return inout_seq
 
 
-def feature_select(feature_list, df, start_feature):
+def feature_select(feature_list, df, start_feature, n_features):
     # pass the required feature names, returns sorted df
     if feature_list == None:
-        return df
+        return df, n_features
     else:
         df_config = df.iloc[:, :start_feature]
         df_new_features = df.loc[:, feature_list]
         df_new = pd.concat([df_config, df_new_features], axis=1)
+        n_features = df_new.shape[1] - start_feature
         # global n_features
         # n_features = df_new_features.shape[1]
-        return df_new
+        return df_new, n_features
 
 
 
