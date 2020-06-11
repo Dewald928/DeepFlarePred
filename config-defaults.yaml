@@ -5,16 +5,16 @@ tag:
     - Debug
 model_type:
   desc: which model to use (TCN/MLP/RNN)
-  value: TCN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1000
+  value: 30
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 256
 learning_rate:
   desc: initial learning rate
-  value: 0.0001
+  value: 0.001
 optim:
   desc: optimizer to use
   value: Adam
@@ -34,23 +34,23 @@ nhid:
   value: 44
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 3
+  value: 1
 
 # MLP
 layers:
   desc: MLP layers
-  value: 1
+  value: 2
 hidden_units:
   desc: number hidden nodes in layer
-  value: 100
+  value: 200
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.2
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.0004
+  value: 0.0
 
 # Cross Validation
 cross_validation:
@@ -78,7 +78,7 @@ early_stop:
   value: True
 patience:
   desc: amount of epochs for early stopping
-  value: 40
+  value: 10
 training:
   desc: Trains models, else only tests
   value: True

@@ -9,10 +9,9 @@ from tabulate import tabulate
 
 api = wandb.Api()
 # specify HPs
-model_type = 'TCN'  # 'TCN 'or 'MLP'
+model_type = 'MLP'  # 'TCN 'or 'MLP'
 if model_type == 'MLP':
-    HP_list = ['layers', 'hidden_units', 'batch_size', 'learning_rate', 'seed',
-               'n_features']
+    HP_list = ['layers', 'hidden_units', 'batch_size', 'learning_rate', 'seed']
     HP_groupby = ['layers', 'hidden_units', 'batch_size', 'learning_rate']
 elif model_type == 'TCN':
     HP_list = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
@@ -20,19 +19,21 @@ elif model_type == 'TCN':
     HP_groupby = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
           'batch_size', 'learning_rate', 'weight_decay']
 
-filename = 'TCN_bayes.csv'
+filename = '40_feat.csv'
 pathname = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/moving_std_val_tss/TCN/40feat')
+    '~/Dropbox/_Meesters/figures/moving_std_val_tss/MLP/40feat')
 all_runs = pd.read_csv(filename).drop(columns="Unnamed: 0") if os.path.isfile(
     filename) is True else pd.DataFrame()
 
 
 def get_wandb_runs():
     # Get runs from a specific sweep
-    sweep0 = api.sweep("dewald123/liu_pytorch_tcn/2oooc6mh")
-    # sweep1 = api.sweep("dewald123/liu_pytorch_MLP/0iihk32s")
-    # sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
-    sweeps = [sweep0]
+    sweep0 = api.sweep("dewald123/liu_pytorch_MLP/xris1c8z")
+    sweep1 = api.sweep("dewald123/liu_pytorch_MLP/0iihk32s")
+    sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
+    sweep3 = api.sweep("dewald123/liu_pytorch_MLP/grw0rrpp")
+
+    sweeps = [sweep0, sweep1, sweep2, sweep3]
 
 
     for sweep in sweeps:
@@ -302,14 +303,14 @@ line = ax.lines[0]
 tss_min = line.get_ydata()[-1]
 val_tss_th = sorted_tss["Validation_TSS"].max() - ((sorted_tss[
                                                      "Validation_TSS"].max()
-                                                    - tss_min)*0.3)
+                                                    - tss_min)*0.20)
 # val_tss_th = sorted_tss.quantile(0.8)['Validation_TSS']
 # get std threshold at 70% of smallest values.
 sorted_std_idx = all_runs.groupby('id')['Validation_TSS'].idxmax()
 sorted_std = all_runs['moving_std_w'][
     sorted_std_idx].sort_values().reset_index(drop=True)
 # val_std_th = sorted_std.quantile(0.85)
-val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min())*0.01)
+val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min())*0.05)
 
 # plot all runs tss and mvg_std_w
 plt.plot(sorted_std)
@@ -334,7 +335,7 @@ for id in id_list:
     flag, hp_df = check_network(id, val_tss_th, val_std_th, HP_list, hp_df)
 
 counted_valid_hps = count_valid_network(hp_df)
-final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 1]
+final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
 # Check test performance of final networks
 final_net_scores = final_model_scores(final_possible_hps, hp_df)
 
@@ -382,8 +383,8 @@ plot val moving std std
 '''
 plot val moving std std TCN
 '''
-run_hp = get_hp_from_id(final_net_scores['id'].iloc[2], HP_list)
-plot_val_std(run_hp)
+# run_hp = get_hp_from_id(final_net_scores['id'].iloc[2], HP_list)
+# plot_val_std(run_hp)
 
 
 
