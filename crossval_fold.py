@@ -230,6 +230,12 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                                              run_path="dewald123/liu_pytorch_tcn/3tcj8ahy")
                 model.load_state_dict(torch.load(weights_file.name))
 
+            stopping_metric, best_tss, best_pr_auc, best_epoch, val_recall, \
+            val_precision, val_accuracy, val_bacc, val_hss, val_tss = \
+                main_TCN_Liu.validate(
+                model, device, valid_loader, criterion, epoch, best_tss,
+                best_pr_auc, best_epoch, cfg)
+
             test_recall, test_precision, test_accuracy, test_bacc, test_hss,\
             test_tss = main_TCN_Liu.test(
                 model, device, test_loader, criterion, epoch)
