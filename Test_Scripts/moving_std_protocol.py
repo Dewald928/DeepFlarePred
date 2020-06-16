@@ -9,7 +9,7 @@ from tabulate import tabulate
 
 api = wandb.Api()
 # specify HPs
-model_type = 'MLP'  # 'TCN 'or 'MLP'
+model_type = 'TCN'  # 'TCN 'or 'MLP'
 if model_type == 'MLP':
     HP_list = ['layers', 'hidden_units', 'batch_size', 'learning_rate', 'seed']
     HP_groupby = ['layers', 'hidden_units', 'batch_size', 'learning_rate']
@@ -19,9 +19,9 @@ elif model_type == 'TCN':
     HP_groupby = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
           'batch_size', 'learning_rate', 'weight_decay']
 
-filename = '40_feat.csv'
+filename = 'TCN_bayes.csv'
 pathname = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/moving_std_val_tss/MLP/40feat')
+    '~/Dropbox/_Meesters/figures/moving_std_val_tss/TCN/40feat')
 all_runs = pd.read_csv(filename).drop(columns="Unnamed: 0") if os.path.isfile(
     filename) is True else pd.DataFrame()
 
@@ -335,7 +335,7 @@ for id in id_list:
     flag, hp_df = check_network(id, val_tss_th, val_std_th, HP_list, hp_df)
 
 counted_valid_hps = count_valid_network(hp_df)
-final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
+final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 1]
 # Check test performance of final networks
 final_net_scores = final_model_scores(final_possible_hps, hp_df)
 

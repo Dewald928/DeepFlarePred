@@ -15,7 +15,7 @@ filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_train, df_val, df_test], axis=0)
+df = pd.concat([df_train, df_val], axis=0)
 df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
@@ -113,12 +113,17 @@ sns.set_palette(colours)
 
 # ARs that eventually erupt large (24 hour ahead)
 snsdata = m5_flares_data.drop(['flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
-sns_plot = sns.pairplot(snsdata, hue='label',
-                        hue_order=['Negative', 'Positive'],
-                        # vars=['Cdec', 'Chis1d', 'Edec'],
-                        plot_kws={'alpha': 0.6, 's': 80, 'edgecolor': 'w'},
-                        height=4
-                        )
+sns_plot = sns.PairGrid(snsdata, hue='label', hue_order=['Negative',
+                                                          'Positive'],
+                        height=4, **{'diag_sharey': False})
+sns_plot.map_lower(sns.kdeplot)
+sns_plot.map_diag(sns.kdeplot, **{'shade': True})
+# sns_plot = sns.pairplot(snsdata, hue='label',
+#                         hue_order=['Negative', 'Positive'],
+#                         # vars=['Cdec', 'Chis1d', 'Edec'],
+#                         plot_kws={'alpha': 0.6, 's': 80, 'edgecolor': 'w'},
+#                         height=4
+#                         )
 sns_plot.savefig(drop_path + "feature_pairplot_flaredARs.png")
 # sns_plot.fig.show()
 
@@ -138,11 +143,16 @@ snsdata['flared'] = 'Positive'
 snsdata_no['flared'] = 'Negative'
 
 snsdata_all = pd.concat([snsdata, snsdata_no.iloc[0:len(snsdata), :]])
-sns_all_plot = sns.pairplot(snsdata_all, hue='flared',
-                            hue_order=['Negative', 'Positive'],
-                            # vars=['Cdec', 'Chis1d', 'Edec', 'EPSY'],
-                            plot_kws={'alpha': 0.6, 's': 80, 'edgecolor': 'w'},
-                            height=4, corner=True)
+sns_all_plot = sns.PairGrid(snsdata_all, hue='flared',
+                            hue_order=['Negative', 'Positive'], height=4,
+                            **{'diag_sharey': False})
+sns_all_plot.map_lower(sns.kdeplot)
+sns_all_plot.map_diag(sns.kdeplot, **{'shade': True})
+# sns_all_plot = sns.pairplot(snsdata_all, hue='flared',
+#                             hue_order=['Negative', 'Positive'],
+#                             # vars=['Cdec', 'Chis1d', 'Edec', 'EPSY'],
+#                             plot_kws={'alpha': 0.6, 's': 80, 'edgecolor': 'w'},
+#                             height=4, corner=True)
 sns_all_plot.savefig(drop_path + "feature_pairplot_flarevsno.png")
 
 # todo log skewed features
@@ -162,7 +172,7 @@ plt.show()
 
 # Check correlation
 corr_plot = sns.PairGrid(snsdata)
-corr_plot.map_upper(plt.scatter, edgecolor="white")
+# corr_plot.map_upper(plt.scatter, edgecolor="white")
 corr_plot.map_lower(sns.kdeplot)
 corr_plot.map_diag(sns.kdeplot)
 corr_plot.add_legend(loc='upper right')
@@ -189,6 +199,31 @@ corr_plot.savefig(drop_path + "feature_pairplot_correlation.png")
 print(tabulate(corr_features_df, headers="keys", tablefmt="github",
                showindex=False))
 
+'''
+Heatmaps of Correlation
+'''
+df_corr = snsdata[snsdata['label'] == 'Positive'].iloc[:, 5:].corr()
+df_corr[df_corr == 1] = 0
+df_large_corr = df_corr[(df_corr >= 0.7) | (df_corr <= -0.7)]
+mask = np.zeros_like(df_large_corr)
+mask[np.triu_indices_from(mask)] = True
+plt.figure(figsize=(20, 15))
+ax = plt.subplot(111)
+sns.heatmap(df_large_corr, ax=ax, annot=True, fmt='.1f', center=0,
+            vmin=-1, vmax=1, mask=mask)  # put in so for summary
+plt.tight_layout()
+plt.savefig(drop_path + "feature_correlation_heatmap_24h")
+plt.show()
+
+# s = df_large_corr
+# # so = s.sort_values(kind="quicksort", ascending=False)
+# # so = so[(so >= 0.7) | (so <= -0.7)]
+# so = so.unstack()
+# upper = df_large_corr.where(np.triu(np.ones(df_large_corr.shape), k=1).astype(np.bool))
+# to_drop = [column for column in upper.columns if any((upper[column] ==
+#                                                       np.nan))]
+# s.drop(to_drop, axis=1, inplace=True)
+# s.drop(to_drop, axis=0, inplace=True)
 
 '''
 Infer values
