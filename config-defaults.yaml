@@ -11,7 +11,7 @@ epochs:
   value: 2000
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 8192
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -28,10 +28,10 @@ levels:
   value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 3
+  value: 2
 nhid:
   desc: number of filters
-  value: 44
+  value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
   value: 1
@@ -39,10 +39,10 @@ seq_len:
 # MLP
 layers:
   desc: MLP layers
-  value: 2
+  value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 200
+  value: 100
 
 # Regularizer
 dropout:
@@ -78,7 +78,7 @@ early_stop:
   value: True
 patience:
   desc: amount of epochs for early stopping
-  value: 10
+  value: 40
 training:
   desc: Trains models, else only tests
   value: True

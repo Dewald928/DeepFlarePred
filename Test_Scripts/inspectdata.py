@@ -212,7 +212,7 @@ ax = plt.subplot(111)
 sns.heatmap(df_large_corr, ax=ax, annot=True, fmt='.1f', center=0,
             vmin=-1, vmax=1, mask=mask)  # put in so for summary
 plt.tight_layout()
-plt.savefig(drop_path + "feature_correlation_heatmap_24h")
+plt.savefig(drop_path + "feature_correlation_heatmap_24h.png")
 plt.show()
 
 # s = df_large_corr
