@@ -3,15 +3,16 @@ tag:
   desc: wandb tags
   value:
     - Debug
+    - 1Dconv
 model_type:
   desc: which model to use (TCN/MLP/RNN)
-  value: MLP
+  value: TCN
 epochs:
   desc: Number of epochs to train over
   value: 2000
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 256
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -47,10 +48,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.4
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.0001
 
 # Cross Validation
 cross_validation:
@@ -69,13 +70,13 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 100
+  value: 155
 cuda:
   desc: enables cuda training
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
+  value: False
 patience:
   desc: amount of epochs for early stopping
   value: 40

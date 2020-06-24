@@ -32,6 +32,7 @@ from utils import confusion_matrix_plot
 # Data
 n_features = 40
 start_feature = 5
+mask_value = 0
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
 filepath = './Data/Liu/' + 'M5' + '/'
@@ -62,9 +63,14 @@ y_valid_tr = data_loader.label_transform(y_valid_data)
 y_test_tr = data_loader.label_transform(y_test_data)
 y = data_loader.label_transform(y)
 
+feature_name = pd.DataFrame(data_loader.get_feature_names(
+            filepath + 'normalized_training.csv'))[5:]
+
 '''
 Univariate Feature selection
 '''
+f_df = pd.DataFrame()
+mi_df = pd.DataFrame()
 score_functions = {'F-score': f_classif,
                    'Mutual-Information': mutual_info_classif}
 for scorer, score_func in score_functions.items():
@@ -87,6 +93,8 @@ for scorer, score_func in score_functions.items():
                          pd.DataFrame(
             selector.scores_, columns=['Importance'])], axis=1).sort_values(
             by='Importance', ascending=False).reset_index()
+    f_df = sort_df if scorer == 'F-score' else f_df
+    mi_df = sort_df if scorer == 'Mutual-Information' else mi_df
     sns.barplot(x='Features', y='Importance', data=sort_df, order=sort_df[
         'Features'])
     plt.xticks(rotation=90)
@@ -101,8 +109,9 @@ Linear SVC optimization
 params = {'C': [0.001]}  # choose C values here
 clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
                 class_weight='balanced')
+cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=2, random_state=2)
 grid = GridSearchCV(clf, param_grid=params,
-                    cv=5,
+                    cv=cv,
                     return_train_score=True,
                     scoring=make_scorer(balanced_accuracy_score,
                                         **{'adjusted': True}), n_jobs=-1)
@@ -121,7 +130,7 @@ print("The scores are computed on the full evaluation set.")
 y_true, y_pred = y_test_tr, grid.predict(X_test_data)
 print(classification_report(y_true, y_pred))
 average_tss = balanced_accuracy_score(y_test_tr, y_pred, adjusted=True)
-print('Average tss score: {0:0.2f}'.format(
+print('Average tss score: {0:0.4f}'.format(
       average_tss))
 
 
@@ -169,7 +178,7 @@ clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
 # get a list of models to evaluate
 def get_models():
     models = dict()
-    for i in range(1, 40):
+    for i in range(1, 41):
         rfe = RFE(estimator=clf, n_features_to_select=i)
         model = clf
         models[str(i)] = Pipeline(steps=[('s', rfe), ('m', model)])
@@ -178,7 +187,7 @@ def get_models():
 
 # evaluate a give model using cross-validation
 def evaluate_model(model):
-    cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
+    cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=1, random_state=1)
     scores = cross_val_score(model, X, y,
                              scoring=make_scorer(balanced_accuracy_score,
                                                  **{'adjusted': True}), cv=cv,
@@ -194,10 +203,25 @@ for name, model in models.items():
     scores = evaluate_model(model)
     results.append(scores)
     names.append(name)
-    print('>%s %.3f (%.3f)' % (name, mean(scores), std(scores)))
+    print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
 # plot model performance for comparison
-pyplot.boxplot(results, labels=names, showmeans=True)
-pyplot.show()
+fig = plt.figure(figsize=(10, 8))
+plt.boxplot(results, labels=names, showmeans=True)
+plt.tight_layout()
+plt.savefig(drop_path + 'RFECV_boxplot.png')
+plt.show()
+# rfe_results = pd.concat([pd.DataFrame(names), pd.DataFrame(results)], axis=1)
+# rfe_results.to_csv('rfe_results.csv')
+
+# rfe_results = pd.read_csv('rfe_results.csv')
+# results = rfe_results.iloc[:, 2:]
+# names = rfe_results.index.values
+
+# Get feature ranking
+rfecv = RFECV(clf, cv=10, scoring=make_scorer(balanced_accuracy_score,
+                                                 **{'adjusted': True}), 
+              n_jobs=-1)
+rfecv.fit(X, y)
 
 # plot scores
 plt.figure(figsize=(16, 9))
@@ -222,9 +246,6 @@ print('Average tss score: {0:0.4f}'.format(
 confusion_matrix_plot.plot_confusion_matrix_from_data(y_test_tr, y_pred,
                                                       ['Negative',
                                                        'Positive'])
-
-
-
 
 
 '''
@@ -281,7 +302,35 @@ for name, model in models.items():
     scores = evaluate_model(model)
     results.append(scores)
     names.append(name)
-    print('>%s %.3f (%.3f)' % (name, mean(scores), std(scores)))
+    print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
 # plot model performance for comparison
 plt.boxplot(results, labels=names, showmeans=True)
 plt.show()
+
+
+'''
+Comparison Plot
+'''
+f_df = f_df.loc[:, ['Features']]
+f_df = pd.DataFrame(f_df.index.values, index=f_df)
+mi_df = mi_df.loc[:, ['Features']]
+mi_df = pd.DataFrame(mi_df.index.values, index=mi_df)
+liu_df = pd.DataFrame(feature_name.index.values, index=feature_name)
+
+rfe_df.columns = ['0', 'Features']
+rfe_df = pd.DataFrame(rfe_df.index.values, index=rfe_df)
+
+
+df_comp = pd.concat([liu_df, f_df, mi_df, rfe_df], axis=1, sort=False)
+df_comp.columns = ['Liu', 'F-Score', 'MI', 'RFE']
+plt.figure(figsize=(20, 16))
+ax = plt.subplot(111)
+sns.heatmap(df_comp, ax=ax, annot=True, fmt='.1f')
+plt.tight_layout()
+plt.savefig(drop_path + "feature_selection_comparison.png")
+plt.show()
+
+sns.clustermap(df_comp, figsize=(20,16))
+plt.savefig(drop_path + 'feature_selection_comparison_clustermap.png')
+plt.show()
+

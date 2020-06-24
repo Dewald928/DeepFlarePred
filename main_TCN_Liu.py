@@ -37,6 +37,7 @@ from data_loader import CustomDataset
 from data_loader import data_loader
 from utils import early_stopping
 from model.tcn import TemporalConvNet
+from model import tcn
 from model import lstm
 from model import metric
 from model import mlp
@@ -431,7 +432,9 @@ if __name__ == '__main__':
                               num_hidden=cfg.layers,
                               dropout=cfg.dropout).to(device)
     elif cfg.model_type == "TCN":
-        model = TCN(cfg.n_features, nclass, channel_sizes,
+        # model = TCN(cfg.n_features, nclass, channel_sizes,
+        #             kernel_size=kernel_size, dropout=cfg.dropout).to(device)
+        model = tcn.Simple1DConv(cfg.n_features, cfg.nhid,
                     kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
     elif cfg.model_type == 'RNN':

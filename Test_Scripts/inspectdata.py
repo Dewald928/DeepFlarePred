@@ -1,6 +1,9 @@
 import pandas as pd
 import torch
 import re
+
+# from scipy.stats import norm_gen
+
 import main_TCN_Liu
 from tabulate import tabulate
 import seaborn as sns
@@ -61,27 +64,86 @@ yearly_sunspots_AR = df.groupby(df['date'].dt.year).agg(
 print(tabulate(yearly_sunspots_AR, headers="keys", tablefmt="github"))
 df = df.drop(['date'], axis=1)
 
-# todo flares count per AR
-unique_flares = df.groupby('NOAA')['flare'].agg([
-    pd.Series.unique]).reset_index()
-unique_flares['B'] = 0
-unique_flares['C'] = 0
-unique_flares['M'] = 0
-unique_flares['X'] = 0
-for index, value in unique_flares['unique'].items():
-    s = pd.Series(value)
-    # print(s)
-    b_count = s.str.contains('B').sum()
-    c_count = s.str.contains('C').sum()
-    m_count = s.str.contains('M').sum()
-    x_count = s.str.contains('X').sum()
-    unique_flares['B'][index] = b_count
-    unique_flares['C'][index] = c_count
-    unique_flares['M'][index] = m_count
-    unique_flares['X'][index] = x_count
-unique_flares = unique_flares.drop(columns=['unique'])
-print(tabulate(unique_flares[unique_flares['X'] >= 1], headers="keys",
-               tablefmt="github", showindex=False))
+
+'''
+Flare history histogram
+'''
+flares_df = pd.read_csv('./Data/GOES/all_flares_list.csv').drop\
+        (columns="Unnamed: 0")
+flares_df = flares_df.sort_values(by=['noaa_active_region',
+                                            'peak_time']).reset_index(
+    drop=True)
+flares_df_prep = flares_df.copy()
+flares_df_prep['goes_class'] = flares_df_prep['goes_class'].apply(lambda x:
+                                                                  x[0])
+flares_df_prep = flares_df_prep.pivot_table(index='noaa_active_region', columns='goes_class',
+                           aggfunc={'goes_class': pd.Series.count}).fillna(0)
+flares_df_prep.columns = ['B', 'C', 'M', 'X']
+fp0 = flares_df_prep[flares_df_prep['X'] >= 1]
+fp1 = flares_df_prep[flares_df_prep['X'] < 1]
+# get values before only.
+flares_df_class_simplify = flares_df.copy()
+# flares_df_class_simplify['goes_class'] = flares_df_class_simplify[
+#     'goes_class'].apply(lambda x: x[0])
+flares_from_noaa = flares_df_class_simplify[flares_df_class_simplify[
+    'noaa_active_region'].isin(m5_flared_NOAA)]
+
+
+HARP_NOAA_list = pd.read_csv(
+    'http://jsoc.stanford.edu/doc/data/hmi/harpnum_to_noaa/all_harps_with_noaa_ars.txt', sep=' ')
+listofactiveregions = list(flares_from_noaa['noaa_active_region'].unique())
+new_flares_df = pd.DataFrame()
+for i, noaa in enumerate(flares_from_noaa[
+                           'noaa_active_region'].unique()):
+    print(i)
+    idx = HARP_NOAA_list[HARP_NOAA_list['NOAA_ARS'].str.contains(
+        str(int(listofactiveregions[i])))]
+    # if there's no HARPNUM, quit
+    if idx.empty:
+        print('skip: there are no matching HARPNUMs for',
+              str(int(listofactiveregions[i])))
+        continue
+    fl_noaa_df = flares_from_noaa[flares_from_noaa[
+        'noaa_active_region']==noaa]
+    minimum_class_label = ['M5', 'M6', 'M7', 'M8', 'M9', 'X']
+    last_idx = fl_noaa_df.index[fl_noaa_df[
+        'goes_class'].str.contains('|'.join(minimum_class_label))][-1]
+    new_flares_df = pd.concat([new_flares_df, fl_noaa_df.loc[:last_idx, :]])
+
+fp0 = new_flares_df.copy()
+fp0['goes_class'] = new_flares_df['goes_class'].apply(lambda x: x[0])
+fp0 = fp0.pivot_table(index='noaa_active_region', columns='goes_class',
+                           aggfunc={'goes_class': pd.Series.count}).fillna(0)
+fp0.columns = ['B', 'C', 'M', 'X']
+
+print(tabulate(fp0, headers="keys",
+               tablefmt="github"))
+
+fp1[['B', 'C', 'M', 'X']] = fp1[['B', 'C', 'M', 'X']].replace({0:np.nan})
+fp0[['B', 'C', 'M', 'X']] = fp0[['B', 'C', 'M', 'X']].replace({0:np.nan})
+flare_classes = ['B', 'C', 'M']
+fps = [fp0, fp1]
+fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(16,9))
+for i, fp in enumerate(fps):
+    # Iterate through the five airlines
+    for flare_class in flare_classes:
+        # Subset to the airline
+        subset = fp['{}'.format(flare_class)]
+
+        # Draw the density plot
+        sns.distplot(fp.loc[:, '{}'.format(flare_class)], hist=False,
+                     kde=True, rug=True,
+                     kde_kws={'bw': 0.2}, label=flare_class, ax=ax[i])
+
+    # Plot formatting
+    ax[i].legend(prop={'size': 16}, title='Class')
+    ax[i].set(xlabel='Number of flares per AR')
+    ax[i].set(ylabel='Frequency')
+    ax[0].set_title('Density Plot with Flares classes >= M5.0')
+    ax[1].set_title('Density Plot with Flares classes < M5.0')
+plt.savefig(drop_path + 'history_density.png')
+plt.show()
+
 
 
 '''
@@ -202,7 +264,7 @@ print(tabulate(corr_features_df, headers="keys", tablefmt="github",
 '''
 Heatmaps of Correlation
 '''
-df_corr = snsdata[snsdata['label'] == 'Positive'].iloc[:, 5:].corr()
+df_corr = df.iloc[:, 5:].corr()
 df_corr[df_corr == 1] = 0
 df_large_corr = df_corr[(df_corr >= 0.7) | (df_corr <= -0.7)]
 mask = np.zeros_like(df_large_corr)
@@ -210,20 +272,19 @@ mask[np.triu_indices_from(mask)] = True
 plt.figure(figsize=(20, 15))
 ax = plt.subplot(111)
 sns.heatmap(df_large_corr, ax=ax, annot=True, fmt='.1f', center=0,
-            vmin=-1, vmax=1, mask=mask)  # put in so for summary
+            vmin=-1, vmax=1, mask=mask, linecolor='k', linewidths=0.2)  # put
+# in so for
+# summary
 plt.tight_layout()
-plt.savefig(drop_path + "feature_correlation_heatmap_24h.png")
+plt.savefig(drop_path + "feature_correlation_heatmap.png")
 plt.show()
 
-# s = df_large_corr
-# # so = s.sort_values(kind="quicksort", ascending=False)
-# # so = so[(so >= 0.7) | (so <= -0.7)]
-# so = so.unstack()
-# upper = df_large_corr.where(np.triu(np.ones(df_large_corr.shape), k=1).astype(np.bool))
-# to_drop = [column for column in upper.columns if any((upper[column] ==
-#                                                       np.nan))]
-# s.drop(to_drop, axis=1, inplace=True)
-# s.drop(to_drop, axis=0, inplace=True)
+'''
+Cluster map
+'''
+g = sns.clustermap(df.iloc[:100, 5:7], annot=True)
+g.fig.show()
+
 
 '''
 Infer values
