@@ -4,54 +4,40 @@ Ecclesiastes 5:12 New King James Version (NKJV)
 Whether he eats little or much;
 But the abundance of the rich will not permit him to sleep.
 """
-import yaml
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.model_selection import cross_val_score, cross_validate, GridSearchCV
-from sklearn.datasets import make_classification
-from sklearn.utils import class_weight
-from sklearn.metrics import make_scorer, balanced_accuracy_score
-import sklearn.metrics
-import seaborn as sn
-
-import sys
-import os
-import numpy as np
 import argparse
+import os
 import time
 
+import numpy as np
+import pandas as pd
+import sklearn.metrics
 import torch
 import torch.nn as nn
-import torch.utils.data
 import torch.nn.functional as F
-
-import skorch
+import torch.utils.data
+import wandb
+import yaml
+from sklearn.metrics import make_scorer, balanced_accuracy_score
+from sklearn.model_selection import GridSearchCV, cross_val_score, \
+    StratifiedKFold
+from sklearn.utils import class_weight
 from skorch import NeuralNetClassifier
 from skorch.callbacks import *
-from skorch.helper import predefined_split
 from skorch.dataset import Dataset
-from skorch import toy
-
-from interpret.interpreter import get_shap
-from skorch_tools import skorch_utils
+from skorch.helper import predefined_split
+from torchsummary import summary
 
 from data_loader import CustomDataset
 from data_loader import data_loader
-from utils import early_stopping
-from model.tcn import TemporalConvNet
-from model import tcn
 from model import lstm
 from model import metric
 from model import mlp
-from interpret import interpreter
-from utils import confusion_matrix_plot
+from model import tcn
+from model.tcn import TemporalConvNet
+from skorch_tools import skorch_utils
+from utils import early_stopping
 from utils import pdf
 from utils import visualize_CV
-
-import wandb
-from torchsummary import summary
-
-import crossval_fold
 
 '''
 TCN with n residual blocks will have a receptive field of
@@ -344,7 +330,7 @@ if __name__ == '__main__':
                             'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec', 'EPSZ',
                             'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xhis', 'EPSX',
                             'EPSY', 'Bhis', 'Bdec']
-    feature_list = listofuncorrfeatures  #
+    feature_list = None  #
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -391,8 +377,8 @@ if __name__ == '__main__':
         X_valid_data = np.reshape(X_valid_data,
                                   (len(X_valid_data), cfg.n_features))
         X_test_data = np.reshape(X_test_data,
-                                  (len(X_test_data), cfg.n_features))
-    elif cfg.model_type == 'TCN':
+                                 (len(X_test_data), cfg.n_features))
+    elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN'):
         X_train_data = torch.tensor(X_train_data).float()
         X_train_data = X_train_data.permute(0, 2, 1)
         X_valid_data = torch.tensor(X_valid_data).float()
@@ -447,11 +433,11 @@ if __name__ == '__main__':
                     kernel_size=kernel_size, dropout=cfg.dropout).to(device)
     elif cfg.model_type == "CNN":
         model = tcn.Simple1DConv(cfg.n_features, cfg.nhid,
-                    kernel_size=kernel_size, dropout=cfg.dropout).to(device)
+                                 kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
     elif cfg.model_type == 'RNN':
         model = lstm.LSTMModel(cfg.n_features, cfg.nhid, cfg.levels,
-                    output_dim=nclass, dropout=cfg.dropout, device=device,
+                               output_dim=nclass, dropout=cfg.dropout, device=device,
                                rnn_module='LSTM')
         # summary(model, input_size=(cfg.seq_len,
         #                            cfg.n_features))
@@ -513,7 +499,7 @@ if __name__ == '__main__':
 
         wandb.log(
             {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
-            best_epoch,
+                best_epoch,
              'Best_Validation_PR_AUC': best_pr_auc})
 
         # reload best tss checkpoint and test
@@ -525,7 +511,7 @@ if __name__ == '__main__':
         except:
             print('No model loaded... Loading default')
             weights_file = wandb.restore('model.pt',
-                                       run_path=cfg.model_name)
+                                         run_path=cfg.model_name)
             model.load_state_dict(torch.load(weights_file.name))
 
         test_tss = test(model, device, test_loader, criterion, epoch)[5]
@@ -537,7 +523,7 @@ if __name__ == '__main__':
         yhat = infer_model(model, device, train_loader, cfg)
 
         f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
-                                                 'Train')[2:4]
+                                                  'Train')[2:4]
         metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
         roc_auc = metric.get_roc(model, yhat, y_train_tr_tensor, device,
                                  'Train')
@@ -547,7 +533,7 @@ if __name__ == '__main__':
         yhat = infer_model(model, device, valid_loader, cfg)
 
         f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
-                                           'Validation')[2:4]
+                                                  'Validation')[2:4]
         metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
         tss = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[4]
         th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
@@ -564,14 +550,14 @@ if __name__ == '__main__':
         tss_th = metric.calculate_metrics(cm, 2)[4]
 
         f1, pr_auc = metric.plot_precision_recall(model, yhat,
-        y_test_tr_tensor, 'Test')[2:4]
+                                                  y_test_tr_tensor, 'Test')[2:4]
         metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
         tss = metric.get_metrics_threshold(yhat, y_test_tr_tensor)[4]
 
         roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
 
         print('Test TSS from validation threshold ({:0.3f}): {:0.3f}'.format(th,
-                                                                        tss_th))
+                                                                             tss_th))
         wandb.log({'Test_TSS_Th': tss_th})
 
         th_norm_test = pdf.plot_density_estimation(model, yhat,
@@ -583,9 +569,8 @@ if __name__ == '__main__':
     Model interpretation
     '''
     # # todo interpret on test set?
-    #
-    # test_loader_interpret = torch.utils.data.DataLoader(datasets['test'],
-    # int(
+    # data_loader_interpret = torch.utils.data.DataLoader(datasets['train'],
+    #                                                     int(
     #     cfg.batch_size / 6), shuffle=False, drop_last=False)
     #
     # # X_test_data_tensor = X_test_data_tensor.to(device)
@@ -595,7 +580,7 @@ if __name__ == '__main__':
     # #                            return_convergence_delta=True)
     #
     # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-    #     model, device, test_loader_interpret, cfg.n_features, cfg)
+    #     model, device, data_loader_interpret, cfg.n_features, cfg)
     #
     # interpreter.visualize_importance(
     #     np.array(feature_names[start_feature:start_feature +
@@ -668,7 +653,7 @@ if __name__ == '__main__':
                                                                cfg.batch_size,
                                                                cfg.learning_rate,
                                                                cfg.seed))
-        elif cfg.model_type == 'TCN':
+        elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN'):
             savename = os.path.join(wandb.run.dir,
                                     '{}_{}_{}_{}_{}_{}'.format(cfg.model_type,
                                                                cfg.levels,
@@ -679,8 +664,6 @@ if __name__ == '__main__':
 
         checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
-        checkpoint_cv = Checkpoint(monitor='train_tss_best',
-                                     dirname=savename)
 
         logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
 
@@ -698,7 +681,7 @@ if __name__ == '__main__':
                                   optimizer__weight_decay=cfg.weight_decay,
                                   optimizer__amsgrad=False, device=device,
                                   train_split=predefined_split(valid_ds),
-                                  # train_split=None,
+                                  # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss, valid_tss, earlystop,
                                              checkpoint,  # load_state,
                                              reload_at_end,
@@ -712,7 +695,7 @@ if __name__ == '__main__':
                                                          cfg.seed))
         net.save_params(f_params=init_savename)
 
-        if not cfg.cross_validation:
+        if not (cfg.cross_validation) and not (cfg.nested_cv):
             net.fit(inputs, labels)
 
         # '''
@@ -728,7 +711,7 @@ if __name__ == '__main__':
             visualize_CV.visualize_cv(sklearn.model_selection.StratifiedKFold,
                                       combined_inputs, combined_labels, cfg)
             for train_index, val_index in skf.split(combined_inputs,
-                                                  combined_labels):
+                                                    combined_labels):
                 print('train -  {}   |   test -  {}'.format(
                     np.bincount(combined_labels[train_index]), np.bincount(combined_labels[val_index])))
                 x_train, x_val = combined_inputs[train_index], combined_inputs[val_index]
@@ -742,6 +725,48 @@ if __name__ == '__main__':
             print('Scores from each Iteration: ', scores)
             print('Average K-Fold Score :', np.mean(scores))
             wandb.log({"CV_Score": scores})
+
+        elif cfg.nested_cv:
+            p_grid = {'max_epochs': [1, 2]}
+            inner_cv = StratifiedKFold(n_splits=2, shuffle=False,
+                                       random_state=cfg.seed)
+            outer_cv = StratifiedKFold(n_splits=3, shuffle=False,
+                                       random_state=cfg.seed)
+
+            gcv = GridSearchCV(estimator=net, param_grid=p_grid,
+                               scoring=make_scorer(balanced_accuracy_score,
+                                                   **{'adjusted': True}),
+                               n_jobs=1, cv=inner_cv, refit=True,
+                               return_train_score=True)
+
+            nested_score = cross_val_score(gcv, X=combined_inputs, y=combined_labels,
+                                           cv=outer_cv, n_jobs=1,
+                                           scoring=make_scorer(
+                                               balanced_accuracy_score,
+                                               **{'adjusted': True}))
+            print('%s | outer ACC %.2f%% +/- %.2f' % (
+                'MLP', nested_score.mean() * 100, nested_score.std() * 100))
+
+            # Fitting a model to the whole training set
+            # using the "best" algorithm
+            gcv.fit(combined_inputs, combined_labels)
+            train_tss = balanced_accuracy_score(y_true=combined_labels,
+                                       y_pred=gcv.predict(combined_inputs))
+            test_tss = balanced_accuracy_score(y_true=test_labels,
+                                      y_pred=gcv.predict(test_inputs))
+
+            print('Training TSS: %.4f' % (train_tss))
+            print('Test TSS: %.4f' % (test_tss))
+
+            # summarize results
+            print("Best: %f using %s" % (
+            gcv.best_score_, gcv.best_params_))
+            means = gcv.cv_results_['mean_test_score']
+            stds = gcv.cv_results_['std_test_score']
+            params = gcv.cv_results_['params']
+            for mean, stdev, param in zip(means, stds, params):
+                print("%f (%f) with: %r" % (mean, stdev, param))
+            pd.DataFrame(gcv.cv_results_).to_csv('cv_results.csv')
 
         '''
         Test Results
@@ -769,14 +794,14 @@ if __name__ == '__main__':
         net.initialize()
         net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
-        # pdf.plot_calibration_curve(net, "Test", X_valid_data,
-        #                            y_valid_tr,
-        #                            test_inputs, test_labels)
-
         y_test = net.predict(test_inputs)
         tss_test_score = skorch_utils.get_tss(test_labels, y_test)
         wandb.log({'Test_TSS': tss_test_score})
         print("Test TSS:" + str(tss_test_score))
+
+        # pdf.plot_calibration_curve(net, "Test", X_valid_data,
+        #                            y_valid_tr,
+        #                            test_inputs, test_labels)
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))

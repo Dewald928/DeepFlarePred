@@ -119,14 +119,15 @@ def get_shap(model, test_loader, device, args, feature_names, start_feature):
     test_samples = test_sample_x
     e = shap.DeepExplainer(model, background)
     shap_values = e.shap_values(test_samples)
-    shap_numpy = shap_values # comment out for tcn
+    # shap_numpy = shap_values  # comment out for tcn
     # uncomment for tcn
-    # shap_numpy = []
-    # test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,
-    #                          2)
-    # test_numpy = test_numpy.squeeze(2)
-    # for i in shap_values:
-    #     shap_numpy.append(i.squeeze(2))
+    shap_numpy = []
+    test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,
+                             2)
+    test_numpy = test_numpy.squeeze(2)
+    for i in shap_values:
+        shap_numpy.append(i.squeeze(2))
+
     fig_shap = plt.figure()
     plt.title('SHAP Summary Plot')
     plt.tight_layout()

@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - RemovedCorr
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
@@ -11,7 +11,7 @@ epochs:
   value: 2000
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 256
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -20,7 +20,7 @@ optim:
   value: Adam
 n_features:
   desc: number of features to include (max 40)
-  value: 23
+  value: 40
 
 # TCN HP
 levels:
@@ -28,7 +28,7 @@ levels:
   value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 4
+  value: 2
 nhid:
   desc: number of filters
   value: 40
@@ -58,7 +58,7 @@ cross_validation:
   value: False
 nested_cv:
   desc: if nested crossval should be performed
-  value: False
+  value: True
 n_splits:
   desc: number of splits
   value: 3
@@ -72,7 +72,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 10
+  value: 115
 cuda:
   desc: enables cuda training
   value: True
