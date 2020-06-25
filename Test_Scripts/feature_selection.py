@@ -36,6 +36,15 @@ mask_value = 0
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
 filepath = './Data/Liu/' + 'M5' + '/'
+
+# todo removed redundant features
+listofuncorrfeatures = ['TOTUSJH', 'Cdec', 'Chis', 'Edec', 'Mhis', 'Mdec',
+                            'AREA_ACR', 'MEANPOT', 'TOTFX', 'MEANSHR',
+                            'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec', 'EPSZ',
+                            'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xhis', 'EPSX',
+                            'EPSY', 'Bhis', 'Bdec']
+feature_list = listofuncorrfeatures
+
 X_train_data, y_train_data = data_loader.load_data(
         datafile=filepath + 'normalized_training.csv',
         flare_label='M5', series_len=1,

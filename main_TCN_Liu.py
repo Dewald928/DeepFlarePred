@@ -7,6 +7,8 @@ But the abundance of the rich will not permit him to sleep.
 import yaml
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.model_selection import cross_val_score, cross_validate, GridSearchCV
+from sklearn.datasets import make_classification
 from sklearn.utils import class_weight
 from sklearn.metrics import make_scorer, balanced_accuracy_score
 import sklearn.metrics
@@ -269,8 +271,12 @@ def init_project():
         cfg = yaml.load(ymlfile, Loader=yaml.Loader)
 
     model_type = cfg['model_type']['value']
-    project = 'liu_pytorch_MLP' if model_type == 'MLP' else \
-        'liu_pytorch_tcn'
+    if model_type == 'MLP':
+        project = 'liu_pytorch_MLP'
+    elif model_type == 'TCN':
+        project = 'liu_pytorch_tcn'
+    elif model_type == 'CNN':
+        project = 'liu_pytorch_cnn'
     tags = cfg['tag']['value']
 
     return project, tags
@@ -333,10 +339,15 @@ if __name__ == '__main__':
     history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
                         'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
                         'Mhis1d', 'Xhis1d', 'Xmax1d']
-    feature_list = None   #
-                    # can be
-                     # None, need to change
-    # cfg_nfeature to match length
+    listofuncorrfeatures = ['TOTUSJH', 'Cdec', 'Chis', 'Edec', 'Mhis', 'Mdec',
+                            'AREA_ACR', 'MEANPOT', 'TOTFX', 'MEANSHR',
+                            'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec', 'EPSZ',
+                            'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xhis', 'EPSX',
+                            'EPSY', 'Bhis', 'Bdec']
+    feature_list = listofuncorrfeatures  #
+    # can be
+    # None, need to change
+    # cfg.n_features to match length
 
     # setup dataloaders
     X_train_data, y_train_data = data_loader.load_data(
@@ -432,8 +443,9 @@ if __name__ == '__main__':
                               num_hidden=cfg.layers,
                               dropout=cfg.dropout).to(device)
     elif cfg.model_type == "TCN":
-        # model = TCN(cfg.n_features, nclass, channel_sizes,
-        #             kernel_size=kernel_size, dropout=cfg.dropout).to(device)
+        model = TCN(cfg.n_features, nclass, channel_sizes,
+                    kernel_size=kernel_size, dropout=cfg.dropout).to(device)
+    elif cfg.model_type == "CNN":
         model = tcn.Simple1DConv(cfg.n_features, cfg.nhid,
                     kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
@@ -667,6 +679,8 @@ if __name__ == '__main__':
 
         checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
+        checkpoint_cv = Checkpoint(monitor='train_tss_best',
+                                     dirname=savename)
 
         logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
 
@@ -708,12 +722,12 @@ if __name__ == '__main__':
             kf = sklearn.model_selection.KFold(n_splits=cfg.n_splits, shuffle=False)
             skf = sklearn.model_selection.StratifiedKFold(cfg.n_splits, shuffle=False)
             tscv = sklearn.model_selection.TimeSeriesSplit(n_splits=cfg.n_splits)
-            rkf = sklearn.model_selection.RepeatedKFold(n_splits=5,
+            rkf = sklearn.model_selection.RepeatedKFold(n_splits=cfg.n_splits,
                                                         n_repeats=2)
             scores = []
-            visualize_CV.visualize_cv(sklearn.model_selection.KFold,
+            visualize_CV.visualize_cv(sklearn.model_selection.StratifiedKFold,
                                       combined_inputs, combined_labels, cfg)
-            for train_index, val_index in kf.split(combined_inputs,
+            for train_index, val_index in skf.split(combined_inputs,
                                                   combined_labels):
                 print('train -  {}   |   test -  {}'.format(
                     np.bincount(combined_labels[train_index]), np.bincount(combined_labels[val_index])))
@@ -737,10 +751,20 @@ if __name__ == '__main__':
             net.initialize()
             net.load_params(f_params=init_savename)
             net.train_split = None
-            net.callbacks = [train_tss, Checkpoint(monitor='train_tss_best',
-                                                   dirname=savename)]
+            net.callbacks = [train_tss, EarlyStopping(monitor='train_tss',
+                                                      lower_is_better=False,
+                                                      patience=cfg.patience),
+                             checkpoint_cv]
             net.initialize_callbacks()
-            net.fit_loop(combined_inputs, combined_labels, epochs=100)
+            params = {}
+            cv = sklearn.model_selection.StratifiedKFold(n_splits=cfg.n_splits)
+            gs = GridSearchCV(net, params, refit=True, cv=cv,
+                              scoring=make_scorer(balanced_accuracy_score,
+                                                  **{'adjusted': True}),
+                              return_train_score=True)
+
+            gs.fit(combined_inputs, combined_labels)
+            print(gs.best_score_, gs.best_params_)
 
         net.initialize()
         net.load_params(checkpoint=checkpoint)  # Select best TSS epoch

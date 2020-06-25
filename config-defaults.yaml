@@ -2,17 +2,16 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
-    - 1Dconv
+    - RemovedCorr
 model_type:
-  desc: which model to use (TCN/MLP/RNN)
-  value: TCN
+  desc: which model to use (CNN/TCN/MLP/RNN)
+  value: MLP
 epochs:
   desc: Number of epochs to train over
   value: 2000
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 8192
 learning_rate:
   desc: initial learning rate
   value: 0.001
@@ -21,7 +20,7 @@ optim:
   value: Adam
 n_features:
   desc: number of features to include (max 40)
-  value: 40
+  value: 23
 
 # TCN HP
 levels:
@@ -29,7 +28,7 @@ levels:
   value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 2
+  value: 4
 nhid:
   desc: number of filters
   value: 40
@@ -48,18 +47,21 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.4
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.0001
+  value: 0.0
 
 # Cross Validation
 cross_validation:
   desc: if crossval should be performed
   value: False
+nested_cv:
+  desc: if nested crossval should be performed
+  value: False
 n_splits:
   desc: number of splits
-  value: 10
+  value: 3
 
 # Environment
 skorch:
@@ -70,13 +72,13 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 155
+  value: 10
 cuda:
   desc: enables cuda training
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: False
+  value: True
 patience:
   desc: amount of epochs for early stopping
   value: 40

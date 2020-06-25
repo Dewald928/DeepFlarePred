@@ -8,7 +8,7 @@ from skorch.dataset import Dataset
 from skorch.callbacks import Checkpoint
 from skorch.toy import make_classifier
 from sklearn.model_selection import cross_validate
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.utils import class_weight
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -17,6 +17,7 @@ import torch.nn as nn
 import math
 import wandb
 from main_TCN_Liu import TCN
+from skorch_tools import skorch_utils
 # wandb.init(project="skorchcv", tags='Base')
 
 np.random.seed(0)
@@ -46,6 +47,7 @@ train_acc = EpochScoring(scoring='accuracy', lower_is_better=False,
                          name='train_acc', on_train=True)
 roc_auc = EpochScoring(scoring='roc_auc', lower_is_better=False, on_train=True)
 checkpoint = Checkpoint(monitor='train_bacc_best')
+reload_at_end = skorch_utils.LoadBestCP(checkpoint)
 
 # Model
 model = make_classifier(**{"input_units": 2})
@@ -58,22 +60,33 @@ net = NeuralNetClassifier(model, lr=2,
                           callbacks=[bacc, train_acc, roc_auc,
                                      EarlyStopping(monitor='train_bacc',
                                                    lower_is_better=False,
-                                                   patience=100),
-                                     checkpoint],
+                                                   patience=40),
+                                     checkpoint, reload_at_end],
+                          device='cuda',
                           # consider setting verbose=0
                           train_split=None,
                           warm_start=False)
 # wandb.watch(model)
 
 # Cross Validation
-# scores = cross_validate(net, X, y, scoring=make_scorer(balanced_accuracy_score,
-#                                                        **{'adjusted': True}),
-#                         cv=5, return_train_score=True)
-#
-# print(scores)
-# print("TSS: %0.2f (+/- %0.2f)" % (
-#     scores['test_score'].mean(), scores['test_score'].std() / math.sqrt(len(
-#         scores['test_score']))))
+scores = cross_validate(net, X, y, scoring=make_scorer(balanced_accuracy_score,
+                                                       **{'adjusted': True}),
+                        cv=5, return_train_score=True, return_estimator=True)
+params = {}
+gs = GridSearchCV(net, params, refit=True, cv=3,
+                  scoring=make_scorer(balanced_accuracy_score,
+                                      **{'adjusted': True}),
+                  return_train_score=True, n_jobs=-1)
+
+gs.fit(X, y)
+print(gs.best_score_, gs.best_params_)
+
+print(scores)
+print("TSS: %0.2f (+/- %0.2f)" % (
+    scores['test_score'].mean(), scores['test_score'].std() / math.sqrt(len(
+        scores['test_score']))))
+
+
 # net.initialize()  # This is important!
 # net.load_params(f_params='some-file.pkl')
 net.fit(X, y)

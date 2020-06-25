@@ -11,6 +11,7 @@ import scipy
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from data_loader import data_loader
 
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
@@ -264,7 +265,8 @@ print(tabulate(corr_features_df, headers="keys", tablefmt="github",
 '''
 Heatmaps of Correlation
 '''
-df_corr = df.iloc[:, 5:].corr()
+df_corr = df_removed_features.corr()
+# df_corr = df.iloc[:, 5:].corr()
 df_corr[df_corr == 1] = 0
 df_large_corr = df_corr[(df_corr >= 0.7) | (df_corr <= -0.7)]
 mask = np.zeros_like(df_large_corr)
@@ -282,8 +284,36 @@ plt.show()
 '''
 Cluster map
 '''
-g = sns.clustermap(df.iloc[:100, 5:7], annot=True)
-g.fig.show()
+df_labels = pd.DataFrame(data_loader.label_transform(df.iloc[:, 0]))
+df = df.reset_index(drop=True)
+df_labels.columns = ['labels']
+df_corr = pd.concat([df_labels, df.iloc[:, 5:]], axis=1).corr()
+plt.figure(figsize=(20, 15))
+g = sns.heatmap(df_corr, annot=True, fmt='.1f')
+plt.show()
+
+
+
+'''
+Remove correlated features
+'''
+
+# remove correlated features
+def correlation(dataset, threshold):
+    col_corr = set()  # Set of all the names of deleted columns
+    corr_matrix = dataset.corr()
+    for i in range(len(corr_matrix.columns)):
+        for j in range(i):
+            if (corr_matrix.iloc[i, j] >= threshold) and (corr_matrix.columns[j] not in col_corr):
+                colname = corr_matrix.columns[i]  # getting the name of column
+                col_corr.add(colname)
+                if colname in dataset.columns:
+                    del dataset[colname] # deleting the column from the dataset
+    return dataset
+
+
+df_removed_features = correlation(df.iloc[:, 5:], 0.7)
+listofnewfeatures = df_removed_features.columns.to_list()
 
 
 '''

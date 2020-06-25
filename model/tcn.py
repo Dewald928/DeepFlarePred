@@ -95,7 +95,7 @@ class Simple1DConv(nn.Module):
 
     def forward(self, x):
         out = self.conv1(x)
-        out = self.chomp1(out)
+        out = self.chomp1(out)  # for causal conv
         out = self.relu1(out)
         out = self.dropout1(out)
 

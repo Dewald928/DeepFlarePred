@@ -56,7 +56,7 @@ inner_cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=1)
 outer_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=1)
 
 gcv = GridSearchCV(estimator=net, param_grid=p_grid, scoring='accuracy',
-                   n_jobs=1, cv=inner_cv, refit=True, iid=True)
+                   n_jobs=1, cv=inner_cv, refit=True)
 
 nested_score = cross_val_score(gcv, X=X_train, y=y_train, cv=outer_cv,
                                n_jobs=1)
