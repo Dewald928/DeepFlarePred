@@ -100,4 +100,4 @@ class Simple1DConv(nn.Module):
         out = self.dropout1(out)
 
         out = self.linear(out[:, :, -1])
-        return F.softmax(out, dim=1)
+        return out

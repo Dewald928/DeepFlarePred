@@ -312,7 +312,7 @@ def correlation(dataset, threshold):
     return dataset
 
 
-df_removed_features = correlation(df.iloc[:, 5:], 0.7)
+df_removed_features = correlation(df.iloc[:, 5:], 0.95)
 listofnewfeatures = df_removed_features.columns.to_list()
 
 

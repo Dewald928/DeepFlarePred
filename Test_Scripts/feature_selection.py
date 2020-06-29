@@ -33,33 +33,29 @@ from utils import confusion_matrix_plot
 n_features = 40
 start_feature = 5
 mask_value = 0
-drop_path = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/features_inspect/')
+drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
 filepath = './Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
 listofuncorrfeatures = ['TOTUSJH', 'Cdec', 'Chis', 'Edec', 'Mhis', 'Mdec',
-                            'AREA_ACR', 'MEANPOT', 'TOTFX', 'MEANSHR',
-                            'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec', 'EPSZ',
-                            'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xhis', 'EPSX',
-                            'EPSY', 'Bhis', 'Bdec']
+                        'AREA_ACR', 'MEANPOT', 'TOTFX', 'MEANSHR', 'MEANGBT',
+                        'TOTFZ', 'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH',
+                        'MEANGBZ', 'Xhis1d', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
+                        'Bdec']
 feature_list = listofuncorrfeatures
 
 X_train_data, y_train_data = data_loader.load_data(
-        datafile=filepath + 'normalized_training.csv',
-        flare_label='M5', series_len=1,
-        start_feature=start_feature, n_features=n_features,
-        mask_value=mask_value)
+    datafile=filepath + 'normalized_training.csv', flare_label='M5',
+    series_len=1, start_feature=start_feature, n_features=n_features,
+    mask_value=mask_value)
 X_valid_data, y_valid_data = data_loader.load_data(
-        datafile=filepath + 'normalized_validation.csv',
-        flare_label='M5', series_len=1,
-        start_feature=start_feature, n_features=n_features,
-        mask_value=mask_value)
+    datafile=filepath + 'normalized_validation.csv', flare_label='M5',
+    series_len=1, start_feature=start_feature, n_features=n_features,
+    mask_value=mask_value)
 X_test_data, y_test_data = data_loader.load_data(
-        datafile=filepath + 'normalized_testing.csv',
-        flare_label='M5', series_len=1,
-        start_feature=start_feature, n_features=n_features,
-        mask_value=mask_value)
+    datafile=filepath + 'normalized_testing.csv', flare_label='M5',
+    series_len=1, start_feature=start_feature, n_features=n_features,
+    mask_value=mask_value)
 X_train_data = np.reshape(X_train_data, (len(X_train_data), n_features))
 X_valid_data = np.reshape(X_valid_data, (len(X_valid_data), n_features))
 X_test_data = np.reshape(X_test_data, (len(X_test_data), n_features))
@@ -72,8 +68,10 @@ y_valid_tr = data_loader.label_transform(y_valid_data)
 y_test_tr = data_loader.label_transform(y_test_data)
 y = data_loader.label_transform(y)
 
-feature_name = pd.DataFrame(data_loader.get_feature_names(
-            filepath + 'normalized_training.csv'))[5:]
+feature_name = pd.DataFrame(
+    data_loader.get_feature_names(filepath + 'normalized_training.csv'))[5:]
+feature_names = data_loader.get_feature_names(
+    filepath + 'normalized_training.csv')
 
 '''
 Univariate Feature selection
@@ -86,8 +84,9 @@ for scorer, score_func in score_functions.items():
     print(scorer, score_func)
     selector = SelectKBest(score_func, k=40)
     selected_features = selector.fit_transform(X_train_data, y_train_tr)
-    plt.bar(data_loader.get_feature_names(
-            filepath + 'normalized_training.csv')[5:], selector.scores_)
+    plt.bar(
+        data_loader.get_feature_names(filepath + 'normalized_training.csv')[
+        5:], selector.scores_)
     plt.title('{} vs. Features'.format(scorer))
     plt.xlabel('Features')
     plt.xticks(rotation=90)
@@ -97,15 +96,15 @@ for scorer, score_func in score_functions.items():
     plt.show()
     f_score_indexes = (-selector.scores_).argsort()[:40]
 
-    sort_df = pd.concat([pd.DataFrame(data_loader.get_feature_names(
-            filepath + 'normalized_training.csv')[5:], columns=['Features']),
-                         pd.DataFrame(
-            selector.scores_, columns=['Importance'])], axis=1).sort_values(
-            by='Importance', ascending=False).reset_index()
+    sort_df = pd.concat([pd.DataFrame(
+        data_loader.get_feature_names(filepath + 'normalized_training.csv')[
+        5:], columns=['Features']), pd.DataFrame(selector.scores_,
+        columns=['Importance'])], axis=1).sort_values(by='Importance',
+        ascending=False).reset_index()
     f_df = sort_df if scorer == 'F-score' else f_df
     mi_df = sort_df if scorer == 'Mutual-Information' else mi_df
-    sns.barplot(x='Features', y='Importance', data=sort_df, order=sort_df[
-        'Features'])
+    sns.barplot(x='Features', y='Importance', data=sort_df,
+                order=sort_df['Features'])
     plt.xticks(rotation=90)
     plt.title('Sorted {} vs. Features'.format(scorer))
     plt.tight_layout()
@@ -119,9 +118,7 @@ params = {'C': [0.001]}  # choose C values here
 clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
                 class_weight='balanced')
 cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=2, random_state=2)
-grid = GridSearchCV(clf, param_grid=params,
-                    cv=cv,
-                    return_train_score=True,
+grid = GridSearchCV(clf, param_grid=params, cv=cv, return_train_score=True,
                     scoring=make_scorer(balanced_accuracy_score,
                                         **{'adjusted': True}), n_jobs=-1)
 grid.fit(X, y)
@@ -139,18 +136,15 @@ print("The scores are computed on the full evaluation set.")
 y_true, y_pred = y_test_tr, grid.predict(X_test_data)
 print(classification_report(y_true, y_pred))
 average_tss = balanced_accuracy_score(y_test_tr, y_pred, adjusted=True)
-print('Average tss score: {0:0.4f}'.format(
-      average_tss))
-
+print('Average tss score: {0:0.4f}'.format(average_tss))
 
 '''
 Crossval from feature selection
 '''
 cs = l1_min_c(X, y)  # minimum C-value
-clf = Pipeline([('anova', SelectKBest(mutual_info_classif)),
-                ('svc', LinearSVC(C=0.001, penalty="l1", dual=False, verbose=1,
-                                  max_iter=10000,
-                                  class_weight='balanced'))])
+clf = Pipeline([('anova', SelectKBest(mutual_info_classif)), ('svc', LinearSVC(
+    C=0.001, penalty="l1", dual=False, verbose=1, max_iter=10000,
+    class_weight='balanced'))])
 
 # Plot the cross-validation score as a function of number of features
 score_means = list()
@@ -173,15 +167,14 @@ plt.xticks(np.linspace(100, 0, 11, endpoint=True))
 plt.xlabel('Number of Features')
 plt.ylabel('TSS')
 plt.axis('tight')
-plt.savefig(drop_path + "SVM_CV_MI.png")
+plt.savefig(drop_path + "SVM_CV.png")
 plt.show()
-
 
 '''
 Recursive Feature Elimination
 '''
 clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
-                class_weight='balanced', random_state=1, C=0.001)
+                class_weight='balanced', random_state=1, C=100)
 
 
 # get a list of models to evaluate
@@ -196,7 +189,7 @@ def get_models():
 
 # evaluate a give model using cross-validation
 def evaluate_model(model):
-    cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=1, random_state=1)
+    cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
     scores = cross_val_score(model, X, y,
                              scoring=make_scorer(balanced_accuracy_score,
                                                  **{'adjusted': True}), cv=cv,
@@ -227,9 +220,9 @@ plt.show()
 # names = rfe_results.index.values
 
 # Get feature ranking
-rfecv = RFECV(clf, cv=10, scoring=make_scorer(balanced_accuracy_score,
-                                                 **{'adjusted': True}), 
-              n_jobs=-1)
+cv = RepeatedStratifiedKFold(n_splits=3, n_repeats=1, random_state=1)
+rfecv = RFECV(clf, cv=cv, scoring=make_scorer(balanced_accuracy_score,
+                                             **{'adjusted': True}), n_jobs=-1)
 rfecv.fit(X, y)
 
 # plot scores
@@ -242,24 +235,38 @@ plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_,
 plt.show()
 
 print("Features sorted by their rank:")
-rfe_df = pd.DataFrame(sorted(
-    zip(map(lambda x: round(x, 4), rfecv.ranking_), feature_names[5:])))
-print(tabulate(rfe_df.T, headers="keys",
-               tablefmt="github", showindex=False))
+rfe_df = pd.DataFrame(
+    sorted(zip(map(lambda x: round(x, 4), rfecv.ranking_), feature_names[5:])))
+print(tabulate(rfe_df.T, headers="keys", tablefmt="github", showindex=False))
 
 # RFE evaluation
 y_pred = rfecv.predict(X_test_data)
 average_tss = balanced_accuracy_score(y_test_tr, y_pred, adjusted=True)
-print('Average tss score: {0:0.4f}'.format(
-      average_tss))
+print('Test tss score: {0:0.4f}'.format(average_tss))
 confusion_matrix_plot.plot_confusion_matrix_from_data(y_test_tr, y_pred,
-                                                      ['Negative',
-                                                       'Positive'])
+                                                      ['Negative', 'Positive'])
+
+'''
+RFE 2
+'''
+# create pipeline
+rfe = RFECV(estimator=clf)
+model = clf
+pipeline = Pipeline(steps=[('s', rfe), ('m', model)])
+# evaluate model
+cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
+n_scores = cross_val_score(pipeline, X, y, scoring=make_scorer(balanced_accuracy_score,
+                                             **{'adjusted': True}), cv=cv,
+                           n_jobs=-1, error_score='raise')
+# report performance
+print('TSS: %.4f (%.4f)' % (np.mean(n_scores), np.std(n_scores)))
 
 
 '''
 RFE Multiple algorithms test
 '''
+
+
 # get the dataset
 def get_dataset():
     X, y = make_classification(n_samples=1000, n_features=10, n_informative=5,
@@ -296,8 +303,10 @@ def get_models():
 # evaluate a give model using cross-validation
 def evaluate_model(model):
     cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
-    scores = cross_val_score(model, X, y, scoring=make_scorer(balanced_accuracy_score,
-                                         **{'adjusted': True}), cv=cv, n_jobs=-1)
+    scores = cross_val_score(model, X, y,
+                             scoring=make_scorer(balanced_accuracy_score,
+                                                 **{'adjusted': True}), cv=cv,
+                             n_jobs=-1)
     return scores
 
 
@@ -316,7 +325,6 @@ for name, model in models.items():
 plt.boxplot(results, labels=names, showmeans=True)
 plt.show()
 
-
 '''
 Comparison Plot
 '''
@@ -329,7 +337,6 @@ liu_df = pd.DataFrame(feature_name.index.values, index=feature_name)
 rfe_df.columns = ['0', 'Features']
 rfe_df = pd.DataFrame(rfe_df.index.values, index=rfe_df)
 
-
 df_comp = pd.concat([liu_df, f_df, mi_df, rfe_df], axis=1, sort=False)
 df_comp.columns = ['Liu', 'F-Score', 'MI', 'RFE']
 plt.figure(figsize=(20, 16))
@@ -339,7 +346,6 @@ plt.tight_layout()
 plt.savefig(drop_path + "feature_selection_comparison.png")
 plt.show()
 
-sns.clustermap(df_comp, figsize=(20,16))
+sns.clustermap(df_comp, figsize=(20, 16))
 plt.savefig(drop_path + 'feature_selection_comparison_clustermap.png')
 plt.show()
-

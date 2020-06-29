@@ -61,4 +61,4 @@ class MLPModule(nn.Module):
         X = self.sequential(X)
         if self.squeeze_output:
             X = X.squeeze(-1)
-        return F.softmax(X, dim=1)
+        return X

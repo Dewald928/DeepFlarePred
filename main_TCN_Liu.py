@@ -66,7 +66,7 @@ class TCN(nn.Module):
     def forward(self, x):
         y1 = self.tcn(x)  # input should have dimension (batch, chan, seq len)
         out = self.linear(y1[:, :, -1])
-        return F.softmax(out, dim=1)
+        return out
 
 
 def train(model, device, train_loader, optimizer, epoch, criterion, args,
@@ -275,6 +275,7 @@ if __name__ == '__main__':
 
     # initialize parameters
     filepath = './Data/Liu/' + cfg.flare_label + '/'
+    # filepath = './Data/Krynauw/'
     # n_features = 0
     if cfg.flare_label == 'M5':
         n_features = cfg.n_features  # 20 original
@@ -325,11 +326,11 @@ if __name__ == '__main__':
     history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
                         'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
                         'Mhis1d', 'Xhis1d', 'Xmax1d']
-    listofuncorrfeatures = ['TOTUSJH', 'Cdec', 'Chis', 'Edec', 'Mhis', 'Mdec',
-                            'AREA_ACR', 'MEANPOT', 'TOTFX', 'MEANSHR',
-                            'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec', 'EPSZ',
-                            'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xhis', 'EPSX',
-                            'EPSY', 'Bhis', 'Bdec']
+    listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'Cdec', 'Chis', 'Edec',
+                            'Mhis', 'Mdec', 'AREA_ACR', 'MEANPOT', 'SHRGT45',
+                            'TOTFX', 'MEANSHR', 'MEANGBT', 'TOTFZ', 'TOTFY',
+                            'logEdec', 'EPSZ', 'MEANGBH', 'MEANGBZ', 'Xhis1d',
+                            'Xhis', 'EPSX', 'EPSY', 'Bhis', 'Bdec']
     feature_list = None  #
     # can be
     # None, need to change
@@ -453,7 +454,7 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(
         device))  # weighted cross entropy
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
-                                 weight_decay=cfg.weight_decay, amsgrad=False)
+                                weight_decay=cfg.weight_decay)
 
     # print model parameters
     print("Receptive Field: " + str(
@@ -727,29 +728,36 @@ if __name__ == '__main__':
             wandb.log({"CV_Score": scores})
 
         elif cfg.nested_cv:
-            p_grid = {'max_epochs': [1, 2]}
-            inner_cv = StratifiedKFold(n_splits=2, shuffle=False,
+            net.initialize()
+            net.load_params(f_params=init_savename)
+            net.train_split = None
+            net.callbacks = [train_tss]
+            net.initialize_callbacks()
+            p_grid = {'max_epochs': [20]}
+            inner_cv = StratifiedKFold(n_splits=2, shuffle=True,
                                        random_state=cfg.seed)
-            outer_cv = StratifiedKFold(n_splits=3, shuffle=False,
+            outer_cv = StratifiedKFold(n_splits=5, shuffle=True,
                                        random_state=cfg.seed)
 
             gcv = GridSearchCV(estimator=net, param_grid=p_grid,
                                scoring=make_scorer(balanced_accuracy_score,
                                                    **{'adjusted': True}),
                                n_jobs=1, cv=inner_cv, refit=True,
-                               return_train_score=True)
+                               return_train_score=True, verbose=1)
 
             nested_score = cross_val_score(gcv, X=combined_inputs, y=combined_labels,
                                            cv=outer_cv, n_jobs=1,
                                            scoring=make_scorer(
                                                balanced_accuracy_score,
                                                **{'adjusted': True}))
-            print('%s | outer ACC %.2f%% +/- %.2f' % (
+            print('%s | outer TSS %.2f%% +/- %.2f' % (
                 'MLP', nested_score.mean() * 100, nested_score.std() * 100))
 
             # Fitting a model to the whole training set
             # using the "best" algorithm
+            # best_algo = gridcvs['SVM']
             gcv.fit(combined_inputs, combined_labels)
+
             train_tss = balanced_accuracy_score(y_true=combined_labels,
                                        y_pred=gcv.predict(combined_inputs))
             test_tss = balanced_accuracy_score(y_true=test_labels,
@@ -766,7 +774,11 @@ if __name__ == '__main__':
             params = gcv.cv_results_['params']
             for mean, stdev, param in zip(means, stds, params):
                 print("%f (%f) with: %r" % (mean, stdev, param))
-            pd.DataFrame(gcv.cv_results_).to_csv('cv_results.csv')
+            pd.DataFrame(gcv.cv_results_).to_csv(
+                'saved/scores/cv_results_0.csv')
+
+            #save best model
+
 
         '''
         Test Results
