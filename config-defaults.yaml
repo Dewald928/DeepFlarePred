@@ -8,13 +8,13 @@ model_type:
   value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 1000
+  value: 40
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 4096
 learning_rate:
   desc: initial learning rate
-  value: 0.01
+  value: 0.005
 momentum:
   desc: momentum for SGD
   value: 0.9
