@@ -85,6 +85,8 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
         loss = criterion(output, target)
         loss_epoch += criterion(output, target).item()
         loss.backward()
+        if cfg.clip > 0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.clip)
         optimizer.step()
         _, predicted = torch.max(output.data, 1)
 
@@ -383,22 +385,22 @@ if __name__ == '__main__':
         X_test_data = np.reshape(X_test_data,
                                  (len(X_test_data), cfg.n_features))
     elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN'):
-        X_train_data = torch.tensor(X_train_data).double()
+        X_train_data = torch.tensor(X_train_data).float()
         X_train_data = X_train_data.permute(0, 2, 1)
-        X_valid_data = torch.tensor(X_valid_data).double()
+        X_valid_data = torch.tensor(X_valid_data).float()
         X_valid_data = X_valid_data.permute(0, 2, 1)
-        X_test_data = torch.tensor(X_test_data).double()
+        X_test_data = torch.tensor(X_test_data).float()
         X_test_data = X_test_data.permute(0, 2, 1)
     elif cfg.model_type == 'RNN':
         pass
     # (samples, seq_len, features) -> (samples, features, seq_len)
-    X_train_data_tensor = torch.tensor(X_train_data).double()
+    X_train_data_tensor = torch.tensor(X_train_data).float()
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
 
-    X_valid_data_tensor = torch.tensor(X_valid_data).double()
+    X_valid_data_tensor = torch.tensor(X_valid_data).float()
     y_valid_tr_tensor = torch.tensor(y_valid_tr).long()
 
-    X_test_data_tensor = torch.tensor(X_test_data).double()
+    X_test_data_tensor = torch.tensor(X_test_data).float()
     y_test_tr_tensor = torch.tensor(y_test_tr).long()
 
     # ready custom dataset
@@ -446,7 +448,7 @@ if __name__ == '__main__':
         # summary(model, input_size=(cfg.seq_len,
         #                            cfg.n_features))
 
-    model = model.double()
+    # model = model.float() # too slow, approx is close enough
     wandb.watch(model, log='all')
 
     # optimizers
@@ -455,7 +457,7 @@ if __name__ == '__main__':
                                                       y_train_data)
 
     # noinspection PyArgumentList
-    criterion = nn.CrossEntropyLoss(weight=torch.DoubleTensor(class_weights).to(
+    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(
         device))  # weighted cross entropy
     # optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
     #                             weight_decay=cfg.weight_decay,
@@ -629,7 +631,7 @@ if __name__ == '__main__':
 
         # combined datasets
         combined_inputs = np.concatenate([inputs, X_valid_data],
-                                         axis=0).astype(np.double)
+                                         axis=0).astype(np.float32)
         combined_labels = np.concatenate([labels, y_valid_tr], axis=0)
         ds = Dataset(combined_inputs, combined_labels)
         combined_labels = np.array([labels for _, labels in iter(ds)])
@@ -690,13 +692,13 @@ if __name__ == '__main__':
         net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
                                   batch_size=cfg.batch_size,
                                   criterion=nn.CrossEntropyLoss,
-                                  criterion__weight=torch.DoubleTensor(
+                                  criterion__weight=torch.FloatTensor(
                                       class_weights).to(device),
-                                  optimizer=torch.optim.SGD,
+                                  optimizer=torch.optim.Adam,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
-                                  optimizer__momentum=cfg.momentum,
-                                  optimizer__nesterov=True,
+                                  # optimizer__momentum=cfg.momentum,
+                                  # optimizer__nesterov=True,
                                   device=device,
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),

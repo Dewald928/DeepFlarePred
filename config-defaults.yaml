@@ -5,7 +5,7 @@ tag:
     - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: MLP
+  value: CNN
 epochs:
   desc: Number of epochs to train over
   value: 1000
@@ -14,13 +14,13 @@ batch_size:
   value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.0001
+  value: 0.01
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
-  value: SGD
+  value: Adam
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -75,7 +75,10 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 273
+  value: 115
+clip:
+  desc: gradient clipping value (not skorch)
+  value: -1
 cuda:
   desc: enables cuda training
   value: True
