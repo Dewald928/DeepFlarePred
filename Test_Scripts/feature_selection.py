@@ -21,6 +21,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
 # explore the algorithm wrapped by RFE
 from sklearn.svm import LinearSVC, l1_min_c
 from sklearn.tree import DecisionTreeClassifier
@@ -37,11 +38,12 @@ drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
 filepath = './Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
-listofuncorrfeatures = ['TOTUSJH', 'Cdec', 'Chis', 'Edec', 'Mhis', 'Mdec',
-                        'AREA_ACR', 'MEANPOT', 'TOTFX', 'MEANSHR', 'MEANGBT',
-                        'TOTFZ', 'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH',
-                        'MEANGBZ', 'Xhis1d', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
-                        'Bdec']
+listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ', 'USFLUX',
+                        'Cdec', 'Chis', 'Edec', 'Mhis', 'Xmax1d', 'Mdec',
+                        'AREA_ACR', 'MEANPOT', 'Mhis1d', 'SHRGT45', 'TOTFX',
+                        'MEANSHR', 'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec',
+                        'EPSZ', 'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xdec', 'Xhis',
+                        'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']
 feature_list = listofuncorrfeatures
 
 X_train_data, y_train_data = data_loader.load_data(
@@ -72,6 +74,11 @@ feature_name = pd.DataFrame(
     data_loader.get_feature_names(filepath + 'normalized_training.csv'))[5:]
 feature_names = data_loader.get_feature_names(
     filepath + 'normalized_training.csv')
+
+X, y = make_classification(n_samples=10000, n_features=10, n_redundant=5,
+                           n_informative=5, n_clusters_per_class=1,
+                           weights=[0.1, 0.9], class_sep=1)
+X, X_test_data, y, y_test_tr = train_test_split(X,y, test_size=0.3)
 
 '''
 Univariate Feature selection
@@ -114,7 +121,7 @@ for scorer, score_func in score_functions.items():
 '''
 Linear SVC optimization
 '''
-params = {'C': [0.001]}  # choose C values here
+params = {'C': [0.0001,0.001,0.01,0.1,1,10,100]}  # choose C values here
 clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
                 class_weight='balanced')
 cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=2, random_state=2)
@@ -174,7 +181,7 @@ plt.show()
 Recursive Feature Elimination
 '''
 clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
-                class_weight='balanced', random_state=1, C=100)
+                class_weight='balanced', random_state=1, C=1)
 
 
 # get a list of models to evaluate
@@ -219,9 +226,10 @@ plt.show()
 # results = rfe_results.iloc[:, 2:]
 # names = rfe_results.index.values
 
+# the same as previous much faster, but without std
 # Get feature ranking
-cv = RepeatedStratifiedKFold(n_splits=3, n_repeats=1, random_state=1)
-rfecv = RFECV(clf, cv=cv, scoring=make_scorer(balanced_accuracy_score,
+cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
+rfecv = RFECV(clf, cv=5, scoring=make_scorer(balanced_accuracy_score,
                                              **{'adjusted': True}), n_jobs=-1)
 rfecv.fit(X, y)
 

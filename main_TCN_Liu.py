@@ -15,6 +15,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
+from torch.autograd import gradcheck
 import wandb
 import yaml
 from sklearn.metrics import make_scorer, balanced_accuracy_score
@@ -326,11 +327,13 @@ if __name__ == '__main__':
     history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
                         'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
                         'Mhis1d', 'Xhis1d', 'Xmax1d']
-    listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'Cdec', 'Chis', 'Edec',
-                            'Mhis', 'Mdec', 'AREA_ACR', 'MEANPOT', 'SHRGT45',
+    listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ',
+                            'USFLUX', 'Cdec', 'Chis', 'Edec', 'Mhis', 'Xmax1d',
+                            'Mdec', 'AREA_ACR', 'MEANPOT', 'Mhis1d', 'SHRGT45',
                             'TOTFX', 'MEANSHR', 'MEANGBT', 'TOTFZ', 'TOTFY',
                             'logEdec', 'EPSZ', 'MEANGBH', 'MEANGBZ', 'Xhis1d',
-                            'Xhis', 'EPSX', 'EPSY', 'Bhis', 'Bdec']
+                            'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis', 'Bdec',
+                            'Bhis1d']
     feature_list = None  #
     # can be
     # None, need to change
@@ -380,22 +383,22 @@ if __name__ == '__main__':
         X_test_data = np.reshape(X_test_data,
                                  (len(X_test_data), cfg.n_features))
     elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN'):
-        X_train_data = torch.tensor(X_train_data).float()
+        X_train_data = torch.tensor(X_train_data).double()
         X_train_data = X_train_data.permute(0, 2, 1)
-        X_valid_data = torch.tensor(X_valid_data).float()
+        X_valid_data = torch.tensor(X_valid_data).double()
         X_valid_data = X_valid_data.permute(0, 2, 1)
-        X_test_data = torch.tensor(X_test_data).float()
+        X_test_data = torch.tensor(X_test_data).double()
         X_test_data = X_test_data.permute(0, 2, 1)
     elif cfg.model_type == 'RNN':
         pass
     # (samples, seq_len, features) -> (samples, features, seq_len)
-    X_train_data_tensor = torch.tensor(X_train_data).float()
+    X_train_data_tensor = torch.tensor(X_train_data).double()
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
 
-    X_valid_data_tensor = torch.tensor(X_valid_data).float()
+    X_valid_data_tensor = torch.tensor(X_valid_data).double()
     y_valid_tr_tensor = torch.tensor(y_valid_tr).long()
 
-    X_test_data_tensor = torch.tensor(X_test_data).float()
+    X_test_data_tensor = torch.tensor(X_test_data).double()
     y_test_tr_tensor = torch.tensor(y_test_tr).long()
 
     # ready custom dataset
@@ -443,6 +446,7 @@ if __name__ == '__main__':
         # summary(model, input_size=(cfg.seq_len,
         #                            cfg.n_features))
 
+    model = model.double()
     wandb.watch(model, log='all')
 
     # optimizers
@@ -451,8 +455,11 @@ if __name__ == '__main__':
                                                       y_train_data)
 
     # noinspection PyArgumentList
-    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(
+    criterion = nn.CrossEntropyLoss(weight=torch.DoubleTensor(class_weights).to(
         device))  # weighted cross entropy
+    # optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
+    #                             weight_decay=cfg.weight_decay,
+    #                             nesterov=True, momentum=cfg.momentum)
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
                                 weight_decay=cfg.weight_decay)
 
@@ -470,6 +477,11 @@ if __name__ == '__main__':
     best_pr_auc = 0.0
     best_epoch = 0
     epoch = 0
+
+    # gradient check
+    # input = X_train_data_tensor[:10].double().requires_grad_(True).to(device)
+    # test = gradcheck(model.double(), input, eps=1e-6, atol=1e-4)
+    # print(test)
 
     if not cfg.skorch:
         print('{:<11s}{:^9s}{:^9s}{:^9s}'
@@ -616,7 +628,8 @@ if __name__ == '__main__':
         valid_ds = Dataset(X_valid_data, y_valid_tr)
 
         # combined datasets
-        combined_inputs = np.concatenate([inputs, X_valid_data], axis=0).astype(np.float32)
+        combined_inputs = np.concatenate([inputs, X_valid_data],
+                                         axis=0).astype(np.double)
         combined_labels = np.concatenate([labels, y_valid_tr], axis=0)
         ds = Dataset(combined_inputs, combined_labels)
         combined_labels = np.array([labels for _, labels in iter(ds)])
@@ -665,6 +678,8 @@ if __name__ == '__main__':
 
         checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
+        lrscheduler = LRScheduler(policy='StepLR',
+                                  monitor='valid_tss', step_size=10, gamma=0.9)
 
         logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
 
@@ -675,12 +690,14 @@ if __name__ == '__main__':
         net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
                                   batch_size=cfg.batch_size,
                                   criterion=nn.CrossEntropyLoss,
-                                  criterion__weight=torch.FloatTensor(
+                                  criterion__weight=torch.DoubleTensor(
                                       class_weights).to(device),
-                                  optimizer=torch.optim.Adam,
+                                  optimizer=torch.optim.SGD,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
-                                  optimizer__amsgrad=False, device=device,
+                                  optimizer__momentum=cfg.momentum,
+                                  optimizer__nesterov=True,
+                                  device=device,
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss, valid_tss, earlystop,

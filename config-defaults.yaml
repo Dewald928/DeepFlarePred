@@ -2,22 +2,25 @@
 tag:
   desc: wandb tags
   value:
-    - NestedCV
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: CNN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 2000
+  value: 1000
 batch_size:
   desc: Size of each mini-batch
   value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.001
+  value: 0.0001
+momentum:
+  desc: momentum for SGD
+  value: 0.9
 optim:
   desc: optimizer to use
-  value: Adam
+  value: SGD
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -58,7 +61,7 @@ cross_validation:
   value: False
 nested_cv:
   desc: if nested crossval should be performed
-  value: True
+  value: False
 n_splits:
   desc: number of splits
   value: 3
@@ -72,16 +75,16 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 115
+  value: 273
 cuda:
   desc: enables cuda training
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
+  value: False
 patience:
   desc: amount of epochs for early stopping
-  value: 40
+  value: 20
 training:
   desc: Trains models, else only tests
   value: True

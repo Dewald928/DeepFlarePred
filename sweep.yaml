@@ -3,9 +3,6 @@ method: bayes
 metric:
   name: Best_Validation_TSS
   goal: maximize
-early_terminate:
-  type: hyperband
-  min_iter: 10
 parameters:
   nhid:
     distribution: int_uniform
