@@ -306,12 +306,12 @@ if __name__ == '__main__':
     device = torch.device("cuda" if use_cuda else "cpu")
 
     # set seed
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', type=int, default=None, metavar='N',
-                        help='init seed (default: 0)')
-    args = parser.parse_args()
-    if args.seed is not None:
-        wandb.config.update(args, allow_val_change=True)  # adds all of the arguments as config
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--seed', type=int, default=None, metavar='N',
+    #                     help='init seed (default: 0)')
+    # args = parser.parse_args()
+    # if args.seed is not None:
+    #     wandb.config.update(args, allow_val_change=True)  # adds all of the arguments as config
         # variables
     torch.manual_seed(cfg.seed)
     if torch.cuda.is_available():
