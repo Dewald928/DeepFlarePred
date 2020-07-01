@@ -41,7 +41,7 @@ class MLPModule(nn.Module):
 
         sequence = []
         for u0, u1 in zip(units, units[1:]):
-            sequence.append(nn.Linear(u0, u1))
+            sequence.append(nn.Linear(u0, u1, bias=False))
             sequence.append(nn.BatchNorm1d(num_features=u1))
             sequence.append(self.nonlin)
             sequence.append(nn.Dropout(self.dropout))

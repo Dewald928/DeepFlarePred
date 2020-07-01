@@ -273,12 +273,16 @@ def init_project():
 
 if __name__ == '__main__':
     project, tags = init_project()
-    wandb.init(project=project, tags=tags)
+    run = wandb.init(project=project, tags=tags)
     cfg = wandb.config
 
     # initialize parameters
-    filepath = './Data/Liu/' + cfg.flare_label + '/'
-    # filepath = './Data/Krynauw/'
+    if cfg.dataset == 'Liu':
+        filepath = './Data/Liu/' + cfg.flare_label + '/'
+        artifact = wandb.Artifact('liu-dataset', type='dataset')
+    elif cfg.dataset == 'Krynauw':
+        filepath = './Data/Krynauw/'
+        artifact = wandb.Artifact('krynauw-dataset', type='dataset')
     # n_features = 0
     if cfg.flare_label == 'M5':
         n_features = cfg.n_features  # 20 original
@@ -312,7 +316,6 @@ if __name__ == '__main__':
     # args = parser.parse_args()
     # if args.seed is not None:
     #     wandb.config.update(args, allow_val_change=True)  # adds all of the arguments as config
-        # variables
     torch.manual_seed(cfg.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(cfg.seed)
@@ -484,6 +487,16 @@ if __name__ == '__main__':
     # input = X_train_data_tensor[:10].double().requires_grad_(True).to(device)
     # test = gradcheck(model.double(), input, eps=1e-6, atol=1e-4)
     # print(test)
+
+    # wandb artifact
+    artifact.add_file(filepath + 'normalized_training.csv',
+                      name='normalized_training')
+    artifact.add_file(filepath + 'normalized_validation.csv',
+                      name='normalized_validation')
+    artifact.add_file(filepath + 'normalized_testing.csv',
+                      name='normalized_testing')
+    run.log_artifact(artifact)
+
 
     if not cfg.skorch:
         print('{:<11s}{:^9s}{:^9s}{:^9s}'
@@ -681,7 +694,7 @@ if __name__ == '__main__':
         checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
         lrscheduler = LRScheduler(policy='StepLR',
-                                  monitor='valid_tss', step_size=10, gamma=0.9)
+                                  monitor='valid_tss', step_size=20, gamma=0.1)
 
         logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
 

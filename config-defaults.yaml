@@ -2,19 +2,19 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - Bayes
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 40
+  value: 2000
 batch_size:
   desc: Size of each mini-batch
-  value: 4096
+  value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.005
+  value: 0.001
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -75,7 +75,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 115
+  value: 20
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -87,7 +87,7 @@ early_stop:
   value: False
 patience:
   desc: amount of epochs for early stopping
-  value: 20
+  value: 40
 training:
   desc: Trains models, else only tests
   value: True
@@ -97,5 +97,10 @@ model_name:
 num_workers:
   desc: number of gpu workers
   value: 9
+
+# Dataset
+dataset:
+  desc: which dataset to use (Liu/Krynauw)
+  value: Liu
 
 
