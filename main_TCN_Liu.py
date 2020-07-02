@@ -28,6 +28,7 @@ from skorch.dataset import Dataset
 from skorch.helper import predefined_split
 from torchsummary import summary
 
+import crossval_fold
 from data_loader import CustomDataset
 from data_loader import data_loader
 from model import lstm
@@ -70,8 +71,8 @@ class TCN(nn.Module):
         return out
 
 
-def train(model, device, train_loader, optimizer, epoch, criterion, args,
-          nclass=2):
+def train(model, device, train_loader, optimizer, epoch, criterion, cfg,
+          scheduler=None, nclass=2):
     start = time.time()
     model.train()
     confusion_matrix = torch.zeros(nclass, nclass)
@@ -93,13 +94,18 @@ def train(model, device, train_loader, optimizer, epoch, criterion, args,
         for t, p in zip(target.view(-1), predicted.view(-1)):
             confusion_matrix[t.long(), p.long()] += 1
 
+        if scheduler is not None:
+            scheduler.step()
+        else:
+            pass
+
     loss_epoch /= len(train_loader.dataset)
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn, \
     mcc = metric.calculate_metrics(
         confusion_matrix.numpy(), nclass)
 
     # calculate predicted values
-    yhat = infer_model(model, device, train_loader, args)
+    yhat = infer_model(model, device, train_loader)
 
     # PR curves on train
     f1, pr_auc = metric.get_pr_auc(yhat, train_loader.dataset.targets)[2:4]
@@ -154,7 +160,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         confusion_matrix.numpy(), nclass)
 
     # calculate predicted values
-    yhat = infer_model(model, device, valid_loader, args)
+    yhat = infer_model(model, device, valid_loader)
 
     # PR curves on train
     f1, pr_auc = metric.get_pr_auc(yhat, valid_loader.dataset.targets)[2:4]
@@ -218,7 +224,7 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
 
     test_loss /= len(test_loader.dataset)
 
-    print("Test Scores:")
+    # print("Test Scores:")
     recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn, \
     mcc = metric.calculate_metrics(
         confusion_matrix.numpy(), nclass)
@@ -238,7 +244,7 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
     return recall, precision, accuracy, bacc, hss, tss
 
 
-def infer_model(model, device, data_loader, args):
+def infer_model(model, device, data_loader):
     """    :param args:
          :return prediction of inferred data loader
     """
@@ -372,9 +378,9 @@ if __name__ == '__main__':
                                                               y_test_data,
                                                               num_of_fold)
 
-    # crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
-    #                               X_valid_fold, y_valid_fold, X_test_fold,
-    #                               y_test_fold, cfg, nclass, device)
+    crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
+                                  X_valid_fold, y_valid_fold, X_test_fold,
+                                  y_test_fold, cfg, nclass, device)
 
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)

@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - Sequence
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN

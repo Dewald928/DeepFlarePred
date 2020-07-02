@@ -14,8 +14,10 @@ from data_loader import CustomDataset
 from model.tcn import TemporalConvNet
 from model import metric
 from model import mlp
+from model import tcn
 from utils import early_stopping
 import main_TCN_Liu
+
 # from main_TCN_Liu import TCN
 
 import wandb
@@ -93,7 +95,8 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                 X_valid_data = np.reshape(X_valid,
                                           (len(X_valid), cfg.n_features))
                 X_test_data = np.reshape(X_test, (len(X_test), cfg.n_features))
-            elif cfg.model_type == 'TCN':
+            elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN') or (
+            cfg.model_type == 'RNN'):
                 X_train_data = torch.tensor(X_train).float()
                 X_train_data = X_train_data.permute(0, 2, 1)
                 X_valid_data = torch.tensor(X_valid).float()
@@ -154,6 +157,15 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                             kernel_size=kernel_size, dropout=dropout).to(
                     device)
                 summary(model, input_size=(cfg.n_features, cfg.seq_len))
+            elif cfg.model_type == "CNN":
+                model = tcn.Simple1DConv(cfg.n_features, cfg.nhid,
+                                         kernel_size=kernel_size,
+                                         dropout=cfg.dropout).to(device)
+                # summary(model, input_size=(cfg.n_features, cfg.seq_len))
+            elif cfg.model_type == 'RNN':
+                model = lstm.LSTMModel(cfg.n_features, cfg.nhid, cfg.levels,
+                                       output_dim=nclass, dropout=cfg.dropout,
+                                       device=device, rnn_module='LSTM')
 
             wandb.watch(model, log='all')
 
@@ -167,10 +179,17 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             criterion = nn.CrossEntropyLoss(
                 weight=torch.FloatTensor(class_weights).to(
                     device))  # weighted cross entropy
-            optimizer = torch.optim.Adam(model.parameters(),
+            # optimizer = torch.optim.Adam(model.parameters(),
+            #                              lr=cfg.learning_rate,
+            #                              weight_decay=cfg.weight_decay,
+            #                              amsgrad=False)
+            optimizer = torch.optim.SGD(model.parameters(),
                                          lr=cfg.learning_rate,
                                          weight_decay=cfg.weight_decay,
-                                         amsgrad=False)
+                                         nesterov=True, momentum=0.9)
+            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
+                                                          base_lr=cfg.learning_rate,
+                                                          max_lr=0.1)
 
             # print model parameters
             print("Receptive Field: " + str(
@@ -201,7 +220,7 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
                     train_recall, train_precision, train_accuracy, \
                     train_bacc, train_hss, train_tss = main_TCN_Liu.train(
                         model, device, train_loader, optimizer, epoch,
-                        criterion, cfg)
+                        criterion, cfg, scheduler)
 
                     stopping_metric, best_tss, best_pr_auc, best_epoch, \
                     val_recall, val_precision, val_accuracy, val_bacc, \
