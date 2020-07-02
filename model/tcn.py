@@ -87,6 +87,9 @@ class Simple1DConv(nn.Module):
 
         self.linear = nn.Linear(n_outputs, 2)
 
+        self.downsample = nn.Conv1d(n_inputs, n_outputs,
+                                    1) if n_inputs != n_outputs else None
+
         self.init_weights()
 
     def init_weights(self):
@@ -98,6 +101,8 @@ class Simple1DConv(nn.Module):
         out = self.chomp1(out)  # for causal conv
         out = self.relu1(out)
         out = self.dropout1(out)
+        # res = x if self.downsample is None else self.downsample(x)
+        # out = out + res
 
         out = self.linear(out[:, :, -1])
         return out

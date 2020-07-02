@@ -387,16 +387,16 @@ if __name__ == '__main__':
                                   (len(X_valid_data), cfg.n_features))
         X_test_data = np.reshape(X_test_data,
                                  (len(X_test_data), cfg.n_features))
-    elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN'):
+    elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN') or (
+            cfg.model_type == 'RNN'):
         X_train_data = torch.tensor(X_train_data).float()
         X_train_data = X_train_data.permute(0, 2, 1)
         X_valid_data = torch.tensor(X_valid_data).float()
         X_valid_data = X_valid_data.permute(0, 2, 1)
         X_test_data = torch.tensor(X_test_data).float()
         X_test_data = X_test_data.permute(0, 2, 1)
-    elif cfg.model_type == 'RNN':
-        pass
     # (samples, seq_len, features) -> (samples, features, seq_len)
+    # X_train_data_tensor = X_train_data.clone().detach()
     X_train_data_tensor = torch.tensor(X_train_data).float()
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
 
@@ -693,8 +693,9 @@ if __name__ == '__main__':
 
         checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
-        lrscheduler = LRScheduler(policy='StepLR',
-                                  monitor='valid_tss', step_size=20, gamma=0.1)
+        lrscheduler = LRScheduler(policy='TorchCyclicLR',
+                                  monitor='valid_tss',
+                                  base_lr=cfg.learning_rate, max_lr=0.1)
 
         logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
 
@@ -707,18 +708,18 @@ if __name__ == '__main__':
                                   criterion=nn.CrossEntropyLoss,
                                   criterion__weight=torch.FloatTensor(
                                       class_weights).to(device),
-                                  optimizer=torch.optim.Adam,
+                                  optimizer=torch.optim.SGD,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
-                                  # optimizer__momentum=cfg.momentum,
-                                  # optimizer__nesterov=True,
+                                  optimizer__momentum=cfg.momentum,
+                                  optimizer__nesterov=True,
                                   device=device,
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss, valid_tss, earlystop,
                                              checkpoint,  # load_state,
                                              reload_at_end,
-                                             logger],
+                                             logger, lrscheduler],
                                   # iterator_train__shuffle=True,
                                   warm_start=False)
 

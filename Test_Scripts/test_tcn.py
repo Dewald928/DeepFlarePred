@@ -26,15 +26,17 @@ print(linear2.weight)
 m = nn.Conv1d(1, 1, 3, stride=1, bias=False)
 input = torch.randn(1, 1, 50)
 output = m(input)
+relu1 = nn.ReLU()
+linear = nn.Linear(3, 2)
 
 
-a = torch.tensor(np.array([[[0, 0, 1, 1],
-                            [0, 0, 1, 1],
-                            [-1, 0, 0, 0]]]), dtype=torch.float32)
+a = torch.tensor(np.array([[[1, 0, 1, 1],
+                            [0, 0, 1, 0],
+                            [-1, 0, 1, 1]]]), dtype=torch.float32)
 # a = torch.randn(2, 3, 2)  # timesteps, features, sequence length
 b = a.numpy()
 m = nn.Conv1d(3, 3, 2, bias=False, padding=1)
-m.weight.data = torch.tensor([[[0, 0],
+m.weight.data = torch.tensor([[[1, 0],
                              [0, 0],
                              [0, 1]],
                             [[2, 2],
@@ -42,11 +44,14 @@ m.weight.data = torch.tensor([[[0, 0],
                              [2, 2]],
                             [[0, 0],
                              [0, 0],
-                             [0, 0]]],
+                             [0, 1]]],
                              dtype=torch.float32)
 kernel = m.weight.data.numpy()
 # n = nn.ReLU(m)
 out = m(a[:, :, :-1])
+out = relu1(out)
+out = linear(out[:, :, -1])
 out_np = out.detach().numpy()
+print('fnished')
 
 

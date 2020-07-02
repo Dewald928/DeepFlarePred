@@ -2,25 +2,25 @@
 tag:
   desc: wandb tags
   value:
-    - Bayes
+    - Sequence
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 2000
+  value: 100
 batch_size:
   desc: Size of each mini-batch
   value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.001
+  value: 0.01
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
-  value: Adam
+  value: SGD
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -37,7 +37,7 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
@@ -45,12 +45,12 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 100
+  value: 40
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.8
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -87,7 +87,7 @@ early_stop:
   value: False
 patience:
   desc: amount of epochs for early stopping
-  value: 40
+  value: 30
 training:
   desc: Trains models, else only tests
   value: True

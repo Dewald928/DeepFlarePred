@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-for i in 16 125 654 79 31
+for i in 15 124 49
     do
         python main_TCN_Liu.py --seed $i
     done
