@@ -6,6 +6,7 @@ parameters:
   batch_size:
     distribution: categorical
     values:
+    - 256
     - 512
     - 4096
     - 8192
@@ -15,13 +16,14 @@ parameters:
     - 0
   early_stop:
     distribution: constant
-    value: "True"
+    value: "False"
   hidden_units:
     distribution: categorical
     values:
     - 40
     - 100
     - 200
+    - 500
   layers:
     distribution: categorical
     values:
@@ -48,6 +50,4 @@ parameters:
     - 15
     - 124
     - 49
-    - 273
-    - 335
 program: main_TCN_Liu.py

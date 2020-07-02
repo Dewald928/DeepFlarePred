@@ -2,25 +2,25 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - NoSoftmax
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: CNN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
   value: 100
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 256
 learning_rate:
   desc: initial learning rate
-  value: 0.01
+  value: 0.00001
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
-  value: SGD
+  value: Adam
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -37,20 +37,20 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 3
+  value: 1
 
 # MLP
 layers:
   desc: MLP layers
-  value: 1
+  value: 2
 hidden_units:
   desc: number hidden nodes in layer
-  value: 40
+  value: 200
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.8
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
   value: 0.0

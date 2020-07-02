@@ -378,9 +378,9 @@ if __name__ == '__main__':
                                                               y_test_data,
                                                               num_of_fold)
 
-    crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
-                                  X_valid_fold, y_valid_fold, X_test_fold,
-                                  y_test_fold, cfg, nclass, device)
+    # crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
+    #                               X_valid_fold, y_valid_fold, X_test_fold,
+    #                               y_test_fold, cfg, nclass, device)
 
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
@@ -473,6 +473,10 @@ if __name__ == '__main__':
     #                             nesterov=True, momentum=cfg.momentum)
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
                                 weight_decay=cfg.weight_decay)
+
+    # scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
+    #                                               base_lr=cfg.learning_rate,
+    #                                               max_lr=0.1)
 
     # print model parameters
     print("Receptive Field: " + str(
@@ -714,18 +718,18 @@ if __name__ == '__main__':
                                   criterion=nn.CrossEntropyLoss,
                                   criterion__weight=torch.FloatTensor(
                                       class_weights).to(device),
-                                  optimizer=torch.optim.SGD,
+                                  optimizer=torch.optim.Adam,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
-                                  optimizer__momentum=cfg.momentum,
-                                  optimizer__nesterov=True,
+                                  # optimizer__momentum=cfg.momentum,
+                                  # optimizer__nesterov=True,
                                   device=device,
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss, valid_tss, earlystop,
                                              checkpoint,  # load_state,
                                              reload_at_end,
-                                             logger, lrscheduler],
+                                             logger],
                                   # iterator_train__shuffle=True,
                                   warm_start=False)
 
