@@ -31,7 +31,7 @@ def plot_density_estimation(net, yhat, labels, dataset_name):
     maxid = np.argmax(y)  # The id of the peak (maximum of y data)
     idx = np.argwhere(np.diff(np.sign(f - g))).flatten()  # intersection
     stdidx = maxid + int(round(0.341 * (len(x) - 1 - maxid)))
-    plt.plot(x[idx], y[idx], 'k|', ms=10)
+    # plt.plot(x[idx], y[idx], 'k|', ms=10)
     # plt.plot(x[stdidx], y[stdidx], 'b*', ms=10)
 
     # axis labels
@@ -75,7 +75,7 @@ def plot_calibration_curve(est, name, X_valid, y_valid, X_test, y_test,
     fraction_of_positives, mean_predicted_value = calibration_curve(y_test,
                                                                     y_pred[:,
                                                                     1],
-                                                                    n_bins=20)
+                                                                    n_bins=20, normalize=True)
     ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
              label="%s" % (name))
 

@@ -19,7 +19,7 @@ filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_train, df_val], axis=0)
+df = pd.concat([df_train, df_val, df_test], axis=0)
 df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
@@ -319,15 +319,17 @@ listofnewfeatures = df_removed_features.columns.to_list()
 '''
 Infer values
 '''
-x_flares_idx = df.index[df['NOAA'].isin(m5_flared_NOAA)].tolist()
+x_flares_idx = df_test.index[df_test['NOAA'].isin(m5_flared_NOAA)].tolist()
 test_sample_x = test_loader.dataset.data[x_flares_idx].to(device)
+test_sample_x = test_loader.dataset.data[41957:42147].to(device)
 inferred = model(test_sample_x)
 _, predicted = torch.max(inferred.data, 1)
 df_inf = pd.DataFrame(inferred.cpu().detach().numpy()[:, 1], columns=list('1'))
 df_pred = pd.DataFrame(predicted.cpu().detach().numpy(), columns=list('p'))
 concattable = pd.concat(
     [df_pred.reset_index(drop=True), df_inf.reset_index(drop=True),
-     m5_flares_data.reset_index(drop=True)], sort=False, axis=1)
+     df_test.iloc[41957:42147].reset_index(drop=True)], sort=False,
+    axis=1)
 ARs_classified = concattable[(concattable['p'] == 1) & (concattable['label']
                                                         == 'Positive')]
 ARs_classified_NOAA = ARs_classified['NOAA'].unique()

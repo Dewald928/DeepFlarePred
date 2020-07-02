@@ -27,7 +27,9 @@ from skorch.callbacks import *
 from skorch.dataset import Dataset
 from skorch.helper import predefined_split
 from torchsummary import summary
+import matplotlib.pyplot as plt
 
+from interpret import interpreter
 import crossval_fold
 from data_loader import CustomDataset
 from data_loader import data_loader
@@ -468,15 +470,17 @@ if __name__ == '__main__':
     # noinspection PyArgumentList
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(
         device))  # weighted cross entropy
-    # optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
-    #                             weight_decay=cfg.weight_decay,
-    #                             nesterov=True, momentum=cfg.momentum)
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
-                                weight_decay=cfg.weight_decay)
+    if cfg.optim == 'SGD':
+        optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
+                                    weight_decay=cfg.weight_decay,
+                                    nesterov=True, momentum=cfg.momentum)
+    elif cfg.optim == 'Adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
+                                     weight_decay=cfg.weight_decay)
 
-    # scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
-    #                                               base_lr=cfg.learning_rate,
-    #                                               max_lr=0.1)
+    scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
+                                                  base_lr=cfg.learning_rate,
+                                                  max_lr=0.1)
 
     # print model parameters
     print("Receptive Field: " + str(
@@ -558,7 +562,7 @@ if __name__ == '__main__':
         PR Curves
         '''
         # Train
-        yhat = infer_model(model, device, train_loader, cfg)
+        yhat = infer_model(model, device, train_loader)
 
         f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
                                                   'Train')[2:4]
@@ -566,9 +570,11 @@ if __name__ == '__main__':
         roc_auc = metric.get_roc(model, yhat, y_train_tr_tensor, device,
                                  'Train')
         tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
+        pdf.plot_density_estimation(model, yhat, y_train_tr_tensor,
+                                              'Train')
 
         # Validation
-        yhat = infer_model(model, device, valid_loader, cfg)
+        yhat = infer_model(model, device, valid_loader)
 
         f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
                                                   'Validation')[2:4]
@@ -581,7 +587,7 @@ if __name__ == '__main__':
                                               'Validation')
 
         # Test
-        yhat = infer_model(model, device, test_loader, cfg)
+        yhat = infer_model(model, device, test_loader)
         cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
                                               metric.to_labels(yhat[:, 1],
                                                                th))  # watch
@@ -607,36 +613,37 @@ if __name__ == '__main__':
     Model interpretation
     '''
     # # todo interpret on test set?
-    # data_loader_interpret = torch.utils.data.DataLoader(datasets['train'],
-    #                                                     int(
-    #     cfg.batch_size / 6), shuffle=False, drop_last=False)
-    #
-    # # X_test_data_tensor = X_test_data_tensor.to(device)
-    # # from captum.attr import IntegratedGradients
-    # # ig = IntegratedGradients(model.to(device))
-    # # attr, delta = ig.attribute(X_test_data_tensor[0:10], target=1,
-    # #                            return_convergence_delta=True)
-    #
-    # attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-    #     model, device, data_loader_interpret, cfg.n_features, cfg)
-    #
-    # interpreter.visualize_importance(
-    #     np.array(feature_names[start_feature:start_feature +
-    #     cfg.n_features]),
-    #     np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
-    #     cfg.n_features,
-    #     title="Integrated Gradient Features")
-    #
-    # interpreter.visualize_importance(
-    #     np.array(feature_names[start_feature:start_feature +
-    #     cfg.n_features]),
-    #     np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-    #     cfg.n_features, title="Saliency Features")
-    #
-    # '''SHAP'''
-    # plt.close('all')
-    # interpreter.get_shap(model, test_loader, device, cfg, feature_names,
-    #                      start_feature)
+    if cfg.interpret:
+        data_loader_interpret = torch.utils.data.DataLoader(datasets['train'],
+                                                            int(
+            cfg.batch_size / 6), shuffle=False, drop_last=False)
+
+        # X_test_data_tensor = X_test_data_tensor.to(device)
+        # from captum.attr import IntegratedGradients
+        # ig = IntegratedGradients(model.to(device))
+        # attr, delta = ig.attribute(X_test_data_tensor[0:10], target=1,
+        #                            return_convergence_delta=True)
+
+        attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
+            model, device, data_loader_interpret, cfg.n_features, cfg)
+
+        interpreter.visualize_importance(
+            np.array(feature_names[start_feature:start_feature +
+            cfg.n_features]),
+            np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
+            cfg.n_features,
+            title="Integrated Gradient Features")
+
+        interpreter.visualize_importance(
+            np.array(feature_names[start_feature:start_feature +
+            cfg.n_features]),
+            np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
+            cfg.n_features, title="Saliency Features")
+
+        '''SHAP'''
+        plt.close('all')
+        interpreter.get_shap(model, test_loader, device, cfg, feature_names,
+                             start_feature)
 
     if cfg.skorch:
         '''
@@ -718,11 +725,11 @@ if __name__ == '__main__':
                                   criterion=nn.CrossEntropyLoss,
                                   criterion__weight=torch.FloatTensor(
                                       class_weights).to(device),
-                                  optimizer=torch.optim.Adam,
+                                  optimizer=torch.optim.SGD,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
-                                  # optimizer__momentum=cfg.momentum,
-                                  # optimizer__nesterov=True,
+                                  optimizer__momentum=cfg.momentum,
+                                  optimizer__nesterov=True,
                                   device=device,
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
