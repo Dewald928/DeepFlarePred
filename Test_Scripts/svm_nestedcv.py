@@ -32,7 +32,7 @@ from data_loader import data_loader
 from utils import confusion_matrix_plot
 
 # Data
-n_features = 40
+n_features = 32
 start_feature = 5
 mask_value = 0
 drop_path = os.path.expanduser(
@@ -52,17 +52,17 @@ X_train_data, y_train_data = data_loader.load_data(
         datafile=filepath + 'normalized_training.csv',
         flare_label='M5', series_len=1,
         start_feature=start_feature, n_features=n_features,
-        mask_value=mask_value)
+        mask_value=mask_value, feature_list=feature_list)
 X_valid_data, y_valid_data = data_loader.load_data(
         datafile=filepath + 'normalized_validation.csv',
         flare_label='M5', series_len=1,
         start_feature=start_feature, n_features=n_features,
-        mask_value=mask_value)
+        mask_value=mask_value, feature_list=feature_list)
 X_test_data, y_test_data = data_loader.load_data(
         datafile=filepath + 'normalized_testing.csv',
         flare_label='M5', series_len=1,
         start_feature=start_feature, n_features=n_features,
-        mask_value=mask_value)
+        mask_value=mask_value, feature_list=feature_list)
 X_train_data = np.reshape(X_train_data, (len(X_train_data), n_features))
 X_valid_data = np.reshape(X_valid_data, (len(X_valid_data), n_features))
 X_test_data = np.reshape(X_test_data, (len(X_test_data), n_features))
@@ -88,14 +88,13 @@ feature_name = pd.DataFrame(data_loader.get_feature_names(
 '''
 SVM Nested CV
 '''
-params = {'C': [0.0001,0.001,0.01,0.1, 1, 10, 100]}  # choose C values here
-clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
+seed = 4
+params = {'C': [0.001]}  # choose C values here
+clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
 
-inner_cv = StratifiedKFold(n_splits=2, shuffle=True,
-                           random_state=3)
-outer_cv = StratifiedKFold(n_splits=5, shuffle=True,
-                           random_state=3)
+inner_cv = KFold(n_splits=2, shuffle=True, random_state=seed)
+outer_cv = KFold(n_splits=5, shuffle=True, random_state=seed)
 
 gcv = GridSearchCV(estimator=clf, param_grid=params,
                    scoring=make_scorer(balanced_accuracy_score,
@@ -108,21 +107,13 @@ nested_score = cross_val_score(gcv, X=X, y=y,
                                scoring=make_scorer(
                                    balanced_accuracy_score,
                                    **{'adjusted': True}))
-print('%s | outer TSS %.2f%% +/- %.2f' % (
-    'SVM', nested_score.mean() * 100, nested_score.std() * 100))
+print('%s | outer TSS %.4f +/- %.4f' % (
+    'SVM', nested_score.mean(), nested_score.std()))
 
 # Fitting a model to the whole training set
 # using the "best" algorithm
 # best_algo = gridcvs['SVM']
 gcv.fit(X, y)
-
-train_tss = balanced_accuracy_score(y_true=y,
-                           y_pred=gcv.predict(X), adjusted=True)
-test_tss = balanced_accuracy_score(y_true=y_test_tr,
-                          y_pred=gcv.predict(X_test_data), adjusted=True)
-
-print('Training TSS: %.4f' % (train_tss))
-print('Test TSS: %.4f' % (test_tss))
 
 # summarize results
 print("Best: %f using %s" % (
@@ -133,5 +124,27 @@ params = gcv.cv_results_['params']
 for mean, stdev, param in zip(means, stds, params):
     print("%f (%f) with: %r" % (mean, stdev, param))
 
-pd.DataFrame(gcv.cv_results_).to_csv('../saved/scores/nestedcv_svm.csv')
+train_tss = balanced_accuracy_score(y_true=y,
+                           y_pred=gcv.predict(X), adjusted=True)
+test_tss = balanced_accuracy_score(y_true=y_test_tr,
+                          y_pred=gcv.predict(X_test_data), adjusted=True)
 
+print('Training TSS: %.4f' % (train_tss))
+print('Test TSS: %.4f' % (test_tss))
+
+
+# save to csv
+nested_score_df = pd.Series(nested_score, name='best_outer_score')
+df_csv = pd.concat([pd.DataFrame(gcv.cv_results_), nested_score_df], axis=1)
+df_csv.to_csv('../saved/scores/nestedcv_svm_{}.csv'.format(seed))
+
+# calibration
+from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+
+cclf = CalibratedClassifierCV(base_estimator=LinearSVC(penalty='l2',
+                                                       dual=False, C=0.001), cv=5)
+cclf.fit(X, y)
+res = cclf.predict_proba(X_test_data)[:, 1]
+
+# or use
+y_pred = gcv.decision_function(X_test_data)
