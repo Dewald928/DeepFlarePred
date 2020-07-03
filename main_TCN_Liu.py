@@ -609,42 +609,6 @@ if __name__ == '__main__':
         pdf.plot_calibration_curve(model, 'Test', [], [], test_loader,
                                    y_test_tr_tensor, yhat)
 
-    '''
-    Model interpretation
-    '''
-    # # todo interpret on test set?
-    if cfg.interpret:
-        data_loader_interpret = torch.utils.data.DataLoader(datasets['train'],
-                                                            int(
-            cfg.batch_size / 6), shuffle=False, drop_last=False)
-
-        # X_test_data_tensor = X_test_data_tensor.to(device)
-        # from captum.attr import IntegratedGradients
-        # ig = IntegratedGradients(model.to(device))
-        # attr, delta = ig.attribute(X_test_data_tensor[0:10], target=1,
-        #                            return_convergence_delta=True)
-
-        attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-            model, device, data_loader_interpret, cfg.n_features, cfg)
-
-        interpreter.visualize_importance(
-            np.array(feature_names[start_feature:start_feature +
-            cfg.n_features]),
-            np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
-            cfg.n_features,
-            title="Integrated Gradient Features")
-
-        interpreter.visualize_importance(
-            np.array(feature_names[start_feature:start_feature +
-            cfg.n_features]),
-            np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-            cfg.n_features, title="Saliency Features")
-
-        '''SHAP'''
-        plt.close('all')
-        interpreter.get_shap(model, test_loader, device, cfg, feature_names,
-                             start_feature)
-
     if cfg.skorch:
         '''
             Skorch training
@@ -736,7 +700,7 @@ if __name__ == '__main__':
                                   callbacks=[train_tss, valid_tss, earlystop,
                                              checkpoint,  # load_state,
                                              reload_at_end,
-                                             logger],
+                                             logger, lrscheduler],
                                   # iterator_train__shuffle=True,
                                   warm_start=False)
 
@@ -867,4 +831,44 @@ if __name__ == '__main__':
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
+
+
+    '''
+    Model interpretation
+    '''
+    # # todo interpret on test set?
+    if cfg.interpret:
+        data_loader_interpret = torch.utils.data.DataLoader(datasets['train'],
+                                                            int(
+            cfg.batch_size / 6), shuffle=False, drop_last=False)
+
+        # X_test_data_tensor = X_test_data_tensor.to(device)
+        # from captum.attr import IntegratedGradients
+        # ig = IntegratedGradients(model.to(device))
+        # attr, delta = ig.attribute(X_test_data_tensor[0:10], target=1,
+        #                            return_convergence_delta=True)
+
+        attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
+            model, device, data_loader_interpret, cfg.n_features, cfg)
+
+        interpreter.visualize_importance(
+            np.array(feature_names[start_feature:start_feature +
+            cfg.n_features]),
+            np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
+            cfg.n_features,
+            title="Integrated Gradient Features")
+
+        interpreter.visualize_importance(
+            np.array(feature_names[start_feature:start_feature +
+            cfg.n_features]),
+            np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
+            cfg.n_features, title="Saliency Features")
+
+        '''SHAP'''
+        plt.close('all')
+        interpreter.get_shap(model, test_loader, device, cfg, feature_names,
+                             start_feature)
+
     print('Finished')
+
+
