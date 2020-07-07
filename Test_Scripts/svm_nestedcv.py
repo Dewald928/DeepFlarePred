@@ -30,6 +30,7 @@ from tabulate import tabulate
 
 import sys
 sys.path.insert(0, '/home/fuzzy/work/DeepFlarePred/')
+sys.path.insert(0, '/home/dewaldus/projects/DeepFlarePred/')
 from data_loader import data_loader
 from utils import confusion_matrix_plot
 
@@ -40,7 +41,7 @@ start_feature = 5
 mask_value = 0
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
-filepath = './Data/Liu/' + 'M5' + '/'
+filepath = '../Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
 listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ', 'USFLUX',

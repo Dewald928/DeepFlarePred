@@ -27,6 +27,9 @@ from sklearn.svm import LinearSVC, l1_min_c
 from sklearn.tree import DecisionTreeClassifier
 from tabulate import tabulate
 
+import sys
+sys.path.insert(0, '/home/fuzzy/work/DeepFlarePred/')
+sys.path.insert(0, '/home/dewaldus/projects/DeepFlarePred/')
 from data_loader import data_loader
 from utils import confusion_matrix_plot
 
@@ -34,7 +37,9 @@ from utils import confusion_matrix_plot
 n_features = 40
 start_feature = 5
 mask_value = 0
-drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
+# drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
+drop_path = os.path.expanduser(
+    '~/projects/DeepFlarePred/saved/features_inspect/')
 filepath = '../Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
@@ -122,7 +127,7 @@ for scorer, score_func in score_functions.items():
 '''
 Linear SVC optimization
 '''
-params = {'C': [0.001]}  # choose C values here
+params = {'C': [0.01]}  # choose C values here
 clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
 # cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
