@@ -474,13 +474,14 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
                                     weight_decay=cfg.weight_decay,
                                     nesterov=True, momentum=cfg.momentum)
+        scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
+                                                      base_lr=cfg.learning_rate,
+                                                      max_lr=0.1)
     elif cfg.optim == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
                                      weight_decay=cfg.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
-                                                  base_lr=cfg.learning_rate,
-                                                  max_lr=0.1)
+
 
     # print model parameters
     print("Receptive Field: " + str(
@@ -836,38 +837,39 @@ if __name__ == '__main__':
     '''
     Model interpretation
     '''
-    # # todo interpret on test set?
+    # # todo baseline input?
     if cfg.interpret:
-        data_loader_interpret = torch.utils.data.DataLoader(datasets['train'],
-                                                            int(
-            cfg.batch_size / 6), shuffle=False, drop_last=False)
+        # get samples to interpret
+        df = pd.read_csv(filepath + 'normalized_testing.csv')
+        input_df = df[df['NOAA'] == 12673].iloc[:, start_feature:]
+        backgroud_df = df[df['NOAA'] == 12252].iloc[:, start_feature:] #no flar
 
-        # X_test_data_tensor = X_test_data_tensor.to(device)
-        # from captum.attr import IntegratedGradients
-        # ig = IntegratedGradients(model.to(device))
-        # attr, delta = ig.attribute(X_test_data_tensor[0:10], target=1,
-        #                            return_convergence_delta=True)
+        # interpret using captum
+        [attr_sal, attr_ig, delta_ig, attr_dl, delta_dl, attr_ixg,
+         attr_gbp] = interpreter.interpret_model(model, device, input_df,
+                                                 backgroud_df)
 
-        attr_ig, attr_sal, attr_ig_avg, attr_sal_avg = interpreter.interpret_model(
-            model, device, data_loader_interpret, cfg.n_features, cfg)
-
-        interpreter.visualize_importance(
-            np.array(feature_names[start_feature:start_feature +
-            cfg.n_features]),
-            np.mean(attr_ig_avg, axis=0), np.std(attr_ig_avg, axis=0),
-            cfg.n_features,
-            title="Integrated Gradient Features")
-
-        interpreter.visualize_importance(
-            np.array(feature_names[start_feature:start_feature +
-            cfg.n_features]),
-            np.mean(attr_sal_avg, axis=0), np.std(attr_sal_avg, axis=0),
-            cfg.n_features, title="Saliency Features")
+        # visualize interpretation
+        interpreter.visualize_importance(np.array(
+            feature_names[start_feature:start_feature + cfg.n_features]),
+            attr_sal, cfg.n_features, title="Saliency")
+        interpreter.visualize_importance(np.array(
+            feature_names[start_feature:start_feature + cfg.n_features]),
+            attr_ig, cfg.n_features, title="Integrated Gradients")
+        interpreter.visualize_importance(np.array(
+            feature_names[start_feature:start_feature + cfg.n_features]),
+            attr_dl, cfg.n_features, title="Deeplift")
+        interpreter.visualize_importance(np.array(
+            feature_names[start_feature:start_feature + cfg.n_features]),
+            attr_ixg, cfg.n_features, title="Input x Gradient")
+        interpreter.visualize_importance(np.array(
+            feature_names[start_feature:start_feature + cfg.n_features]),
+            attr_gbp, cfg.n_features, title="Guided Backprop")
 
         '''SHAP'''
         plt.close('all')
-        interpreter.get_shap(model, test_loader, device, cfg, feature_names,
-                             start_feature)
+        interpreter.get_shap(model, input_df, backgroud_df, device, cfg,
+                             feature_names, start_feature)
 
     print('Finished')
 
