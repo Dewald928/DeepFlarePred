@@ -32,7 +32,7 @@ from data_loader import data_loader
 from utils import confusion_matrix_plot
 
 # Data
-n_features = 32
+n_features = 40
 start_feature = 5
 mask_value = 0
 drop_path = os.path.expanduser(
@@ -46,7 +46,7 @@ listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ', 'USFLUX',
                         'MEANSHR', 'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec',
                         'EPSZ', 'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xdec', 'Xhis',
                         'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']
-feature_list = listofuncorrfeatures
+feature_list = None
 
 X_train_data, y_train_data = data_loader.load_data(
         datafile=filepath + 'normalized_training.csv',
@@ -88,13 +88,14 @@ feature_name = pd.DataFrame(data_loader.get_feature_names(
 '''
 SVM Nested CV
 '''
-seed = 4
-params = {'C': [0.001]}  # choose C values here
+seed = 1
+params = {'C': [0.0001,0.001,0.01,0.1,1,10,100]}  # choose C values
+# here
 clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
 
-inner_cv = KFold(n_splits=2, shuffle=True, random_state=seed)
-outer_cv = KFold(n_splits=5, shuffle=True, random_state=seed)
+inner_cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=seed)
+outer_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
 
 gcv = GridSearchCV(estimator=clf, param_grid=params,
                    scoring=make_scorer(balanced_accuracy_score,
@@ -136,15 +137,18 @@ print('Test TSS: %.4f' % (test_tss))
 # save to csv
 nested_score_df = pd.Series(nested_score, name='best_outer_score')
 df_csv = pd.concat([pd.DataFrame(gcv.cv_results_), nested_score_df], axis=1)
-df_csv.to_csv('../saved/scores/nestedcv_svm_{}.csv'.format(seed))
+df_csv.to_csv('../saved/scores/nestedcv_svm_{}_strat.csv'.format(seed))
 
 # calibration
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 
-cclf = CalibratedClassifierCV(base_estimator=LinearSVC(penalty='l2',
+cclf = CalibratedClassifierCV(base_estimator=LinearSVC(penalty='l1',
                                                        dual=False, C=0.001), cv=5)
 cclf.fit(X, y)
 res = cclf.predict_proba(X_test_data)[:, 1]
 
 # or use
 y_pred = gcv.decision_function(X_test_data)
+
+
+
