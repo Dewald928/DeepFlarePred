@@ -18,7 +18,7 @@ from sklearn.linear_model import Perceptron
 from sklearn.metrics import balanced_accuracy_score, classification_report
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import RepeatedStratifiedKFold, KFold, RepeatedKFold
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
@@ -35,7 +35,7 @@ n_features = 40
 start_feature = 5
 mask_value = 0
 drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
-filepath = './Data/Liu/' + 'M5' + '/'
+filepath = '../Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
 listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ', 'USFLUX',
@@ -71,14 +71,15 @@ y_test_tr = data_loader.label_transform(y_test_data)
 y = data_loader.label_transform(y)
 
 feature_name = pd.DataFrame(
-    data_loader.get_feature_names(filepath + 'normalized_training.csv'))[5:]
+    data_loader.get_feature_names(filepath + 'normalized_training.csv'))[
+               5:].reset_index(drop=True)
 feature_names = data_loader.get_feature_names(
     filepath + 'normalized_training.csv')
 
-X, y = make_classification(n_samples=10000, n_features=10, n_redundant=5,
-                           n_informative=5, n_clusters_per_class=1,
-                           weights=[0.1, 0.9], class_sep=1)
-X, X_test_data, y, y_test_tr = train_test_split(X,y, test_size=0.3)
+# X, y = make_classification(n_samples=10000, n_features=10, n_redundant=5,
+#                            n_informative=5, n_clusters_per_class=1,
+#                            weights=[0.1, 0.9], class_sep=1)
+# X, X_test_data, y, y_test_tr = train_test_split(X,y, test_size=0.3)
 
 '''
 Univariate Feature selection
@@ -90,9 +91,9 @@ score_functions = {'F-score': f_classif,
 for scorer, score_func in score_functions.items():
     print(scorer, score_func)
     selector = SelectKBest(score_func, k=40)
-    selected_features = selector.fit_transform(X_train_data, y_train_tr)
+    selected_features = selector.fit_transform(X, y)
     plt.bar(
-        data_loader.get_feature_names(filepath + 'normalized_training.csv')[
+        feature_names[
         5:], selector.scores_)
     plt.title('{} vs. Features'.format(scorer))
     plt.xlabel('Features')
@@ -104,7 +105,7 @@ for scorer, score_func in score_functions.items():
     f_score_indexes = (-selector.scores_).argsort()[:40]
 
     sort_df = pd.concat([pd.DataFrame(
-        data_loader.get_feature_names(filepath + 'normalized_training.csv')[
+        feature_names[
         5:], columns=['Features']), pd.DataFrame(selector.scores_,
         columns=['Importance'])], axis=1).sort_values(by='Importance',
         ascending=False).reset_index()
@@ -121,13 +122,14 @@ for scorer, score_func in score_functions.items():
 '''
 Linear SVC optimization
 '''
-params = {'C': [0.0001,0.001,0.01,0.1,1,10,100]}  # choose C values here
-clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
+params = {'C': [0.001]}  # choose C values here
+clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
-cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=2, random_state=2)
-grid = GridSearchCV(clf, param_grid=params, cv=cv, return_train_score=True,
+# cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
+grid = GridSearchCV(clf, param_grid=params, cv=5, return_train_score=True,
                     scoring=make_scorer(balanced_accuracy_score,
-                                        **{'adjusted': True}), n_jobs=-1)
+                                        **{'adjusted': True}), n_jobs=-1,
+                    verbose=1)
 grid.fit(X, y)
 print("Best parameters set found on development set:")
 print(grid.best_params_)
@@ -149,8 +151,8 @@ print('Average tss score: {0:0.4f}'.format(average_tss))
 Crossval from feature selection
 '''
 cs = l1_min_c(X, y)  # minimum C-value
-clf = Pipeline([('anova', SelectKBest(mutual_info_classif)), ('svc', LinearSVC(
-    C=0.001, penalty="l1", dual=False, verbose=1, max_iter=10000,
+clf = Pipeline([('anova', SelectKBest(f_classif)), ('svc', LinearSVC(
+    C=0.01, penalty="l1", dual=False, verbose=0, max_iter=10000,
     class_weight='balanced'))])
 
 # Plot the cross-validation score as a function of number of features
@@ -160,10 +162,11 @@ n_features = np.arange(40, 10, -1)
 
 for k_feature in n_features:
     clf.set_params(anova__k=k_feature)
+    # cv = RepeatedStratifiedKFold(n_splits=5)
     this_scores = cross_val_score(clf, X, y, cv=5,
                                   scoring=make_scorer(balanced_accuracy_score,
                                                       **{'adjusted': True}),
-                                  n_jobs=-1)
+                                  n_jobs=-1, verbose=1)
     score_means.append(this_scores.mean())
     score_stds.append(this_scores.std())
 
@@ -174,63 +177,19 @@ plt.xticks(np.linspace(100, 0, 11, endpoint=True))
 plt.xlabel('Number of Features')
 plt.ylabel('TSS')
 plt.axis('tight')
-plt.savefig(drop_path + "SVM_CV.png")
+plt.savefig(drop_path + "SVM_CV_F.png")
 plt.show()
 
 '''
 Recursive Feature Elimination
 '''
-clf = LinearSVC(penalty="l1", dual=False, verbose=1, max_iter=10000,
-                class_weight='balanced', random_state=1, C=1)
+clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
+                class_weight='balanced', random_state=1, C=0.01)
 
-
-# get a list of models to evaluate
-def get_models():
-    models = dict()
-    for i in range(1, 41):
-        rfe = RFE(estimator=clf, n_features_to_select=i)
-        model = clf
-        models[str(i)] = Pipeline(steps=[('s', rfe), ('m', model)])
-    return models
-
-
-# evaluate a give model using cross-validation
-def evaluate_model(model):
-    cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
-    scores = cross_val_score(model, X, y,
-                             scoring=make_scorer(balanced_accuracy_score,
-                                                 **{'adjusted': True}), cv=cv,
-                             n_jobs=-1, error_score='raise')
-    return scores
-
-
-# get the models to evaluate
-models = get_models()
-# evaluate the models and store results
-results, names = list(), list()
-for name, model in models.items():
-    scores = evaluate_model(model)
-    results.append(scores)
-    names.append(name)
-    print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
-# plot model performance for comparison
-fig = plt.figure(figsize=(10, 8))
-plt.boxplot(results, labels=names, showmeans=True)
-plt.tight_layout()
-plt.savefig(drop_path + 'RFECV_boxplot.png')
-plt.show()
-# rfe_results = pd.concat([pd.DataFrame(names), pd.DataFrame(results)], axis=1)
-# rfe_results.to_csv('rfe_results.csv')
-
-# rfe_results = pd.read_csv('rfe_results.csv')
-# results = rfe_results.iloc[:, 2:]
-# names = rfe_results.index.values
-
-# the same as previous much faster, but without std
 # Get feature ranking
-cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
 rfecv = RFECV(clf, cv=5, scoring=make_scorer(balanced_accuracy_score,
-                                             **{'adjusted': True}), n_jobs=-1)
+                                             **{'adjusted': True}),
+              n_jobs=-1, verbose=1)
 rfecv.fit(X, y)
 
 # plot scores
@@ -238,8 +197,8 @@ plt.figure(figsize=(16, 9))
 plt.title('Recursive Feature Elimination with Cross-Validation')
 plt.xlabel('Number of features selected')
 plt.ylabel('TSS')
-plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_,
-         color='#303F9F', linewidth=3)
+plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
+plt.savefig(drop_path+'RFECV_avg.png')
 plt.show()
 
 print("Features sorted by their rank:")
@@ -254,98 +213,129 @@ print('Test tss score: {0:0.4f}'.format(average_tss))
 confusion_matrix_plot.plot_confusion_matrix_from_data(y_test_tr, y_pred,
                                                       ['Negative', 'Positive'])
 
-'''
-RFE 2
-'''
-# create pipeline
-rfe = RFECV(estimator=clf)
-model = clf
-pipeline = Pipeline(steps=[('s', rfe), ('m', model)])
-# evaluate model
-cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
-n_scores = cross_val_score(pipeline, X, y, scoring=make_scorer(balanced_accuracy_score,
-                                             **{'adjusted': True}), cv=cv,
-                           n_jobs=-1, error_score='raise')
-# report performance
-print('TSS: %.4f (%.4f)' % (np.mean(n_scores), np.std(n_scores)))
+
+
+# # get a list of models to evaluate
+# def get_models():
+#     models = dict()
+#     for i in range(1, 41):
+#         rfe = RFE(estimator=clf, n_features_to_select=i)
+#         model = clf
+#         models[str(i)] = Pipeline(steps=[('s', rfe), ('m', model)])
+#     return models
+#
+#
+# # evaluate a give model using cross-validation
+# def evaluate_model(model):
+#     cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
+#     scores = cross_val_score(model, X, y,
+#                              scoring=make_scorer(balanced_accuracy_score,
+#                                                  **{'adjusted': True}), cv=cv,
+#                              n_jobs=-1, error_score='raise')
+#     return scores
+#
+#
+# # get the models to evaluate
+# models = get_models()
+# # evaluate the models and store results
+# results, names = list(), list()
+# for name, model in models.items():
+#     scores = evaluate_model(model)
+#     results.append(scores)
+#     names.append(name)
+#     print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
+# # plot model performance for comparison
+# fig = plt.figure(figsize=(10, 8))
+# plt.boxplot(results, labels=names, showmeans=True)
+# plt.tight_layout()
+# plt.savefig(drop_path + 'RFECV_boxplot.png')
+# plt.show()
+# # rfe_results = pd.concat([pd.DataFrame(names), pd.DataFrame(results)], axis=1)
+# # rfe_results.to_csv('rfe_results.csv')
+#
+# # rfe_results = pd.read_csv('rfe_results.csv')
+# # results = rfe_results.iloc[:, 2:]
+# # names = rfe_results.index.values
 
 
 '''
 RFE Multiple algorithms test
 '''
-
-
 # get the dataset
-def get_dataset():
-    X, y = make_classification(n_samples=1000, n_features=10, n_informative=5,
-                               n_redundant=5, random_state=1)
-    return X, y
-
-
-# get a list of models to evaluate
-def get_models():
-    models = dict()
-    # lr
-    rfe = RFE(estimator=LogisticRegression(), n_features_to_select=5)
-    model = DecisionTreeClassifier()
-    models['lr'] = Pipeline(steps=[('s', rfe), ('m', model)])
-    # perceptron
-    rfe = RFE(estimator=Perceptron(), n_features_to_select=5)
-    model = DecisionTreeClassifier()
-    models['per'] = Pipeline(steps=[('s', rfe), ('m', model)])
-    # cart
-    rfe = RFE(estimator=DecisionTreeClassifier(), n_features_to_select=5)
-    model = DecisionTreeClassifier()
-    models['cart'] = Pipeline(steps=[('s', rfe), ('m', model)])
-    # rf
-    rfe = RFE(estimator=RandomForestClassifier(), n_features_to_select=5)
-    model = DecisionTreeClassifier()
-    models['rf'] = Pipeline(steps=[('s', rfe), ('m', model)])
-    # gbm
-    rfe = RFE(estimator=GradientBoostingClassifier(), n_features_to_select=5)
-    model = DecisionTreeClassifier()
-    models['gbm'] = Pipeline(steps=[('s', rfe), ('m', model)])
-    return models
-
-
-# evaluate a give model using cross-validation
-def evaluate_model(model):
-    cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
-    scores = cross_val_score(model, X, y,
-                             scoring=make_scorer(balanced_accuracy_score,
-                                                 **{'adjusted': True}), cv=cv,
-                             n_jobs=-1)
-    return scores
-
-
-# define dataset
-# X, y = get_dataset()
-# get the models to evaluate
-models = get_models()
-# evaluate the models and store results
-results, names = list(), list()
-for name, model in models.items():
-    scores = evaluate_model(model)
-    results.append(scores)
-    names.append(name)
-    print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
-# plot model performance for comparison
-plt.boxplot(results, labels=names, showmeans=True)
-plt.show()
+# def get_dataset():
+#     X, y = make_classification(n_samples=1000, n_features=10, n_informative=5,
+#                                n_redundant=5, random_state=1)
+#     return X, y
+#
+#
+# # get a list of models to evaluate
+# def get_models():
+#     models = dict()
+#     # lr
+#     rfe = RFE(estimator=LogisticRegression(), n_features_to_select=5)
+#     model = DecisionTreeClassifier()
+#     models['lr'] = Pipeline(steps=[('s', rfe), ('m', model)])
+#     # perceptron
+#     rfe = RFE(estimator=Perceptron(), n_features_to_select=5)
+#     model = DecisionTreeClassifier()
+#     models['per'] = Pipeline(steps=[('s', rfe), ('m', model)])
+#     # cart
+#     rfe = RFE(estimator=DecisionTreeClassifier(), n_features_to_select=5)
+#     model = DecisionTreeClassifier()
+#     models['cart'] = Pipeline(steps=[('s', rfe), ('m', model)])
+#     # rf
+#     rfe = RFE(estimator=RandomForestClassifier(), n_features_to_select=5)
+#     model = DecisionTreeClassifier()
+#     models['rf'] = Pipeline(steps=[('s', rfe), ('m', model)])
+#     # gbm
+#     rfe = RFE(estimator=GradientBoostingClassifier(), n_features_to_select=5)
+#     model = DecisionTreeClassifier()
+#     models['gbm'] = Pipeline(steps=[('s', rfe), ('m', model)])
+#     return models
+#
+#
+# # evaluate a give model using cross-validation
+# def evaluate_model(model):
+#     cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
+#     scores = cross_val_score(model, X, y,
+#                              scoring=make_scorer(balanced_accuracy_score,
+#                                                  **{'adjusted': True}), cv=cv,
+#                              n_jobs=-1)
+#     return scores
+#
+#
+# # define dataset
+# # X, y = get_dataset()
+# # get the models to evaluate
+# models = get_models()
+# # evaluate the models and store results
+# results, names = list(), list()
+# for name, model in models.items():
+#     scores = evaluate_model(model)
+#     results.append(scores)
+#     names.append(name)
+#     print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
+# # plot model performance for comparison
+# plt.boxplot(results, labels=names, showmeans=True)
+# plt.show()
 
 '''
 Comparison Plot
 '''
-f_df = f_df.loc[:, ['Features']]
-f_df = pd.DataFrame(f_df.index.values, index=f_df)
-mi_df = mi_df.loc[:, ['Features']]
-mi_df = pd.DataFrame(mi_df.index.values, index=mi_df)
-liu_df = pd.DataFrame(feature_name.index.values, index=feature_name)
+f_df_c = f_df.loc[:, ['Features']]
+f_df_c = pd.DataFrame(f_df_c.index.values, index=f_df_c['Features'])
+
+mi_df_c = mi_df.loc[:, ['Features']]
+mi_df_c = pd.DataFrame(mi_df_c.index.values, index=mi_df_c['Features'])
+
+feature_name.columns = ['Features']
+liu_df_c = pd.DataFrame(feature_name.index.values, index=feature_name[
+    'Features'])
 
 rfe_df.columns = ['0', 'Features']
-rfe_df = pd.DataFrame(rfe_df.index.values, index=rfe_df)
+rfe_df_c = pd.DataFrame(rfe_df['0'].values, index=rfe_df['Features'])
 
-df_comp = pd.concat([liu_df, f_df, mi_df, rfe_df], axis=1, sort=False)
+df_comp = pd.concat([liu_df_c, f_df_c, mi_df_c, rfe_df_c], axis=1, sort=False)
 df_comp.columns = ['Liu', 'F-Score', 'MI', 'RFE']
 plt.figure(figsize=(20, 16))
 ax = plt.subplot(111)
