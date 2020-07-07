@@ -28,8 +28,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 
+import sys
+sys.path.insert(0, '/home/fuzzy/work/DeepFlarePred/')
 from data_loader import data_loader
 from utils import confusion_matrix_plot
+
 
 # Data
 n_features = 40
@@ -37,7 +40,7 @@ start_feature = 5
 mask_value = 0
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
-filepath = '../Data/Liu/' + 'M5' + '/'
+filepath = './Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
 listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ', 'USFLUX',
