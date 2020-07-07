@@ -15,14 +15,20 @@ from data_loader import data_loader
 
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
+filepath = './Data/Krynauw/'
 filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_train, df_val, df_test], axis=0)
+df = pd.concat([df_train, df_val], axis=0)
 df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
+
+from sklearn.preprocessing import StandardScaler
+standardscaler = StandardScaler()
+df_norm = standardscaler.fit_transform(df.iloc[:,5:])
+
 
 '''
 Basic Stats
