@@ -15,8 +15,8 @@ import wandb
 def interpret_model(model, device, input_df, backgroud_df):
     print("\n Interpreting Model...")
 
-    input_tensor = torch.tensor(input_df.values).float()
-    background = torch.tensor(backgroud_df.values).float()
+    input_tensor = torch.tensor(input_df).float()
+    background = torch.tensor(backgroud_df).float()
     input_tensor.requires_grad = True
     model.eval()
 
@@ -44,16 +44,18 @@ def interpret_model(model, device, input_df, backgroud_df):
 # Helper method to print importance and visualize distribution
 def visualize_importance(feature_names, attr, n_features,
                          title="Average Feature Importance", plot=True):
-    # print(title)
-    # for i in range(len(feature_names)):
-    #     print(feature_names[i], ": ", '%.3f' % (importances[i]))
+
     importance_avg = np.mean(attr.detach().numpy(), axis=0)
+    importance_avg = importance_avg[:,-1] if importance_avg.shape[1] > 0 else importance_avg
     importance_std = np.std(attr.detach().numpy(), axis=0)
+    importance_std = importance_std[:,-1] if importance_std.shape[1] > 0 else importance_std
+
     x_pos = (np.arange(len(feature_names)))
     if plot:
         fig = plt.figure(figsize=(8, 4))
-        plt.bar(x_pos, importance_avg.reshape(n_features),
-                yerr=importance_std.reshape(n_features), align='center')
+        plt.bar(x_pos, importance_avg,
+                yerr=importance_std,
+                align='center')
         plt.xticks(x_pos, feature_names, rotation='vertical')
         plt.xlabel('Features')
         plt.ylabel('Importance')
@@ -64,12 +66,11 @@ def visualize_importance(feature_names, attr, n_features,
 
         # plot ranked
         df_sorted = pd.DataFrame({'Features': feature_names,
-                                  "Importances": importance_avg.reshape(
-                                      n_features)})
+                                  "Importances": importance_avg})
         df_sorted = df_sorted.sort_values('Importances', ascending=False)
         fig_sorted = df_sorted.plot(kind='bar', y='Importances', x='Features',
                                     title=title, figsize=(8, 4),
-                                    yerr=importance_std.reshape(n_features))
+                                    yerr=importance_std)
         plt.ylabel('Importance')
         plt.tight_layout()
         plt.show()
@@ -98,8 +99,8 @@ def check_significance(attr, test_features, feature_num=1):
 def get_shap(model, input_df, backgroud_df, device, cfg, feature_names,
              start_feature):
 
-    test_samples = torch.tensor(input_df.values).float().to(device)
-    background = torch.tensor(backgroud_df.values).float().to(device)
+    test_samples = torch.tensor(input_df).float().to(device)
+    background = torch.tensor(backgroud_df).float().to(device)
 
     e = shap.DeepExplainer(model.to(device), background)
     shap_values = e.shap_values(test_samples)
@@ -109,11 +110,10 @@ def get_shap(model, input_df, backgroud_df, device, cfg, feature_names,
         test_numpy = test_samples.cpu().numpy()
     else:
         shap_numpy = []
-        test_numpy = np.swapaxes(np.swapaxes(test_samples.cpu().numpy(), 1, -1), 1,
-                                 2)
-        test_numpy = test_numpy.squeeze(2)
+        test_numpy = test_samples.cpu().numpy()
+        test_numpy = test_numpy[:,:,-1]
         for i in shap_values:
-            shap_numpy.append(i.squeeze(2))
+            shap_numpy.append(i[:,:,-1])
 
     # plot shap values
     fig_shap = plt.figure()

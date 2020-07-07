@@ -839,10 +839,32 @@ if __name__ == '__main__':
     '''
     # # todo baseline input?
     if cfg.interpret:
+        # df = pd.read_csv(filepath + 'normalized_testing.csv')
+        # case = df[df['NOAA'] == 12673].to_csv(
+        #     './Data/Case_Study/AR12673.csv', index=False)
+        # cas2 = df[df['NOAA'] == 12252].to_csv(
+        #     './Data/Case_Study/AR12252.csv', index=False)
+
+
         # get samples to interpret
-        df = pd.read_csv(filepath + 'normalized_testing.csv')
-        input_df = df[df['NOAA'] == 12673].iloc[:, start_feature:]
-        backgroud_df = df[df['NOAA'] == 12252].iloc[:, start_feature:] #no flar
+        input_df, _ = data_loader.load_data(
+            datafile='./Data/Case_Study/AR12673.csv',
+            flare_label=cfg.flare_label, series_len=cfg.seq_len,
+            start_feature=start_feature, n_features=cfg.n_features,
+            mask_value=mask_value, feature_list=feature_list)
+
+        backgroud_df, _ = data_loader.load_data(
+            datafile='./Data/Case_Study/AR12252.csv',
+            flare_label=cfg.flare_label, series_len=cfg.seq_len,
+            start_feature=start_feature, n_features=cfg.n_features,
+            mask_value=mask_value, feature_list=feature_list)
+
+        if cfg.model_type == 'MLP':
+            input_df = np.reshape(input_df, (len(input_df), cfg.n_features))
+            backgroud_df = np.reshape(backgroud_df, (len(backgroud_df), cfg.n_features))
+        else:
+            backgroud_df = torch.tensor(backgroud_df).float().permute(0, 2, 1)
+            input_df = torch.tensor(input_df).float().permute(0, 2, 1)
 
         # interpret using captum
         [attr_sal, attr_ig, delta_ig, attr_dl, delta_dl, attr_ixg,
