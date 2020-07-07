@@ -9,7 +9,7 @@ from tabulate import tabulate
 
 api = wandb.Api()
 # specify HPs
-model_type = 'TCN'  # 'TCN 'or 'MLP'
+model_type = 'MLP'  # 'TCN 'or 'MLP'
 if model_type == 'MLP':
     HP_list = ['layers', 'hidden_units', 'batch_size', 'learning_rate', 'seed']
     HP_groupby = ['layers', 'hidden_units', 'batch_size', 'learning_rate']
@@ -19,27 +19,27 @@ elif model_type == 'TCN':
     HP_groupby = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
           'batch_size', 'learning_rate', 'weight_decay']
 
-filename = 'TCN_bayes.csv'
+filename = 'MLP_redo.csv'
 pathname = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/moving_std_val_tss/TCN/40feat')
-all_runs = pd.read_csv(filename).drop(columns="Unnamed: 0") if os.path.isfile(
-    filename) is True else pd.DataFrame()
+    '~/Dropbox/_Meesters/figures/moving_std_val_tss/MLP/40feat/')
+all_runs = pd.read_csv(pathname+filename) if os.path.isfile(
+    pathname+filename) is True else pd.DataFrame()
 
 
 def get_wandb_runs():
     # Get runs from a specific sweep
-    sweep0 = api.sweep("dewald123/liu_pytorch_MLP/xris1c8z")
-    sweep1 = api.sweep("dewald123/liu_pytorch_MLP/0iihk32s")
-    sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
-    sweep3 = api.sweep("dewald123/liu_pytorch_MLP/grw0rrpp")
+    sweep0 = api.sweep("dewald123/liu_pytorch_MLP/h91n1xpo")
+    sweep1 = api.sweep("dewald123/liu_pytorch_MLP/2yk81dhq")
+    # sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
+    # sweep3 = api.sweep("dewald123/liu_pytorch_MLP/grw0rrpp")
 
-    sweeps = [sweep0, sweep1, sweep2, sweep3]
+    sweeps = [sweep0, sweep1]
 
 
     for sweep in sweeps:
         # if the file is already written to, read it
-        all_runs = pd.read_csv(filename) if os.path.isfile(
-            filename) is True else pd.DataFrame()
+        all_runs = pd.read_csv(pathname+filename) if os.path.isfile(
+            pathname+filename) is True else pd.DataFrame()
 
         for i in range(len(sweep.runs)):
             w = 10
@@ -64,19 +64,21 @@ def get_wandb_runs():
                                            ignore_index=True)
 
             # calculate moving avg and std
-            moving_avg = val_tss.expanding(min_periods=2).mean()
-            moving_std = val_tss.expanding(min_periods=2).std()
+            moving_avg = val_tss.expanding(min_periods=1).mean()
+            moving_std = val_tss.expanding(min_periods=1).std()
             # window averages
             moving_avg_w = val_tss.rolling(window=w).mean()
             moving_std_w = val_tss.rolling(window=w).std()
+            moving_avg_w = moving_avg_w.fillna(val_tss.expanding().mean())
+            moving_std_w = moving_std_w.fillna(val_tss.expanding().std())
             moving_avg_g = pd.Series(np.gradient(moving_avg_w))
             moving_std_g = pd.Series(np.gradient(moving_std_w))
-            moving_std_w = moving_std_w.fillna(0)
             moving_avg_w = moving_avg_w.fillna(0)
-            moving_std_g = moving_std_g.fillna(0)
+            moving_std_w = moving_std_w.fillna(0)
             moving_avg_g = moving_avg_g.fillna(0)
-            moving_std = moving_std.fillna(0)
+            moving_std_g = moving_std_g.fillna(0)
             moving_avg = moving_avg.fillna(0)
+            moving_std = moving_std.fillna(0)
             moving_avg.name = 'moving_avg'
             moving_avg_w.name = 'moving_avg_w'
             moving_avg_g.name = 'moving_avg_g'
@@ -100,7 +102,7 @@ def get_wandb_runs():
             print(i)
 
         # dataframe to csv
-        all_runs.to_csv(filename)
+        all_runs.to_csv(pathname+filename, index=False)
 
 
 def plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
@@ -293,6 +295,9 @@ Get wandb runs, save to csv
 '''
 # get_wandb_runs()
 
+all_runs = pd.read_csv(pathname+filename) if os.path.isfile(
+    pathname+filename) is True else pd.DataFrame()
+
 # get the validation tss threshold at 30% of the top values.
 sorted_tss = all_runs.groupby('id')[
     'Validation_TSS'].max().reset_index().sort_values(by='Validation_TSS',
@@ -303,14 +308,14 @@ line = ax.lines[0]
 tss_min = line.get_ydata()[-1]
 val_tss_th = sorted_tss["Validation_TSS"].max() - ((sorted_tss[
                                                      "Validation_TSS"].max()
-                                                    - tss_min)*0.20)
+                                                    - tss_min)*0.30)
 # val_tss_th = sorted_tss.quantile(0.8)['Validation_TSS']
 # get std threshold at 70% of smallest values.
 sorted_std_idx = all_runs.groupby('id')['Validation_TSS'].idxmax()
 sorted_std = all_runs['moving_std_w'][
     sorted_std_idx].sort_values().reset_index(drop=True)
 # val_std_th = sorted_std.quantile(0.85)
-val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min())*0.05)
+val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min())*0.1)
 
 # plot all runs tss and mvg_std_w
 plt.plot(sorted_std)
@@ -335,7 +340,7 @@ for id in id_list:
     flag, hp_df = check_network(id, val_tss_th, val_std_th, HP_list, hp_df)
 
 counted_valid_hps = count_valid_network(hp_df)
-final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 1]
+final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
 # Check test performance of final networks
 final_net_scores = final_model_scores(final_possible_hps, hp_df)
 
@@ -365,19 +370,22 @@ print(tabulate(sorted_ft, headers="keys", tablefmt="github",
                floatfmt=(".0f", ".0f", '.0f', '.0e', '.4f', '.4f', '.4f',
                          '.4f','.4f')
                , showindex=False))
+
+
 '''
 plot val moving std std
 '''
-# layers = 1
-# hidden_units = 40
-# batch_size = 4096
-# learning_rate = 1e-4
-# seeds = [335, 49, 124, 15, 273]
-# for seed in seeds:
-#     plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
-#                  avg=False)
-# plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
-#                  avg=True)
+layers = 1
+hidden_units = 500
+batch_size = 512
+learning_rate = 1e-3
+seeds = [335, 49, 124, 15, 273]
+# seeds = [49, 124, 15]
+for seed in seeds:
+    plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
+                 avg=False)
+plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
+                 avg=True)
 
 
 '''
