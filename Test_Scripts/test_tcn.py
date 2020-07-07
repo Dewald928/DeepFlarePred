@@ -52,6 +52,6 @@ out = m(a[:, :, :-1])
 out = relu1(out)
 out = linear(out[:, :, -1])
 out_np = out.detach().numpy()
-print('fnished')
+print('finished')
 
 
