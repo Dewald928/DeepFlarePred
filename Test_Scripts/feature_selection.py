@@ -89,40 +89,40 @@ feature_names = data_loader.get_feature_names(
 '''
 Univariate Feature selection
 '''
-f_df = pd.DataFrame()
-mi_df = pd.DataFrame()
-score_functions = {'F-score': f_classif,
-                   'Mutual-Information': mutual_info_classif}
-for scorer, score_func in score_functions.items():
-    print(scorer, score_func)
-    selector = SelectKBest(score_func, k=40)
-    selected_features = selector.fit_transform(X, y)
-    plt.bar(
-        feature_names[
-        5:], selector.scores_)
-    plt.title('{} vs. Features'.format(scorer))
-    plt.xlabel('Features')
-    plt.xticks(rotation=90)
-    plt.ylabel('Importance')
-    plt.tight_layout()
-    plt.savefig(drop_path + "{}.png".format(scorer))
-    plt.show()
-    f_score_indexes = (-selector.scores_).argsort()[:40]
-
-    sort_df = pd.concat([pd.DataFrame(
-        feature_names[
-        5:], columns=['Features']), pd.DataFrame(selector.scores_,
-        columns=['Importance'])], axis=1).sort_values(by='Importance',
-        ascending=False).reset_index()
-    f_df = sort_df if scorer == 'F-score' else f_df
-    mi_df = sort_df if scorer == 'Mutual-Information' else mi_df
-    sns.barplot(x='Features', y='Importance', data=sort_df,
-                order=sort_df['Features'])
-    plt.xticks(rotation=90)
-    plt.title('Sorted {} vs. Features'.format(scorer))
-    plt.tight_layout()
-    plt.savefig(drop_path + "{}_sorted.png".format(scorer))
-    plt.show()
+# f_df = pd.DataFrame()
+# mi_df = pd.DataFrame()
+# score_functions = {'F-score': f_classif,
+#                    'Mutual-Information': mutual_info_classif}
+# for scorer, score_func in score_functions.items():
+#     print(scorer, score_func)
+#     selector = SelectKBest(score_func, k=40)
+#     selected_features = selector.fit_transform(X, y)
+#     plt.bar(
+#         feature_names[
+#         5:], selector.scores_)
+#     plt.title('{} vs. Features'.format(scorer))
+#     plt.xlabel('Features')
+#     plt.xticks(rotation=90)
+#     plt.ylabel('Importance')
+#     plt.tight_layout()
+#     plt.savefig(drop_path + "{}.png".format(scorer))
+#     plt.show()
+#     f_score_indexes = (-selector.scores_).argsort()[:40]
+#
+#     sort_df = pd.concat([pd.DataFrame(
+#         feature_names[
+#         5:], columns=['Features']), pd.DataFrame(selector.scores_,
+#         columns=['Importance'])], axis=1).sort_values(by='Importance',
+#         ascending=False).reset_index()
+#     f_df = sort_df if scorer == 'F-score' else f_df
+#     mi_df = sort_df if scorer == 'Mutual-Information' else mi_df
+#     sns.barplot(x='Features', y='Importance', data=sort_df,
+#                 order=sort_df['Features'])
+#     plt.xticks(rotation=90)
+#     plt.title('Sorted {} vs. Features'.format(scorer))
+#     plt.tight_layout()
+#     plt.savefig(drop_path + "{}_sorted.png".format(scorer))
+#     plt.show()
 
 '''
 Linear SVC optimization
@@ -163,7 +163,7 @@ clf = Pipeline([('anova', SelectKBest(f_classif)), ('svc', LinearSVC(
 # Plot the cross-validation score as a function of number of features
 score_means = list()
 score_stds = list()
-n_features = np.arange(40, 10, -1)
+n_features = np.arange(40, 1, -1)
 
 for k_feature in n_features:
     clf.set_params(anova__k=k_feature)
