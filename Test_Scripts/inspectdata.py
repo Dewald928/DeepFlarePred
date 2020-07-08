@@ -15,7 +15,7 @@ from data_loader import data_loader
 
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
-filepath = './Data/Krynauw/'
+# filepath = './Data/Krynauw/'
 filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
@@ -25,9 +25,9 @@ df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
 
-from sklearn.preprocessing import StandardScaler
-standardscaler = StandardScaler()
-df_norm = standardscaler.fit_transform(df.iloc[:,5:])
+# from sklearn.preprocessing import StandardScaler
+# standardscaler = StandardScaler()
+# df_norm = standardscaler.fit_transform(df.iloc[:,5:])
 
 
 '''
@@ -271,7 +271,8 @@ print(tabulate(corr_features_df, headers="keys", tablefmt="github",
 '''
 Heatmaps of Correlation
 '''
-df_corr = df_removed_features.corr()
+# df_corr = m5_flares_data[m5_flares_data['label']=='Positive'].iloc[:,5:].corr()
+df_corr = m5_flares_data.iloc[:,5:].corr()
 # df_corr = df.iloc[:, 5:].corr()
 df_corr[df_corr == 1] = 0
 df_large_corr = df_corr[(df_corr >= 0.7) | (df_corr <= -0.7)]
@@ -284,7 +285,7 @@ sns.heatmap(df_large_corr, ax=ax, annot=True, fmt='.1f', center=0,
 # in so for
 # summary
 plt.tight_layout()
-plt.savefig(drop_path + "feature_correlation_heatmap.png")
+plt.savefig(drop_path + "feature_correlation_heatmap_flaredAR.png")
 plt.show()
 
 '''

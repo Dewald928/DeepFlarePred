@@ -43,26 +43,28 @@ drop_path = os.path.expanduser(
 filepath = '../Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
-listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ', 'USFLUX',
+listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
                         'Cdec', 'Chis', 'Edec', 'Mhis', 'Xmax1d', 'Mdec',
-                        'AREA_ACR', 'MEANPOT', 'Mhis1d', 'SHRGT45', 'TOTFX',
-                        'MEANSHR', 'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec',
-                        'EPSZ', 'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xdec', 'Xhis',
+                        'MEANPOT', 'R_VALUE', 'Mhis1d', 'MEANGAM', 'TOTFX',
+                        'MEANJZH', 'MEANGBZ', 'TOTFZ', 'TOTFY', 'logEdec',
+                        'EPSZ', 'MEANGBH', 'MEANJZD', 'Xhis1d', 'Xdec', 'Xhis',
                         'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']
+# feature_list = ['Bdec', 'Cdec', 'Chis1d', 'Edec', 'MEANGBZ', 'Mdec',
+#                 'Mhis1d', 'R_VALUE', 'Xdec', 'Xhis1d', 'Xmax1d']
 feature_list = None
 
 X_train_data, y_train_data = data_loader.load_data(
     datafile=filepath + 'normalized_training.csv', flare_label='M5',
     series_len=1, start_feature=start_feature, n_features=n_features,
-    mask_value=mask_value)
+    mask_value=mask_value, feature_list=feature_list)
 X_valid_data, y_valid_data = data_loader.load_data(
     datafile=filepath + 'normalized_validation.csv', flare_label='M5',
     series_len=1, start_feature=start_feature, n_features=n_features,
-    mask_value=mask_value)
+    mask_value=mask_value, feature_list=feature_list)
 X_test_data, y_test_data = data_loader.load_data(
     datafile=filepath + 'normalized_testing.csv', flare_label='M5',
     series_len=1, start_feature=start_feature, n_features=n_features,
-    mask_value=mask_value)
+    mask_value=mask_value, feature_list=feature_list)
 X_train_data = np.reshape(X_train_data, (len(X_train_data), n_features))
 X_valid_data = np.reshape(X_valid_data, (len(X_valid_data), n_features))
 X_test_data = np.reshape(X_test_data, (len(X_test_data), n_features))
@@ -129,7 +131,7 @@ for scorer, score_func in score_functions.items():
 '''
 Linear SVC optimization
 '''
-params = {'C': [0.01]}  # choose C values here
+params = {'C': [10]}  # choose C values here
 clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
 # cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
@@ -141,10 +143,13 @@ grid.fit(X, y)
 print("Best parameters set found on development set:")
 print(grid.best_params_)
 print("Grid scores on development set:")
+tmeans = grid.cv_results_['mean_train_score']
+tstds = grid.cv_results_['std_train_score']
 means = grid.cv_results_['mean_test_score']
 stds = grid.cv_results_['std_test_score']
-for mean, std, params in zip(means, stds, grid.cv_results_['params']):
-    print("%0.4f (+/-%0.04f) for %r" % (mean, std, params))
+for tmean, tstd, mean, std, params in zip(tmeans, tstds, means, stds,
+                                          grid.cv_results_['params']):
+    print(f"Training: {tmean:0.4f} ± {tstd:0.4f} | Validation: {mean:0.4f} ± {std:0.4f} for {params}")
 
 print("Detailed classification report:")
 print("The model is trained on the full development set.")
@@ -153,6 +158,20 @@ y_true, y_pred = y_test_tr, grid.predict(X_test_data)
 print(classification_report(y_true, y_pred))
 average_tss = balanced_accuracy_score(y_test_tr, y_pred, adjusted=True)
 print('Average tss score: {0:0.4f}'.format(average_tss))
+
+# plot weights
+svm_weights = np.abs(grid.best_estimator_.coef_).sum(axis=0)
+svm_weights /= svm_weights.sum()
+X_indices = feature_names[
+        5:]
+plt.bar(X_indices, svm_weights, width=.2, label='SVM weight')
+plt.title("SVM Coefficients")
+plt.xlabel('Features')
+plt.xticks(rotation=90)
+plt.yticks(())
+plt.axis('tight')
+plt.legend(loc='upper right')
+plt.show()
 
 '''
 Crossval from feature selection

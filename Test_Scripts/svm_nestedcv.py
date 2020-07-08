@@ -44,11 +44,11 @@ drop_path = os.path.expanduser(
 filepath = '../Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
-listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ', 'USFLUX',
+listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
                         'Cdec', 'Chis', 'Edec', 'Mhis', 'Xmax1d', 'Mdec',
-                        'AREA_ACR', 'MEANPOT', 'Mhis1d', 'SHRGT45', 'TOTFX',
-                        'MEANSHR', 'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec',
-                        'EPSZ', 'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xdec', 'Xhis',
+                        'MEANPOT', 'R_VALUE', 'Mhis1d', 'MEANGAM', 'TOTFX',
+                        'MEANJZH', 'MEANGBZ', 'TOTFZ', 'TOTFY', 'logEdec',
+                        'EPSZ', 'MEANGBH', 'MEANJZD', 'Xhis1d', 'Xdec', 'Xhis',
                         'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']
 feature_list = None
 
