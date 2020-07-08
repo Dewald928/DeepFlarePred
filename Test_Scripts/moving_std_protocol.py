@@ -14,53 +14,53 @@ if model_type == 'MLP':
     HP_list = ['layers', 'hidden_units', 'batch_size', 'learning_rate', 'seed']
     HP_groupby = ['layers', 'hidden_units', 'batch_size', 'learning_rate']
 elif model_type == 'TCN':
-    HP_list = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
-          'batch_size', 'learning_rate', 'weight_decay', 'seed']
+    HP_list = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout', 'batch_size',
+               'learning_rate', 'weight_decay', 'seed']
     HP_groupby = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
-          'batch_size', 'learning_rate', 'weight_decay']
+                  'batch_size', 'learning_rate', 'weight_decay']
 
-filename = 'MLP_redo.csv'
+filename = 'MLP_32f.csv'
 pathname = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/moving_std_val_tss/MLP/40feat/')
-all_runs = pd.read_csv(pathname+filename) if os.path.isfile(
-    pathname+filename) is True else pd.DataFrame()
+    '~/Dropbox/_Meesters/figures/moving_std_val_tss/MLP/32feat/')
+all_runs = pd.read_csv(pathname + filename) if os.path.isfile(
+    pathname + filename) is True else pd.DataFrame()
 
 
 def get_wandb_runs():
     # Get runs from a specific sweep
-    sweep0 = api.sweep("dewald123/liu_pytorch_MLP/h91n1xpo")
-    sweep1 = api.sweep("dewald123/liu_pytorch_MLP/2yk81dhq")
+    sweep0 = api.runs(path="dewald123/liu_pytorch_MLP",
+                      filters={'sweep': "forcrr6p"}, per_page=1200)
+    # sweep1 = api.sweep("dewald123/liu_pytorch_MLP/2yk81dhq")
     # sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
     # sweep3 = api.sweep("dewald123/liu_pytorch_MLP/grw0rrpp")
 
-    sweeps = [sweep0, sweep1]
-
+    sweeps = [sweep0]
 
     for sweep in sweeps:
         # if the file is already written to, read it
-        all_runs = pd.read_csv(pathname+filename) if os.path.isfile(
-            pathname+filename) is True else pd.DataFrame()
+        all_runs = pd.read_csv(pathname + filename) if os.path.isfile(
+            pathname + filename) is True else pd.DataFrame()
 
-        for i in range(len(sweep.runs)):
+        for i in range(len(sweep)):
             w = 10
             run_data = pd.DataFrame()
             # get val tss for run
-            history = sweep.runs[i].history(samples=2000)
+            history = sweep[i].history(samples=2000)
             val_tss = history["Validation_TSS"].dropna().reset_index(drop=True)
             try:
                 test_tss = history["Test_TSS"].dropna().reset_index(drop=True)
             except:
-                test_tss = pd.Series(history[
-                                         'Test_TSS_curve'][val_tss.idxmax()])
-            test_tss = test_tss.append([test_tss]*(len(val_tss)-1),
-                                         ignore_index=True)
-            run_id = sweep.runs[i].id
-            run_config = sweep.runs[i].config
+                test_tss = pd.Series(
+                    history['Test_TSS_curve'][val_tss.idxmax()])
+            test_tss = test_tss.append([test_tss] * (len(val_tss) - 1),
+                                       ignore_index=True)
+            run_id = sweep[i].id
+            run_config = sweep[i].config
             run_config = {k: run_config[k] for k in
                           run_config.keys() & set(HP_list)}
             run_config.update({'id': run_id})
             run_config = pd.DataFrame(run_config, index=range(1))
-            run_config = run_config.append([run_config] * (len(val_tss)-1),
+            run_config = run_config.append([run_config] * (len(val_tss) - 1),
                                            ignore_index=True)
 
             # calculate moving avg and std
@@ -91,40 +91,38 @@ def get_wandb_runs():
             val_tss['epoch'] = np.arange(len(val_tss))
 
             # create dataframe from the run
-            run_data = pd.concat([run_config, val_tss, test_tss, moving_avg,
-                                  moving_std,
-                                  moving_avg_w, moving_std_w, moving_avg_g,
-                                  moving_std_g],
-                                 axis=1)
+            run_data = pd.concat(
+                [run_config, val_tss, test_tss, moving_avg, moving_std,
+                 moving_avg_w, moving_std_w, moving_avg_g, moving_std_g],
+                axis=1)
 
             # append run to other runs
             all_runs = pd.concat([all_runs, run_data], axis=0, sort=False)
             print(i)
 
         # dataframe to csv
-        all_runs.to_csv(pathname+filename, index=False)
+        all_runs.to_csv(pathname + filename, index=False)
 
 
 def plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
-                 avg=False):
+                     avg=False):
     # select run values
     if avg:
         run_data = all_runs[(all_runs['layers'] == layers) & (
-                    all_runs['hidden_units'] == hidden_units) & (all_runs[
-                                                                     'batch_size'] == batch_size) & (
-                                        all_runs[
-                                            'learning_rate'] == learning_rate)]
+                all_runs['hidden_units'] == hidden_units) & (all_runs[
+                                                                 'batch_size'] == batch_size) & (
+                                    all_runs[
+                                        'learning_rate'] == learning_rate)]
         savefile = 'std_avg_{}_{}_{}_{:.0e}_{}'.format(layers, hidden_units,
                                                        batch_size,
                                                        learning_rate, seed)
     else:
         run_data = all_runs[(all_runs['layers'] == layers) & (
-                    all_runs['hidden_units'] == hidden_units) & (all_runs[
-                                                                     'batch_size'] == batch_size) & (
-                                        all_runs[
-                                            'learning_rate'] ==
-                                        learning_rate) & (
-                                        all_runs['seed'] == seed)]
+                all_runs['hidden_units'] == hidden_units) & (all_runs[
+                                                                 'batch_size'] == batch_size) & (
+                                    all_runs[
+                                        'learning_rate'] == learning_rate) & (
+                                    all_runs['seed'] == seed)]
         savefile = 'std_{}_{}_{}_{:.0e}_{}'.format(layers, hidden_units,
                                                    batch_size, learning_rate,
                                                    seed)
@@ -247,8 +245,10 @@ def check_network(id, val_tss_th, val_std_th, HP_list, hp_df=pd.DataFrame()):
         flag = True
         # add hp to dataframe
         hp_df.loc[len(hp_df)] = run_data[HP_list].iloc[0].to_list() + [id,
-                                 max_val_tss,
-                                 run_data['Test_TSS'].iloc[0]]
+                                                                       max_val_tss,
+                                                                       run_data[
+                                                                           'Test_TSS'].iloc[
+                                                                           0]]
     else:
         flag = False
     return flag, hp_df
@@ -261,16 +261,14 @@ def count_valid_network(hp_df):
     new_HP_list.remove('seed')
     counted_nets = hp_df.groupby(HP_groupby).size().reset_index(
 
-    ).rename(
-        columns={0: 'count'})
+    ).rename(columns={0: 'count'})
     return counted_nets
 
 
 def final_model_scores(hps, hp_df):
     # get the test scores of the chosen HP
     final_scores = pd.DataFrame()
-    all_entries = pd.merge(hp_df, hps, on=HP_groupby,
-                           how='inner')
+    all_entries = pd.merge(hp_df, hps, on=HP_groupby, how='inner')
     all_entries = all_entries.drop('count', axis=1)
     # val_se = all_entries['Validation_TSS'].sem()
     # test_se = all_entries['Validation_TSS'].sem()
@@ -295,8 +293,8 @@ Get wandb runs, save to csv
 '''
 # get_wandb_runs()
 
-all_runs = pd.read_csv(pathname+filename) if os.path.isfile(
-    pathname+filename) is True else pd.DataFrame()
+all_runs = pd.read_csv(pathname + filename) if os.path.isfile(
+    pathname + filename) is True else pd.DataFrame()
 
 # get the validation tss threshold at 30% of the top values.
 sorted_tss = all_runs.groupby('id')[
@@ -306,16 +304,15 @@ sorted_tss = all_runs.groupby('id')[
 ax = sns.regplot(x=sorted_tss.index, y="Validation_TSS", data=sorted_tss)
 line = ax.lines[0]
 tss_min = line.get_ydata()[-1]
-val_tss_th = sorted_tss["Validation_TSS"].max() - ((sorted_tss[
-                                                     "Validation_TSS"].max()
-                                                    - tss_min)*0.30)
+val_tss_th = sorted_tss["Validation_TSS"].max() - (
+            (sorted_tss["Validation_TSS"].max() - tss_min) * 0.30)
 # val_tss_th = sorted_tss.quantile(0.8)['Validation_TSS']
 # get std threshold at 70% of smallest values.
 sorted_std_idx = all_runs.groupby('id')['Validation_TSS'].idxmax()
 sorted_std = all_runs['moving_std_w'][
     sorted_std_idx].sort_values().reset_index(drop=True)
 # val_std_th = sorted_std.quantile(0.85)
-val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min())*0.1)
+val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min()) * 0.15)
 
 # plot all runs tss and mvg_std_w
 plt.plot(sorted_std)
@@ -345,16 +342,15 @@ final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
 final_net_scores = final_model_scores(final_possible_hps, hp_df)
 
 print(tabulate(counted_valid_hps, headers="keys", tablefmt="github",
-               floatfmt=(".0f", ".0f", '.0f', '.0e', '.4f', '.4f')
-               , showindex=False))
+               floatfmt=(".0f", ".0f", '.0f', '.0e', '.4f', '.4f'),
+               showindex=False))
 
 # get top 3 seed per arch
 top3_tbl = final_net_scores.groupby(HP_groupby).apply(
     lambda x: x.nlargest(3, ['Best_Val_TSS', 'Test_TSS'])).reset_index(
     drop=True)
 # create final tables with average and standard errors
-final_table = top3_tbl.groupby(HP_groupby).mean().reset_index(
-).drop(
+final_table = top3_tbl.groupby(HP_groupby).mean().reset_index().drop(
     columns='seed').rename(
     columns={'Best_Val_TSS': 'avg_val_TSS', 'Test_TSS': 'avg_test_TSS'})
 
@@ -363,14 +359,12 @@ hp_se = top3_tbl.groupby(HP_groupby).sem().reset_index().rename(
 final_table.insert(5, 'val_se', hp_se['val_se'])
 final_table.insert(7, 'test_se', hp_se['test_se'])
 
-sorted_ft = final_table.sort_values(['avg_val_TSS', 'val_se'], ascending=[
-    False, True])
+sorted_ft = final_table.sort_values(['avg_val_TSS', 'val_se'],
+                                    ascending=[False, True])
 
-print(tabulate(sorted_ft, headers="keys", tablefmt="github",
-               floatfmt=(".0f", ".0f", '.0f', '.0e', '.4f', '.4f', '.4f',
-                         '.4f','.4f')
-               , showindex=False))
-
+print(tabulate(sorted_ft, headers="keys", tablefmt="github", floatfmt=(
+".0f", ".0f", '.0f', '.0e', '.4f', '.4f', '.4f', '.4f', '.4f'),
+               showindex=False))
 
 '''
 plot val moving std std
@@ -383,10 +377,9 @@ seeds = [335, 49, 124, 15, 273]
 # seeds = [49, 124, 15]
 for seed in seeds:
     plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
-                 avg=False)
+                     avg=False)
 plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
                  avg=True)
-
 
 '''
 plot val moving std std TCN
@@ -395,11 +388,9 @@ plot val moving std std TCN
 # plot_val_std(run_hp)
 
 
-
 '''
 Get system metrics
-'''
-# import wandb
+'''  # import wandb
 # api = wandb.Api()
 # run = api.run("dewald123/liu_pytorch_MLP/5zpfen0g")
 # system_metrics = run.history(stream='events')
