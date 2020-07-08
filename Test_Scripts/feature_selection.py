@@ -49,7 +49,7 @@ listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ', 'USFLUX',
                         'MEANSHR', 'MEANGBT', 'TOTFZ', 'TOTFY', 'logEdec',
                         'EPSZ', 'MEANGBH', 'MEANGBZ', 'Xhis1d', 'Xdec', 'Xhis',
                         'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']
-feature_list = listofuncorrfeatures
+feature_list = None
 
 X_train_data, y_train_data = data_loader.load_data(
     datafile=filepath + 'normalized_training.csv', flare_label='M5',
@@ -89,40 +89,42 @@ feature_names = data_loader.get_feature_names(
 '''
 Univariate Feature selection
 '''
-# f_df = pd.DataFrame()
-# mi_df = pd.DataFrame()
-# score_functions = {'F-score': f_classif,
-#                    'Mutual-Information': mutual_info_classif}
-# for scorer, score_func in score_functions.items():
-#     print(scorer, score_func)
-#     selector = SelectKBest(score_func, k=40)
-#     selected_features = selector.fit_transform(X, y)
-#     plt.bar(
-#         feature_names[
-#         5:], selector.scores_)
-#     plt.title('{} vs. Features'.format(scorer))
-#     plt.xlabel('Features')
-#     plt.xticks(rotation=90)
-#     plt.ylabel('Importance')
-#     plt.tight_layout()
-#     plt.savefig(drop_path + "{}.png".format(scorer))
-#     plt.show()
-#     f_score_indexes = (-selector.scores_).argsort()[:40]
-#
-#     sort_df = pd.concat([pd.DataFrame(
-#         feature_names[
-#         5:], columns=['Features']), pd.DataFrame(selector.scores_,
-#         columns=['Importance'])], axis=1).sort_values(by='Importance',
-#         ascending=False).reset_index()
-#     f_df = sort_df if scorer == 'F-score' else f_df
-#     mi_df = sort_df if scorer == 'Mutual-Information' else mi_df
-#     sns.barplot(x='Features', y='Importance', data=sort_df,
-#                 order=sort_df['Features'])
-#     plt.xticks(rotation=90)
-#     plt.title('Sorted {} vs. Features'.format(scorer))
-#     plt.tight_layout()
-#     plt.savefig(drop_path + "{}_sorted.png".format(scorer))
-#     plt.show()
+f_df = pd.DataFrame()
+mi_df = pd.DataFrame()
+score_functions = {'F-score': f_classif,
+                   'Mutual-Information': mutual_info_classif}
+for scorer, score_func in score_functions.items():
+    print(scorer, score_func)
+    selector = SelectKBest(score_func, k=40)
+    selected_features = selector.fit_transform(X, y)
+    plt.bar(
+        feature_names[
+        5:], selector.scores_)
+    plt.title('{} vs. Features'.format(scorer))
+    plt.xlabel('Features')
+    plt.xticks(rotation=90)
+    plt.ylabel('Importance')
+    plt.tight_layout()
+    plt.savefig(drop_path + "{}.png".format(scorer))
+    plt.show()
+    plt.close('all')
+    f_score_indexes = (-selector.scores_).argsort()[:40]
+
+    sort_df = pd.concat([pd.DataFrame(
+        feature_names[
+        5:], columns=['Features']), pd.DataFrame(selector.scores_,
+        columns=['Importance'])], axis=1).sort_values(by='Importance',
+        ascending=False).reset_index()
+    f_df = sort_df if scorer == 'F-score' else f_df
+    mi_df = sort_df if scorer == 'Mutual-Information' else mi_df
+    sns.barplot(x='Features', y='Importance', data=sort_df,
+                order=sort_df['Features'])
+    plt.xticks(rotation=90)
+    plt.title('Sorted {} vs. Features'.format(scorer))
+    plt.tight_layout()
+    plt.savefig(drop_path + "{}_sorted.png".format(scorer))
+    plt.show()
+    plt.close('all')
 
 '''
 Linear SVC optimization
@@ -142,7 +144,7 @@ print("Grid scores on development set:")
 means = grid.cv_results_['mean_test_score']
 stds = grid.cv_results_['std_test_score']
 for mean, std, params in zip(means, stds, grid.cv_results_['params']):
-    print("%0.3f (+/-%0.03f) for %r" % (mean, std, params))
+    print("%0.4f (+/-%0.04f) for %r" % (mean, std, params))
 
 print("Detailed classification report:")
 print("The model is trained on the full development set.")
@@ -189,7 +191,7 @@ plt.show()
 Recursive Feature Elimination
 '''
 clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
-                class_weight='balanced', random_state=1, C=0.01)
+                class_weight='balanced', random_state=1, C=1)
 
 # Get feature ranking
 rfecv = RFECV(clf, cv=5, scoring=make_scorer(balanced_accuracy_score,

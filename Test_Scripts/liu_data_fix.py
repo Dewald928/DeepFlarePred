@@ -20,17 +20,26 @@ filepath = '../Data/Liu/' + 'M5' + '/'
 splits = ['training', 'validation', 'testing']
 
 for split in splits:
-    df = pd.read_csv(filepath + '{}_old.csv'.format(split))
+    df = pd.read_csv(filepath + 'normalized_{}_old.csv'.format(split))
 
-    df = df.rename(columns={'SAVNCPP': 'USFLUX', 'ABSNJZH': 'SAVNCPP',
-                            'TOTPOT': 'TOTUSJZ', 'TOTUSJZ': 'ABSNJZH',
-                            'TOTBSQ': 'TOTPOT', 'USFLUX': 'AREA_ACR',
-                            'AREA_ACR': 'MEANPOT', 'MEANPOT': 'R_VALUE',
-                            'SHRGT45': 'MEANGAM', 'MEANSHR': 'MEANJZH',
-                            'MEANJZD': 'MEANALP', 'MEANJZH': 'MEANSHR',
-                            'MEANGAM': 'MEANGBZ', 'MEANALP': 'TOTBSQ',
-                            'R_VALUE': 'SHRGT45', 'MEANGBZ': 'MEANJZD', })
+    df = df.rename(columns={'SAVNCPP': 'USFLUX',
+                            'ABSNJZH': 'SAVNCPP',
+                            'TOTPOT': 'TOTUSJZ',
+                            'TOTUSJZ': 'ABSNJZH',
+                            'TOTBSQ': 'TOTPOT',
+                            'USFLUX': 'AREA_ACR',
+                            'AREA_ACR': 'MEANPOT',
+                            'MEANPOT': 'R_VALUE',
+                            'SHRGT45': 'MEANGAM',
+                            'MEANSHR': 'MEANJZH',
+                            'MEANJZD': 'MEANALP',
+                            'MEANJZH': 'MEANSHR',
+                            'MEANGAM': 'MEANGBT',
+                            'MEANGBT': 'MEANGBZ',
+                            'MEANALP': 'TOTBSQ',
+                            'R_VALUE': 'SHRGT45',
+                            'MEANGBZ': 'MEANJZD', })
 
-    df.to_csv(filepath + '{}.csv'.format(split), index=False)
+    df.to_csv(filepath + 'normalized_{}.csv'.format(split), index=False)
 
 
