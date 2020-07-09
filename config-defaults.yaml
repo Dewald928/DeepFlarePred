@@ -2,25 +2,31 @@
 tag:
   desc: wandb tags
   value:
-    - NoSoftmax
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: MLP
+  value: CNN
 epochs:
   desc: Number of epochs to train over
   value: 100
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.00001
+  value: 0.03
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
   value: Adam
+lr_scheduler:
+  desc: if scheduler is on
+  value: False
+max_lr:
+  desc: cyclic lr max value
+  value: 0.1
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -37,20 +43,20 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
   desc: MLP layers
-  value: 2
+  value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 200
+  value: 500
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.6
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -69,13 +75,13 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 flare_label:
   desc: Types of flare class
   value: M5
 seed:
   desc: random seed
-  value: 20
+  value: 15
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -102,5 +108,10 @@ num_workers:
 dataset:
   desc: which dataset to use (Liu/Krynauw)
   value: Liu
+
+# Interpretation
+interpret:
+  desc: activate captum/SHAP attribution methods
+  value: False
 
 

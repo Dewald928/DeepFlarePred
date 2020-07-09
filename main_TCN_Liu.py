@@ -28,6 +28,7 @@ from skorch.dataset import Dataset
 from skorch.helper import predefined_split
 from torchsummary import summary
 import matplotlib.pyplot as plt
+from torch_lr_finder import LRFinder
 
 from interpret import interpreter
 import crossval_fold
@@ -340,13 +341,13 @@ if __name__ == '__main__':
     history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
                         'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
                         'Mhis1d', 'Xhis1d', 'Xmax1d']
-    listofuncorrfeatures = ['TOTUSJH', 'ABSNJZH', 'TOTUSJZ', 'TOTBSQ',
-                            'USFLUX', 'Cdec', 'Chis', 'Edec', 'Mhis', 'Xmax1d',
-                            'Mdec', 'AREA_ACR', 'MEANPOT', 'Mhis1d', 'SHRGT45',
-                            'TOTFX', 'MEANSHR', 'MEANGBT', 'TOTFZ', 'TOTFY',
-                            'logEdec', 'EPSZ', 'MEANGBH', 'MEANGBZ', 'Xhis1d',
-                            'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis', 'Bdec',
-                            'Bhis1d']
+    listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT',
+                            'AREA_ACR', 'Cdec', 'Chis', 'Edec', 'Mhis',
+                            'Xmax1d', 'Mdec', 'MEANPOT', 'R_VALUE', 'Mhis1d',
+                            'MEANGAM', 'TOTFX', 'MEANJZH', 'MEANGBZ', 'TOTFZ',
+                            'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
+                            'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
+                            'Bdec', 'Bhis1d']
     feature_list = None  #
     # can be
     # None, need to change
@@ -474,14 +475,40 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
                                     weight_decay=cfg.weight_decay,
                                     nesterov=True, momentum=cfg.momentum)
-        scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
-                                                      base_lr=cfg.learning_rate,
-                                                      max_lr=0.1)
+        if cfg.lr_scheduler:
+            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
+                                                          base_lr=cfg.learning_rate,
+                                                          max_lr=cfg.max_lr,
+                                                          step_size_up=int(4 * (
+                                                                  len(
+                                                                      X_train_data) / cfg.batch_size)))
     elif cfg.optim == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
                                      weight_decay=cfg.weight_decay)
+        if cfg.lr_scheduler:
+            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
+                                                          base_lr=cfg.learning_rate,
+                                                          max_lr=cfg.max_lr,
+                                                          step_size_up=int(4 * (
+                                                                  len(
+                                                                      X_train_data) / cfg.batch_size)),
+                                                          cycle_momentum=False)
 
-
+    #
+    # # LR finder (tweaked version)
+    # lr_finder = LRFinder(model, optimizer, criterion, device=device)
+    # lr_finder.range_test(train_loader, end_lr=100, num_iter=100)
+    # lr_finder.plot()  # to inspect the loss-learning rate graph
+    # lr_finder.reset()  # to reset the model and optimizer to their initial state
+    # # halfway down slope for static
+    # # min max for cyclic
+    #
+    # # LR finder (Leslie SMiths)
+    # lr_finder = LRFinder(model, optimizer, criterion, device=device)
+    # lr_finder.range_test(train_loader, val_loader=valid_loader, end_lr=1,
+    #                      num_iter=1000, step_mode="linear")
+    # lr_finder.plot(log_lr=True)
+    # lr_finder.reset()
 
     # print model parameters
     print("Receptive Field: " + str(
@@ -675,9 +702,15 @@ if __name__ == '__main__':
 
         checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
-        lrscheduler = LRScheduler(policy='TorchCyclicLR',
-                                  monitor='valid_tss',
-                                  base_lr=cfg.learning_rate, max_lr=0.1)
+        if cfg.lr_scheduler:
+            lrscheduler = LRScheduler(policy='TorchCyclicLR',
+                                      monitor='valid_tss',
+                                      base_lr=cfg.learning_rate,
+                                      max_lr=cfg.max_lr,
+                                      step_size_up=int(4 * (
+                                              len(X_train_data) / cfg.batch_size)))
+        else:
+            lrscheduler = None
 
         logger = skorch_utils.LoggingCallback(test_inputs, test_labels)
 
@@ -690,11 +723,9 @@ if __name__ == '__main__':
                                   criterion=nn.CrossEntropyLoss,
                                   criterion__weight=torch.FloatTensor(
                                       class_weights).to(device),
-                                  optimizer=torch.optim.SGD,
+                                  optimizer=torch.optim.Adam,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
-                                  optimizer__momentum=cfg.momentum,
-                                  optimizer__nesterov=True,
                                   device=device,
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
@@ -704,6 +735,14 @@ if __name__ == '__main__':
                                              logger, lrscheduler],
                                   # iterator_train__shuffle=True,
                                   warm_start=False)
+
+        # set optimizer dynamically
+        if cfg.optim == 'SGD':
+            net.set_params(optimizer=torch.optim.SGD)
+            net.set_params(optimizer__momentum=cfg.momentum)
+            net.set_params(optimizer__nesterov=True)
+        else:
+            net.set_params(optimizer=torch.optim.Adam)
 
         net.initialize()
         init_savename = os.path.join(wandb.run.dir,
@@ -743,56 +782,7 @@ if __name__ == '__main__':
             wandb.log({"CV_Score": scores})
 
         elif cfg.nested_cv:
-            net.initialize()
-            net.load_params(f_params=init_savename)
-            net.train_split = None
-            net.callbacks = [train_tss]
-            net.initialize_callbacks()
-            p_grid = {'max_epochs': [20]}
-            inner_cv = StratifiedKFold(n_splits=2, shuffle=True,
-                                       random_state=cfg.seed)
-            outer_cv = StratifiedKFold(n_splits=5, shuffle=True,
-                                       random_state=cfg.seed)
-
-            gcv = GridSearchCV(estimator=net, param_grid=p_grid,
-                               scoring=make_scorer(balanced_accuracy_score,
-                                                   **{'adjusted': True}),
-                               n_jobs=1, cv=inner_cv, refit=True,
-                               return_train_score=True, verbose=1)
-
-            nested_score = cross_val_score(gcv, X=combined_inputs, y=combined_labels,
-                                           cv=outer_cv, n_jobs=1,
-                                           scoring=make_scorer(
-                                               balanced_accuracy_score,
-                                               **{'adjusted': True}))
-            print('%s | outer TSS %.2f%% +/- %.2f' % (
-                'MLP', nested_score.mean() * 100, nested_score.std() * 100))
-
-            # Fitting a model to the whole training set
-            # using the "best" algorithm
-            # best_algo = gridcvs['SVM']
-            gcv.fit(combined_inputs, combined_labels)
-
-            train_tss = balanced_accuracy_score(y_true=combined_labels,
-                                       y_pred=gcv.predict(combined_inputs))
-            test_tss = balanced_accuracy_score(y_true=test_labels,
-                                      y_pred=gcv.predict(test_inputs))
-
-            print('Training TSS: %.4f' % (train_tss))
-            print('Test TSS: %.4f' % (test_tss))
-
-            # summarize results
-            print("Best: %f using %s" % (
-            gcv.best_score_, gcv.best_params_))
-            means = gcv.cv_results_['mean_test_score']
-            stds = gcv.cv_results_['std_test_score']
-            params = gcv.cv_results_['params']
-            for mean, stdev, param in zip(means, stds, params):
-                print("%f (%f) with: %r" % (mean, stdev, param))
-            pd.DataFrame(gcv.cv_results_).to_csv(
-                'saved/scores/cv_results_0.csv')
-
-            #save best model
+            pass
 
 
         '''
@@ -837,14 +827,12 @@ if __name__ == '__main__':
     '''
     Model interpretation
     '''
-    # # todo baseline input?
     if cfg.interpret:
         # df = pd.read_csv(filepath + 'normalized_testing.csv')
         # case = df[df['NOAA'] == 12673].to_csv(
         #     './Data/Case_Study/AR12673.csv', index=False)
         # cas2 = df[df['NOAA'] == 12252].to_csv(
         #     './Data/Case_Study/AR12252.csv', index=False)
-
 
         # get samples to interpret
         input_df, _ = data_loader.load_data(
