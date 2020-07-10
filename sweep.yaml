@@ -7,13 +7,10 @@ parameters:
     distribution: categorical
     values:
     - 256
-    - 512
+    - 1024
     - 4096
-    - 8192
-  dropout:
-    distribution: categorical
-    values:
-    - 0
+    - 16384
+    - 65536
   early_stop:
     distribution: constant
     value: "False"
@@ -23,31 +20,30 @@ parameters:
     - 40
     - 100
     - 200
-    - 500
   layers:
     distribution: categorical
     values:
     - 1
     - 2
-  learning_rate:
-    distribution: categorical
-    values:
-    - 0.1
-    - 0.01
-    - 0.001
-    - 0.0001
-    - 1e-05
   model_type:
     distribution: constant
     value: MLP
-  n_features:
-    distribution: categorical
-    values:
-    - 40
   seed:
     distribution: categorical
     values:
     - 15
     - 124
     - 49
+  optim:
+    distribution: categorical
+    values:
+      - SGD
+      - Adam
+  weight_decay:
+    distribution: categorical
+    values:
+      - 0
+      - 0.001
+      - 0.0001
+      - 0.00001
 program: main_TCN_Liu.py

@@ -15,6 +15,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
+from torch.optim import lr_scheduler
+from torch.optim.lr_scheduler import *
 from torch.autograd import gradcheck
 import wandb
 import yaml
@@ -499,27 +501,26 @@ if __name__ == '__main__':
                                     weight_decay=cfg.weight_decay,
                                     nesterov=True, momentum=cfg.momentum)
         if cfg.lr_scheduler:
-            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
-                                                          base_lr=cfg.learning_rate,
-                                                          max_lr=cfg.max_lr,
-                                                          step_size_up=int(4 * (
-                                                                  len(
-                                                                      X_train_data) / cfg.batch_size)))
+            scheduler = lr_scheduler.CyclicLR(optimizer,
+                                              base_lr=cfg.learning_rate,
+                                              max_lr=cfg.max_lr,
+                                              step_size_up=int(4 * (len(
+                                                  X_train_data) / cfg.batch_size)))
     elif cfg.optim == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
                                      weight_decay=cfg.weight_decay)
         if cfg.lr_scheduler:
-            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
-                                                          base_lr=cfg.learning_rate,
-                                                          max_lr=cfg.max_lr,
-                                                          step_size_up=int(4 * (
-                                                                  len(
-                                                                      X_train_data) / cfg.batch_size)),
-                                                          cycle_momentum=False)
+            scheduler = lr_scheduler.CyclicLR(optimizer,
+                                              base_lr=cfg.learning_rate,
+                                              max_lr=cfg.max_lr,
+                                              step_size_up=int(4 * (len(
+                                                  X_train_data) / cfg.batch_size)),
+                                              cycle_momentum=False)
 
     # find LR
     if not cfg.lr_scheduler:
-        lr_finding.find_lr(model, optimizer, criterion, device, train_loader, valid_loader)
+        lr_finding.find_lr(model, optimizer, criterion, device,
+                           train_loader, valid_loader)
 
     # print model parameters
     print("Receptive Field: " + str(
@@ -549,7 +550,6 @@ if __name__ == '__main__':
     artifact.add_file(filepath + 'normalized_testing.csv',
                       name='normalized_testing')
     run.log_artifact(artifact)
-
 
     if not cfg.skorch:
         print('{:<11s}{:^9s}{:^9s}{:^9s}'

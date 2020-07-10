@@ -6,8 +6,7 @@ for model_type in MLP ; do
         for layers in 1 2 ; do
             for hidden_units in 40 100 200 ; do
                 for weight_decay in $(seq 0 0.001 0.0001 0.00001) ; do
-                    for batch_size in 256 512 1024 2048 4096 8192 16384 \
-                    32768 65536; do
+                    for batch_size in 256 1024 4096 16384 65536; do
                         for seed in 15 124 49 ; do
                             python main_TCN_Liu.py \
                             --seed $seed \

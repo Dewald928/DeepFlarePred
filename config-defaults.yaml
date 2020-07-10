@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - LRFinding_search
+    - LRFinding
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
