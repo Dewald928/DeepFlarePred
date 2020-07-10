@@ -315,7 +315,8 @@ if __name__ == '__main__':
     cfg = wandb.config
 
     # Parse args
-    parse_args(cfg)
+    if cfg.parse_args:
+        parse_args(cfg)
 
     # initialize parameters
     if cfg.dataset == 'Liu':

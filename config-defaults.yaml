@@ -103,6 +103,9 @@ model_name:
 num_workers:
   desc: number of gpu workers
   value: 9
+parse_args:
+  desc: if args should be parse for bash script
+  value: False
 
 # Dataset
 dataset:
