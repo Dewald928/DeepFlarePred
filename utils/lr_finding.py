@@ -34,6 +34,6 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     for i in range(len(valx)):
         wandb.log({'valid_lr': valy[i], 'valid_lr_step': valx[i]}, step=i)
     wandb.log({'LR_Finder_img': wandb.Image(fig)})
-    plt.show()
+    # plt.show()
 
 
