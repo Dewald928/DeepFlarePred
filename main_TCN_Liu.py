@@ -43,6 +43,7 @@ from skorch_tools import skorch_utils
 from utils import early_stopping
 from utils import pdf
 from utils import visualize_CV
+from utils import lr_finding
 
 '''
 TCN with n residual blocks will have a receptive field of
@@ -264,6 +265,32 @@ def infer_model(model, device, data_loader):
     return np.vstack(output_arr)
 
 
+def parse_args(cfg):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--seed', type=int, default=cfg.seed, metavar='N',
+                        help='init seed')
+    parser.add_argument('--batch_size', type=int, default=cfg.batch_size,
+                        metavar='N',
+                        help='mini-batch size')
+    parser.add_argument('--optim', type=str, default=cfg.optim, metavar='N',
+                        help='optimizer SGD/Adam')
+    parser.add_argument('--model_type', type=str, default=cfg.model_type,
+                        metavar='N',
+                        help='CNN/TCN/MLP')
+    parser.add_argument('--layers', type=int, default=cfg.layers, metavar='N',
+                        help='MLP layers')
+    parser.add_argument('--levels', type=int, default=cfg.levels, metavar='N',
+                        help='CNN/TCN layers')
+    parser.add_argument('--hidden_units', type=int, default=cfg.hidden_units,
+                        metavar='N',
+                        help='MLP nodes per layers')
+    parser.add_argument('--ksize', type=int, default=cfg.ksize, metavar='N',
+                        help='kernel size')
+
+    args = parser.parse_args()
+    wandb.config.update(args, allow_val_change=True)  # adds all of the arguments as config
+
+
 def init_project():
     with open('config-defaults.yaml', 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.Loader)
@@ -284,6 +311,9 @@ if __name__ == '__main__':
     project, tags = init_project()
     run = wandb.init(project=project, tags=tags)
     cfg = wandb.config
+
+    # Parse args
+    parse_args(cfg)
 
     # initialize parameters
     if cfg.dataset == 'Liu':
@@ -318,13 +348,6 @@ if __name__ == '__main__':
         print("Cuda disabled")
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    # set seed
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--seed', type=int, default=None, metavar='N',
-    #                     help='init seed (default: 0)')
-    # args = parser.parse_args()
-    # if args.seed is not None:
-    #     wandb.config.update(args, allow_val_change=True)  # adds all of the arguments as config
     torch.manual_seed(cfg.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(cfg.seed)
@@ -494,21 +517,9 @@ if __name__ == '__main__':
                                                                       X_train_data) / cfg.batch_size)),
                                                           cycle_momentum=False)
 
-    #
-    # # LR finder (tweaked version)
-    # lr_finder = LRFinder(model, optimizer, criterion, device=device)
-    # lr_finder.range_test(train_loader, end_lr=100, num_iter=100)
-    # lr_finder.plot()  # to inspect the loss-learning rate graph
-    # lr_finder.reset()  # to reset the model and optimizer to their initial state
-    # # halfway down slope for static
-    # # min max for cyclic
-    #
-    # # LR finder (Leslie SMiths)
-    # lr_finder = LRFinder(model, optimizer, criterion, device=device)
-    # lr_finder.range_test(train_loader, val_loader=valid_loader, end_lr=1,
-    #                      num_iter=1000, step_mode="linear")
-    # lr_finder.plot(log_lr=True)
-    # lr_finder.reset()
+    # find LR
+    if not cfg.lr_scheduler:
+        lr_finding.find_lr(model, optimizer, criterion, device, train_loader, valid_loader)
 
     # print model parameters
     print("Receptive Field: " + str(
@@ -599,7 +610,7 @@ if __name__ == '__main__':
                                  'Train')
         tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
         pdf.plot_density_estimation(model, yhat, y_train_tr_tensor,
-                                              'Train')
+                                    'Train')
 
         # Validation
         yhat = infer_model(model, device, valid_loader)
@@ -703,12 +714,22 @@ if __name__ == '__main__':
         checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
         if cfg.lr_scheduler:
-            lrscheduler = LRScheduler(policy='TorchCyclicLR',
+            # lrscheduler = LRScheduler(policy='TorchCyclicLR',
+            #                           monitor='valid_tss',
+            #                           base_lr=cfg.learning_rate,
+            #                           max_lr=cfg.max_lr,
+            #                           step_size_up=int(4 * (
+            #                                   len(X_train_data) /
+            #                                   cfg.batch_size)),
+            #                           cycle_momentum=True if
+            #                           cfg.optim == 'SGD' else False)
+            lrscheduler = LRScheduler(policy=torch.optim.lr_scheduler.OneCycleLR,
                                       monitor='valid_tss',
-                                      base_lr=cfg.learning_rate,
                                       max_lr=cfg.max_lr,
-                                      step_size_up=int(4 * (
-                                              len(X_train_data) / cfg.batch_size)))
+                                      steps_per_epoch=len(train_loader),
+                                      epochs=cfg.epochs,
+                                      cycle_momentum=True if
+                                      cfg.optim == 'SGD' else False)
         else:
             lrscheduler = None
 
@@ -841,6 +862,7 @@ if __name__ == '__main__':
             start_feature=start_feature, n_features=cfg.n_features,
             mask_value=mask_value, feature_list=feature_list)
 
+        # todo pass median or weighted k-medians values as background?
         backgroud_df, _ = data_loader.load_data(
             datafile='./Data/Case_Study/AR12252.csv',
             flare_label=cfg.flare_label, series_len=cfg.seq_len,

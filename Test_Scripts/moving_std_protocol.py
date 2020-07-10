@@ -19,9 +19,9 @@ elif model_type == 'TCN':
     HP_groupby = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout',
                   'batch_size', 'learning_rate', 'weight_decay']
 
-filename = 'MLP_32f.csv'
+filename = 'MLP_40f.csv'
 pathname = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/moving_std_val_tss/MLP/32feat/')
+    '~/Dropbox/_Meesters/figures/moving_std_val_tss/MLP/40feat/')
 all_runs = pd.read_csv(pathname + filename) if os.path.isfile(
     pathname + filename) is True else pd.DataFrame()
 

@@ -26,6 +26,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC, l1_min_c
 from sklearn.tree import DecisionTreeClassifier
 from tabulate import tabulate
+from joblib import dump, load
 
 import sys
 sys.path.insert(0, '/home/fuzzy/work/DeepFlarePred/')
@@ -37,9 +38,9 @@ from utils import confusion_matrix_plot
 n_features = 40
 start_feature = 5
 mask_value = 0
-# drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
-drop_path = os.path.expanduser(
-    '~/projects/DeepFlarePred/saved/features_inspect/')
+drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
+# drop_path = os.path.expanduser(
+#     '~/projects/DeepFlarePred/saved/features_inspect/')
 filepath = '../Data/Liu/' + 'M5' + '/'
 
 # todo removed redundant features
@@ -131,7 +132,7 @@ for scorer, score_func in score_functions.items():
 '''
 Linear SVC optimization
 '''
-params = {'C': [10]}  # choose C values here
+params = {'C': [0.01]}  # choose C values here
 clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
 # cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
@@ -162,12 +163,19 @@ print('Average tss score: {0:0.4f}'.format(average_tss))
 # plot weights
 svm_weights = np.abs(grid.best_estimator_.coef_).sum(axis=0)
 svm_weights /= svm_weights.sum()
-X_indices = feature_names[
-        5:]
+X_indices = np.arange(X.shape[-1])
 plt.bar(X_indices, svm_weights, width=.2, label='SVM weight')
+
+# selector = SelectKBest(f_classif, k=11)
+# selector.fit(X_train_data, y_train_tr)
+# scores = -np.log10(selector.pvalues_)
+# scores /= scores.max()
+# plt.bar(X_indices - .45, scores, width=.2,
+#         label=r'Univariate score ($-Log(p_{value})$)')
+
 plt.title("SVM Coefficients")
 plt.xlabel('Features')
-plt.xticks(rotation=90)
+plt.xticks(range(0, len(feature_names[5:])), feature_names[5:], rotation=90)
 plt.yticks(())
 plt.axis('tight')
 plt.legend(loc='upper right')
@@ -210,12 +218,16 @@ plt.show()
 Recursive Feature Elimination
 '''
 clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
-                class_weight='balanced', random_state=1, C=1)
+                class_weight='balanced', random_state=1, C=0.0001)
 
 # Get feature ranking
-rfecv = RFECV(clf, cv=5, scoring=make_scorer(balanced_accuracy_score,
-                                             **{'adjusted': True}),
-              n_jobs=-1, verbose=1)
+try:
+    # reload model
+    rfecv = load(f'../saved/models/SVM/rfecv_{clf.C:.0e}.joblib')
+except:
+    rfecv = RFECV(clf, cv=5, scoring=make_scorer(balanced_accuracy_score,
+                                                 **{'adjusted': True}),
+                  n_jobs=-1, verbose=1)
 rfecv.fit(X, y)
 
 # plot scores
@@ -239,7 +251,8 @@ print('Test tss score: {0:0.4f}'.format(average_tss))
 confusion_matrix_plot.plot_confusion_matrix_from_data(y_test_tr, y_pred,
                                                       ['Negative', 'Positive'])
 
-
+# save model
+dump(rfecv, f'../saved/models/SVM/rfecv_{clf.C:.0e}.joblib')
 
 # # get a list of models to evaluate
 # def get_models():

@@ -2,31 +2,31 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - LRFinding_search
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: CNN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 100
+  value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 256
 learning_rate:
   desc: initial learning rate
-  value: 0.03
+  value: 0.0000001
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
-  value: Adam
+  value: SGD
 lr_scheduler:
   desc: if scheduler is on
   value: False
 max_lr:
   desc: cyclic lr max value
-  value: 0.1
+  value: 0.01
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -43,7 +43,7 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 3
+  value: 1
 
 # MLP
 layers:
@@ -51,12 +51,12 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 500
+  value: 100
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.6
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -75,13 +75,13 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: False
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
 seed:
   desc: random seed
-  value: 15
+  value: 20
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
