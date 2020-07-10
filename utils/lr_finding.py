@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 from torch_lr_finder import LRFinder
 import wandb
+import numpy as np
 
 
 def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
@@ -29,10 +30,18 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     trainy = fig.axes[0].lines[0]._y
     valx = fig.axes[1].lines[0]._x
     valy = fig.axes[1].lines[0]._y
+    trainx = np.pad(trainx, (0, 1000 - len(trainx)), 'constant',
+           constant_values=(np.nan))
+    trainy = np.pad(trainy, (0, 1000 - len(trainy)), 'constant',
+           constant_values=(np.nan))
+    valx = np.pad(valx, (0, 1000 - len(valx)), 'constant',
+           constant_values=(np.nan))
+    valy = np.pad(valy, (0, 1000 - len(valy)), 'constant',
+           constant_values=(np.nan))
     for i in range(len(trainx)):
-        wandb.log({'train_lr':trainy[i], 'train_lr_step': trainx[i]}, step=i)
-    for i in range(len(valx)):
-        wandb.log({'valid_lr': valy[i], 'valid_lr_step': valx[i]}, step=i)
+        wandb.log({'train_lr': trainy[i], 'train_lr_step': trainx[i],
+                   'valid_lr': valy[i], 'valid_lr_step': valx[i]}, step=i)
+    # for i in range(len(valx)):
     wandb.log({'LR_Finder_img': wandb.Image(fig)})
     # plt.show()
 

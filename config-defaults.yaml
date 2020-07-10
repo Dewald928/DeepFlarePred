@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - LRFinding
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
@@ -11,7 +11,7 @@ epochs:
   value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 128
 learning_rate:
   desc: initial learning rate
   value: 0.0000001
