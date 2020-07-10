@@ -17,10 +17,10 @@ dependencies:
   - bleach=3.1.0=py_0
   - bzip2=1.0.8=h516909a_2
   - c-ares=1.15.0=h516909a_1001
-  - ca-certificates=2020.4.5.1=hecc5488_0
+  - ca-certificates=2020.6.20=hecda079_0
   - cached-property=1.5.1=py_0
-  - captum=0.1.0=0
-  - certifi=2020.4.5.1=py37hc8dfbb8_0
+  - captum=0.2.0=0
+  - certifi=2020.6.20=py37hc8dfbb8_0
   - cffi=1.13.2=py37h8022711_0
   - chardet=3.0.4=py37_1003
   - cloudpickle=1.2.2=py_1
@@ -51,6 +51,7 @@ dependencies:
   - idna=2.8=py37_1000
   - imageio=2.6.1=py37_0
   - importlib_metadata=1.3.0=py37_0
+  - importlib_resources=1.5.0=py37hc8dfbb8_0
   - intel-openmp=2019.4=243
   - ipykernel=5.1.3=py37h5ca1d4c_0
   - ipython=7.13.0=py37hc8dfbb8_2
@@ -89,6 +90,7 @@ dependencies:
   - libxkbcommon=0.9.1=hebb1f50_0
   - libxml2=2.9.10=hee79883_0
   - libxslt=1.1.33=h31b3aaa_0
+  - lime=0.2.0.0=pyh9f0ad1d_0
   - lxml=4.4.2=py37h7ec2d77_0
   - lz4-c=1.8.3=he1b5a44_1001
   - markdown=3.2=py_0
@@ -161,24 +163,25 @@ dependencies:
   - requests-toolbelt=0.9.1=py_0
   - retrying=1.3.3=py_2
   - scikit-image=0.16.2=py37hb3f55d8_0
-  - scikit-learn=0.21.3=py37hcdab131_0
+  - scikit-learn=0.22.1=py37h22eb022_0
   - scipy=1.4.1=py37h921218d_0
   - seaborn=0.10.0=py_1
   - send2trash=1.5.0=py_0
   - setuptools=44.0.0=py37_0
   - shap=0.35.0=py37h0da4684_0
   - six=1.13.0=py37_0
-  - skorch=0.7.0=pyh5ca1d4c_0
+  - skorch=0.8.0=pyh5ca1d4c_0
   - sortedcontainers=2.1.0=py_0
   - soupsieve=1.9.4=py37_0
   - sqlalchemy=1.3.11=py37h516909a_0
   - sqlite=3.30.1=h7b6447c_0
   - statsmodels=0.9.0=py37h3010b51_1000
-  - sunpy=1.0.3=py37h516909a_0
+  - sunpy=1.1.4=py37h03ebfcd_0
   - tabulate=0.8.6=py_0
   - tensorboard=1.15.0=py37_0
   - terminado=0.8.3=py37_0
   - testpath=0.4.4=py_0
+  - threadpoolctl=2.1.0=pyh5ca1d4c_0
   - tk=8.6.10=hed695b0_0
   - toolz=0.10.0=py_0
   - torchvision=0.5.0=py37_cu101
@@ -246,7 +249,9 @@ dependencies:
     - subprocess32==3.5.4
     - termcolor==1.1.0
     - terminaltables==3.1.0
+    - torch-lr-finder==0.2.0
     - torchsummary==1.5.1
-    - wandb==0.8.36
+    - wandb==0.9.2
     - watchdog==0.9.0
 prefix: /home/fuzzy/local/miniconda3/envs/DeepFlarePred
+
