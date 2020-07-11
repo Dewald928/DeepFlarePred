@@ -11,7 +11,7 @@ epochs:
   value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 128
+  value: 65536
 learning_rate:
   desc: initial learning rate
   value: 0.0000001
@@ -59,7 +59,7 @@ dropout:
   value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.1
 
 # Cross Validation
 cross_validation:
