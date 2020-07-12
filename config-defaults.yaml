@@ -5,7 +5,7 @@ tag:
     - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: MLP
+  value: CNN
 epochs:
   desc: Number of epochs to train over
   value: 1
@@ -43,7 +43,7 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
@@ -59,7 +59,7 @@ dropout:
   value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.1
+  value: 0.0
 
 # Cross Validation
 cross_validation:

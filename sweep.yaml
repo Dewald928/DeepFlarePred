@@ -14,20 +14,25 @@ parameters:
   early_stop:
     distribution: constant
     value: "False"
-  hidden_units:
+  ksize:
     distribution: categorical
     values:
-    - 40
-    - 100
-    - 200
-  layers:
+    - 2
+    - 3
+  nhid:
+    distribution: catergorical
+    values:
+      - 20
+      - 40
+      - 80
+  levels:
     distribution: categorical
     values:
     - 1
     - 2
   model_type:
     distribution: constant
-    value: MLP
+    value: TCN
   seed:
     distribution: categorical
     values:
