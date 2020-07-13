@@ -73,22 +73,22 @@ class TemporalConvNet(nn.Module):
 
 
 class Simple1DConv(nn.Module):
-    def __init__(self, n_inputs, n_outputs, kernel_size=2, dropout=0.2,
+    def __init__(self, n_inputs, n_filters, kernel_size=2, dropout=0.2,
                  dilation=1):
         super(Simple1DConv, self).__init__()
         self.padding = (kernel_size - 1) * dilation
         self.conv1 = weight_norm(
-            nn.Conv1d(n_inputs, n_outputs, kernel_size, stride=1,
+            nn.Conv1d(n_inputs, n_filters, kernel_size, stride=1,
                       padding=self.padding, dilation=dilation),
             name='weight', dim=None)
         self.chomp1 = Chomp1d(self.padding)
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout)
 
-        self.linear = nn.Linear(n_outputs, 2)
+        self.linear = nn.Linear(n_filters, 2)
 
-        self.downsample = nn.Conv1d(n_inputs, n_outputs,
-                                    1) if n_inputs != n_outputs else None
+        self.downsample = nn.Conv1d(n_inputs, n_filters,
+                                    1) if n_inputs != n_filters else None
 
         self.init_weights()
 
