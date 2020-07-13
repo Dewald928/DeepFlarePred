@@ -6,6 +6,16 @@ from torch import nn
 from torch.nn.utils.rnn import pad_sequence
 from torch.nn.utils import weight_norm
 
+from model import tcn
+
+
+def create_sequences(data, seq_length):
+    xs = []
+    for i in range(len(data)-seq_length-1):
+        x = data[i:(i+seq_length)]
+        xs.append(x)
+    return np.array(xs)
+
 
 # how to init weight
 torch.manual_seed(3)
@@ -52,6 +62,30 @@ out = m(a[:, :, :-1])
 out = relu1(out)
 out = linear(out[:, :, -1])
 out_np = out.detach().numpy()
+
+
+'''1dconv testing'''
+# disable biases in conv and linear to make it easier
+model = TCN(2, 2, [1],
+                    kernel_size=2, dropout=0.0)
+model = tcn.Simple1DConv(2, 1, kernel_size=2,
+                         dropout=0)
+model.conv1.weight_v.data = torch.tensor([[[1, 0],
+                                           [0, 0]]],
+                                         dtype=torch.float32)
+model.conv1.weight_g.data = torch.tensor(1)
+model.linear.weight.data = torch.tensor([[1],
+        [1]], dtype=torch.float32)
+# test samples
+X = np.array([[1,0,0,1,0,0,1,0,0],
+     [0,0,0,0,0,0,0,0,0]]).T
+x_seq = create_sequences(X, 3)
+X_tensor = torch.from_numpy(x_seq).float()
+X_tensor = X_tensor.permute(0,2,1)
+
+out = model(X_tensor)
+out_np = out.detach().numpy()
+
 print('finished')
 
 
