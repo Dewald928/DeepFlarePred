@@ -2,19 +2,19 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - CNN
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 100
 batch_size:
   desc: Size of each mini-batch
   value: 65536
 learning_rate:
   desc: initial learning rate
-  value: 0.0000001
+  value: 0.01
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -23,10 +23,10 @@ optim:
   value: SGD
 lr_scheduler:
   desc: if scheduler is on
-  value: False
+  value: True
 max_lr:
   desc: cyclic lr max value
-  value: 0.01
+  value: 1
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -48,15 +48,15 @@ seq_len:
 # MLP
 layers:
   desc: MLP layers
-  value: 1
+  value: 2
 hidden_units:
   desc: number hidden nodes in layer
-  value: 100
+  value: 200
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.5
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -75,7 +75,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 flare_label:
   desc: Types of flare class
   value: M5
@@ -90,7 +90,7 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: False
+  value: True
 patience:
   desc: amount of epochs for early stopping
   value: 30

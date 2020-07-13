@@ -6,49 +6,46 @@ parameters:
   batch_size:
     distribution: categorical
     values:
-    - 256
-    - 1024
-    - 4096
-    - 16384
     - 65536
-  early_stop:
-    distribution: constant
-    value: "False"
   ksize:
     distribution: categorical
     values:
     - 2
     - 3
-  nhid:
-    distribution: catergorical
-    values:
-      - 20
-      - 40
-      - 80
   levels:
     distribution: categorical
     values:
     - 1
-    - 2
   model_type:
     distribution: constant
-    value: TCN
+    value: CNN
+  nhid:
+    distribution: categorical
+    values:
+    - 40
+    - 80
+  optim:
+    distribution: categorical
+    values:
+    - SGD
+    - Adam
   seed:
     distribution: categorical
     values:
     - 15
     - 124
     - 49
-  optim:
-    distribution: categorical
-    values:
-      - SGD
-      - Adam
   weight_decay:
     distribution: categorical
     values:
+    - 0
+    - 0.001
+    - 0.0001
+    - 1e-05
+  dropout:
+    distribution: categorical
+    values:
       - 0
-      - 0.001
-      - 0.0001
-      - 0.00001
+      - 0.2
+      - 0.4
 program: main_TCN_Liu.py

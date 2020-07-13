@@ -21,7 +21,7 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
 
     # LR finder (Leslie SMiths)
     lr_finder = LRFinder(model, optimizer, criterion, device=device)
-    lr_finder.range_test(train_loader, val_loader=valid_loader, end_lr=100,
+    lr_finder.range_test(train_loader, val_loader=valid_loader, end_lr=10,
                          num_iter=num_iter, step_mode="exp")
     lr_finder.plot(ax=axes[1], skip_end=0, skip_start=0)
     lr_finder.reset()

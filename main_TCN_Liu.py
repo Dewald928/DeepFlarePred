@@ -502,21 +502,30 @@ if __name__ == '__main__':
                                     weight_decay=cfg.weight_decay,
                                     nesterov=True, momentum=cfg.momentum)
         if cfg.lr_scheduler:
-            scheduler = lr_scheduler.CyclicLR(optimizer,
-                                              base_lr=cfg.learning_rate,
-                                              max_lr=cfg.max_lr,
-                                              step_size_up=int(4 * (len(
-                                                  X_train_data) / cfg.batch_size)))
+            # scheduler = lr_scheduler.CyclicLR(optimizer,
+            #                                   base_lr=cfg.learning_rate,
+            #                                   max_lr=cfg.max_lr,
+            #                                   step_size_up=int(4 * (len(
+            #                                       X_train_data) / cfg.batch_size)))
+            scheduler = lr_scheduler.OneCycleLR(optimizer, max_lr=cfg.max_lr,
+                                                steps_per_epoch=len(
+                                                    train_loader),
+                                                epochs=cfg.epochs)
     elif cfg.optim == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
                                      weight_decay=cfg.weight_decay)
         if cfg.lr_scheduler:
-            scheduler = lr_scheduler.CyclicLR(optimizer,
-                                              base_lr=cfg.learning_rate,
-                                              max_lr=cfg.max_lr,
-                                              step_size_up=int(4 * (len(
-                                                  X_train_data) / cfg.batch_size)),
-                                              cycle_momentum=False)
+            # scheduler = lr_scheduler.CyclicLR(optimizer,
+            #                                   base_lr=cfg.learning_rate,
+            #                                   max_lr=cfg.max_lr,
+            #                                   step_size_up=int(4 * (len(
+            #                                       X_train_data) / cfg.batch_size)),
+            #                                   cycle_momentum=False)
+            scheduler = lr_scheduler.OneCycleLR(optmizier, max_lr=cfg.max_lr,
+                                                steps_per_epoch=len(
+                                                    train_loader),
+                                                epochs=cfg.epochs,
+                                                cycle_momentum=False)
 
     # find LR
     if not cfg.lr_scheduler:
@@ -724,7 +733,7 @@ if __name__ == '__main__':
             #                                   cfg.batch_size)),
             #                           cycle_momentum=True if
             #                           cfg.optim == 'SGD' else False)
-            lrscheduler = LRScheduler(policy=torch.optim.lr_scheduler.OneCycleLR,
+            lrscheduler = LRScheduler(policy=lr_scheduler.OneCycleLR,
                                       monitor='valid_tss',
                                       max_lr=cfg.max_lr,
                                       steps_per_epoch=len(train_loader),
