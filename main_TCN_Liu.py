@@ -521,7 +521,7 @@ if __name__ == '__main__':
             #                                   step_size_up=int(4 * (len(
             #                                       X_train_data) / cfg.batch_size)),
             #                                   cycle_momentum=False)
-            scheduler = lr_scheduler.OneCycleLR(optmizier, max_lr=cfg.max_lr,
+            scheduler = lr_scheduler.OneCycleLR(optimizer, max_lr=cfg.max_lr,
                                                 steps_per_epoch=len(
                                                     train_loader),
                                                 epochs=cfg.epochs,

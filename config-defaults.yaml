@@ -75,7 +75,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: False
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
