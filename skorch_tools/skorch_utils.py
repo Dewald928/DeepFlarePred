@@ -89,11 +89,12 @@ class LoggingCallback(Callback):
         y_test = net.predict(self.test_inputs)
         tss_test_score = get_tss(self.test_labels, y_test)
         h = net.history[-1]
-        wandb.log(
-            {'Training_Loss': h['train_loss'], 'Validation_TSS': h[
-                'valid_tss'],
-             'Training_TSS': h['train_tss'],
-             'Validation_Loss': h['valid_loss'], 'Test_TSS_curve': tss_test_score}, step=h['epoch'])
+        wandb.log({'Training_Loss': h['train_loss'],
+                   'Validation_TSS': h['valid_tss'],
+                   'Training_TSS': h['train_tss'],
+                   'Validation_HSS': h['valid_hss'],
+                   'Validation_Loss': h['valid_loss'],
+                   'Test_TSS_curve': tss_test_score}, step=h['epoch'])
 
 
 class LoadBestCP(Callback):
