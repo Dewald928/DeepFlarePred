@@ -22,7 +22,7 @@ import wandb
 import yaml
 from sklearn.metrics import make_scorer, balanced_accuracy_score
 from sklearn.model_selection import GridSearchCV, cross_val_score, \
-    StratifiedKFold
+    StratifiedKFold, KFold
 from sklearn.utils import class_weight
 from skorch import NeuralNetClassifier
 from skorch.callbacks import *
@@ -243,9 +243,10 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
                                           hss, bacc, accuracy, precision,
                                           recall, ' ', test_loss, mcc))
 
-    wandb.log({"Test_Accuracy": accuracy, "Test_TSS": tss, "Test_HSS": hss,
-               "Test_BACC": bacc, "Test_Precision": precision,
-               "Test_Recall": recall, "Test_Loss": test_loss, "Test_MCC": mcc})
+    wandb.log({"Test_Accuracy_curve": accuracy, "Test_TSS_curve": tss,
+               "Test_HSS_curve": hss, "Test_BACC_curve": bacc,
+               "Test_Precision_curve": precision, "Test_Recall_curve": recall,
+               "Test_Loss_curve": test_loss, "Test_MCC_curve": mcc})
 
     return recall, precision, accuracy, bacc, hss, tss
 
@@ -265,6 +266,65 @@ def infer_model(model, device, data_loader):
             output_arr.append(output.cpu().detach().numpy())
 
     return np.vstack(output_arr)
+
+
+def do_nested_cv():
+    # weight_norm in cnn breek die
+    p_grid = {}
+    net.initialize()
+    net.load_params(f_params=init_savename)
+    net.train_split = None
+    net.callbacks = [train_tss_cb]
+    net.initialize_callbacks()
+
+    inner_cv = KFold(n_splits=2, shuffle=True, random_state=cfg.seed)
+    outer_cv = KFold(n_splits=5, shuffle=True, random_state=cfg.seed)
+
+    gcv = GridSearchCV(estimator=net, param_grid=p_grid,
+                       scoring=make_scorer(balanced_accuracy_score,
+                                           **{'adjusted': True}),
+                       cv=inner_cv, refit=True, return_train_score=True,
+                       verbose=1)
+
+    nested_score = cross_val_score(gcv, X=combined_inputs, y=combined_labels,
+                                   cv=outer_cv,
+                                   scoring=make_scorer(balanced_accuracy_score,
+                                                       **{'adjusted': True}))
+
+    print('%s | outer TSS %.4f +/- %.4f' % (
+        'Model', nested_score.mean(), nested_score.std()))
+
+    # Fitting a model to the whole training set
+    # using the "best" algorithm
+    # best_algo = gridcvs['SVM']
+    gcv.fit(combined_inputs, combined_labels)
+
+    # summarize results
+    print("Best: %f using %s" % (gcv.best_score_, gcv.best_params_))
+    means = gcv.cv_results_['mean_test_score']
+    stds = gcv.cv_results_['std_test_score']
+    params = gcv.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
+
+    train_tss = balanced_accuracy_score(y_true=combined_labels,
+                                        y_pred=gcv.predict(combined_inputs),
+                                        adjusted=True)
+    test_tss = balanced_accuracy_score(y_true=y_test_tr,
+                                       y_pred=gcv.predict(test_inputs),
+                                       adjusted=True)
+
+    print('Training TSS: %.4f' % (train_tss))
+    print('Test TSS: %.4f' % (test_tss))
+
+    # save to csv
+    nested_score_df = pd.Series(nested_score, name='best_outer_score')
+    df_csv = pd.concat([pd.DataFrame(gcv.cv_results_), nested_score_df],
+                       axis=1)
+    # df_csv.to_csv(
+    #     '../saved/scores/nestedcv_{}_{}.csv'.format(seed, cfg.model_type))
+
+    print('Done')
 
 
 def parse_args(cfg):
@@ -418,27 +478,24 @@ if __name__ == '__main__':
     if cfg.model_type == 'MLP':
         X_train_data = np.reshape(X_train_data,
                                   (len(X_train_data), cfg.n_features))
+        X_train_data_tensor = torch.tensor(X_train_data).float()
         X_valid_data = np.reshape(X_valid_data,
                                   (len(X_valid_data), cfg.n_features))
+        X_valid_data_tensor = torch.tensor(X_valid_data).float()
         X_test_data = np.reshape(X_test_data,
                                  (len(X_test_data), cfg.n_features))
+        X_test_data_tensor = torch.tensor(X_test_data).float()
     elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN') or (
             cfg.model_type == 'RNN'):
         X_train_data = torch.tensor(X_train_data).float()
-        X_train_data = X_train_data.permute(0, 2, 1)
+        X_train_data_tensor = X_train_data.permute(0, 2, 1)
         X_valid_data = torch.tensor(X_valid_data).float()
-        X_valid_data = X_valid_data.permute(0, 2, 1)
+        X_valid_data_tensor = X_valid_data.permute(0, 2, 1)
         X_test_data = torch.tensor(X_test_data).float()
-        X_test_data = X_test_data.permute(0, 2, 1)
+        X_test_data_tensor = X_test_data.permute(0, 2, 1)
     # (samples, seq_len, features) -> (samples, features, seq_len)
-    # X_train_data_tensor = X_train_data.clone().detach()
-    X_train_data_tensor = torch.tensor(X_train_data).float()
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
-
-    X_valid_data_tensor = torch.tensor(X_valid_data).float()
     y_valid_tr_tensor = torch.tensor(y_valid_tr).long()
-
-    X_test_data_tensor = torch.tensor(X_test_data).float()
     y_test_tr_tensor = torch.tensor(y_test_tr).long()
 
     # ready custom dataset
@@ -606,6 +663,7 @@ if __name__ == '__main__':
             model.load_state_dict(torch.load(weights_file.name))
 
         test_tss = test(model, device, test_loader, criterion, epoch)[5]
+        wandb.log({"Test_TSS": test_tss})
 
         '''
         PR Curves
@@ -680,19 +738,19 @@ if __name__ == '__main__':
         combined_labels = np.array([labels for _, labels in iter(ds)])
 
         # Metrics + Callbacks
-        valid_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
+        valid_tss_cb = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
                                                      needs_proba=False),
                                  lower_is_better=False, name='valid_tss',
                                  use_caching=True)
-        train_tss = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
+        train_tss_cb = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
                                                      needs_proba=False),
                                  lower_is_better=False, name='train_tss',
                                  use_caching=True, on_train=True)
-        valid_hss = EpochScoring(scoring=make_scorer(skorch_utils.get_hss,
+        valid_hss_cb = EpochScoring(scoring=make_scorer(skorch_utils.get_hss,
                                                      needs_proba=False),
                                  lower_is_better=False, name='valid_hss',
                                  use_caching=True)
-        train_bacc = EpochScoring(
+        train_bacc_cb = EpochScoring(
             scoring=make_scorer(balanced_accuracy_score, **{'adjusted': True},
                                 needs_proba=False), lower_is_better=False,
             name='train_bacc', use_caching=True, on_train=True)
@@ -760,10 +818,12 @@ if __name__ == '__main__':
                                   device=device,
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
-                                  callbacks=[train_tss, valid_tss, earlystop,
-                                             checkpoint,  # load_state,
-                                             reload_at_end,
-                                             logger, lrscheduler],
+                                  callbacks=[train_tss_cb, valid_tss_cb,
+                                             valid_hss_cb,
+                                             earlystop, checkpoint,
+                                             # load_state,
+                                             reload_at_end, logger,
+                                             lrscheduler],
                                   # iterator_train__shuffle=True,
                                   warm_start=False)
 
@@ -813,7 +873,7 @@ if __name__ == '__main__':
             wandb.log({"CV_Score": scores})
 
         elif cfg.nested_cv:
-            pass
+            do_nested_cv()
 
 
         '''

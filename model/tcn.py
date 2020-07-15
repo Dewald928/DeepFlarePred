@@ -39,9 +39,11 @@ class TemporalBlock(nn.Module):
         self.relu = nn.ReLU()
         self.init_weights()
 
-    def init_weights(self):  # todo should be weight_v?
-        self.conv1.weight.data.normal_(0, 0.01)
-        self.conv2.weight.data.normal_(0, 0.01)
+    def init_weights(self):
+        self.conv1.weight = []
+        self.conv2.weight = []
+        self.conv1.weight_v.data.normal_(0, 0.01)
+        self.conv2.weight_v.data.normal_(0, 0.01)
         if self.downsample is not None:
             self.downsample.weight.data.normal_(0, 0.01)
 
@@ -95,6 +97,7 @@ class Simple1DConv(nn.Module):
     def init_weights(self):
         nn.init.kaiming_normal_(self.conv1.weight_v, mode='fan_in',
                                 nonlinearity='relu')
+        self.conv1.weight = []
 
     def forward(self, x):
         out = self.conv1(x)
