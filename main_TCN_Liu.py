@@ -269,7 +269,7 @@ def infer_model(model, device, data_loader):
 
 
 def do_nested_cv():
-    # weight_norm in cnn breek die
+    # weight_norm in cnn breaks this
     p_grid = {}
     net.initialize()
     net.load_params(f_params=init_savename)
@@ -305,17 +305,12 @@ def do_nested_cv():
     stds = gcv.cv_results_['std_test_score']
     params = gcv.cv_results_['params']
     for mean, stdev, param in zip(means, stds, params):
-        print("%f (%f) with: %r" % (mean, stdev, param))
+        print("%.4f (%.4f) with: %r" % (mean, stdev, param))
 
     train_tss = balanced_accuracy_score(y_true=combined_labels,
                                         y_pred=gcv.predict(combined_inputs),
                                         adjusted=True)
-    test_tss = balanced_accuracy_score(y_true=y_test_tr,
-                                       y_pred=gcv.predict(test_inputs),
-                                       adjusted=True)
-
     print('Training TSS: %.4f' % (train_tss))
-    print('Test TSS: %.4f' % (test_tss))
 
     # save to csv
     nested_score_df = pd.Series(nested_score, name='best_outer_score')
@@ -324,7 +319,7 @@ def do_nested_cv():
     # df_csv.to_csv(
     #     '../saved/scores/nestedcv_{}_{}.csv'.format(seed, cfg.model_type))
 
-    print('Done')
+    return gcv
 
 
 def parse_args(cfg):
@@ -873,7 +868,7 @@ if __name__ == '__main__':
             wandb.log({"CV_Score": scores})
 
         elif cfg.nested_cv:
-            do_nested_cv()
+            gcv = do_nested_cv()
 
 
         '''
@@ -881,35 +876,27 @@ if __name__ == '__main__':
         '''
         # train on train and val set
         if cfg.cross_validation:
+            y_test = net.predict(test_inputs)
+            tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+            wandb.log({'Test_TSS': tss_test_score})
+            print("Test TSS:" + str(tss_test_score))
+
+        elif cfg.nested_cv:
+            tss_test_score = balanced_accuracy_score(y_true=test_labels,
+                                                     y_pred=gcv.predict(
+                                                         test_inputs),
+                                                     adjusted=True)
+            wandb.log({'Test_TSS': tss_test_score})
+            print('Test TSS: %.4f' % (tss_test_score))
+
+        else:
             net.initialize()
-            net.load_params(f_params=init_savename)
-            net.train_split = None
-            net.callbacks = [train_tss, EarlyStopping(monitor='train_tss',
-                                                      lower_is_better=False,
-                                                      patience=cfg.patience),
-                             checkpoint_cv]
-            net.initialize_callbacks()
-            params = {}
-            cv = sklearn.model_selection.StratifiedKFold(n_splits=cfg.n_splits)
-            gs = GridSearchCV(net, params, refit=True, cv=cv,
-                              scoring=make_scorer(balanced_accuracy_score,
-                                                  **{'adjusted': True}),
-                              return_train_score=True)
+            net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
-            gs.fit(combined_inputs, combined_labels)
-            print(gs.best_score_, gs.best_params_)
-
-        net.initialize()
-        net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
-
-        y_test = net.predict(test_inputs)
-        tss_test_score = skorch_utils.get_tss(test_labels, y_test)
-        wandb.log({'Test_TSS': tss_test_score})
-        print("Test TSS:" + str(tss_test_score))
-
-        # pdf.plot_calibration_curve(net, "Test", X_valid_data,
-        #                            y_valid_tr,
-        #                            test_inputs, test_labels)
+            y_test = net.predict(test_inputs)
+            tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+            wandb.log({'Test_TSS': tss_test_score})
+            print("Test TSS:" + str(tss_test_score))
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))

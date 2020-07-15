@@ -79,10 +79,8 @@ class Simple1DConv(nn.Module):
                  dilation=1):
         super(Simple1DConv, self).__init__()
         self.padding = (kernel_size - 1) * dilation
-        self.conv1 = weight_norm(
-            nn.Conv1d(n_inputs, n_filters, kernel_size, stride=1,
-                      padding=self.padding, dilation=dilation),
-            name='weight', dim=None)
+        self.conv1 = nn.Conv1d(n_inputs, n_filters, kernel_size, stride=1,
+                               padding=self.padding, dilation=dilation)
         self.chomp1 = Chomp1d(self.padding)
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout)
@@ -95,9 +93,9 @@ class Simple1DConv(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        nn.init.kaiming_normal_(self.conv1.weight_v, mode='fan_in',
+        nn.init.kaiming_normal_(self.conv1.weight, mode='fan_in',
                                 nonlinearity='relu')
-        self.conv1.weight = []
+        # self.conv1.weight = []
 
     def forward(self, x):
         out = self.conv1(x)
