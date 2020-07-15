@@ -274,7 +274,7 @@ def do_nested_cv():
     net.initialize()
     net.load_params(f_params=init_savename)
     net.train_split = None
-    net.callbacks = [train_tss_cb]
+    net.callbacks = [train_tss_cb, lrscheduler]
     net.initialize_callbacks()
 
     inner_cv = KFold(n_splits=2, shuffle=True, random_state=cfg.seed)
@@ -417,18 +417,18 @@ if __name__ == '__main__':
     sharps = ['USFLUX', 'MEANGBT', 'MEANJZH', 'MEANPOT', 'SHRGT45', 'TOTUSJH',
               'MEANGBH', 'MEANALP', 'MEANGAM', 'MEANGBZ', 'MEANJZD', 'TOTUSJZ',
               'SAVNCPP', 'TOTPOT', 'MEANSHR', 'AREA_ACR', 'R_VALUE',
-              'ABSNJZH']
-    lorentz = ['TOTBSQ','TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY', 'EPSZ']
+              'ABSNJZH'] # 18
+    lorentz = ['TOTBSQ','TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY', 'EPSZ'] # 7
     history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
                         'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
-                        'Mhis1d', 'Xhis1d', 'Xmax1d']
+                        'Mhis1d', 'Xhis1d', 'Xmax1d'] # 15
     listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT',
                             'AREA_ACR', 'Cdec', 'Chis', 'Edec', 'Mhis',
                             'Xmax1d', 'Mdec', 'MEANPOT', 'R_VALUE', 'Mhis1d',
                             'MEANGAM', 'TOTFX', 'MEANJZH', 'MEANGBZ', 'TOTFZ',
                             'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
                             'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
-                            'Bdec', 'Bhis1d']
+                            'Bdec', 'Bhis1d'] # 32
     feature_list = None  #
     # can be
     # None, need to change

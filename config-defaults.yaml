@@ -2,13 +2,13 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - AllFeatures
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: TCN
+  value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 14
+  value: 100
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -20,7 +20,7 @@ momentum:
   value: 0.9
 optim:
   desc: optimizer to use
-  value: Adam
+  value: SGD
 lr_scheduler:
   desc: if scheduler is on
   value: True
@@ -43,7 +43,7 @@ nhid:
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
@@ -59,7 +59,7 @@ dropout:
   value: 0.4
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.001
 
 # Cross Validation
 cross_validation:
@@ -67,7 +67,7 @@ cross_validation:
   value: False
 nested_cv:
   desc: if nested crossval should be performed
-  value: True
+  value: False
 n_splits:
   desc: number of splits
   value: 3
@@ -90,10 +90,10 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
+  value: False
 patience:
   desc: amount of epochs for early stopping
-  value: 30
+  value: 20
 training:
   desc: Trains models, else only tests
   value: True
