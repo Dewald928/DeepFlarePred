@@ -2,19 +2,19 @@
 tag:
   desc: wandb tags
   value:
-    - AllFeatures
+    - LiuFold
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 100
+  value: 1
 batch_size:
   desc: Size of each mini-batch
   value: 65536
 learning_rate:
   desc: initial learning rate
-  value: 0.01
+  value: 0.001
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -40,7 +40,7 @@ ksize:
   value: 2
 nhid:
   desc: number of filters
-  value: 40
+  value: 80
 seq_len:
   desc: size of sequence (Be 1 for MLP)
   value: 3
@@ -59,9 +59,12 @@ dropout:
   value: 0.4
 weight_decay:
   desc: L2 regularizing
-  value: 0.001
+  value: 0.0
 
 # Cross Validation
+liu_fold:
+  desc: If liu fold should be done
+  value: True
 cross_validation:
   desc: if crossval should be performed
   value: False
@@ -90,7 +93,7 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: False
+  value: True
 patience:
   desc: amount of epochs for early stopping
   value: 20
@@ -105,7 +108,7 @@ num_workers:
   value: 9
 parse_args:
   desc: if args should be parse for bash script
-  value: False
+  value: True
 
 # Dataset
 dataset:

@@ -462,9 +462,10 @@ if __name__ == '__main__':
                                                               y_test_data,
                                                               num_of_fold)
 
-    # crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
-    #                               X_valid_fold, y_valid_fold, X_test_fold,
-    #                               y_test_fold, cfg, nclass, device)
+    if cfg.liu_fold:
+        crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
+                                      X_valid_fold, y_valid_fold, X_test_fold,
+                                      y_test_fold, cfg, nclass, device)
 
     y_train_tr = data_loader.label_transform(y_train_data)
     y_valid_tr = data_loader.label_transform(y_valid_data)
@@ -849,9 +850,9 @@ if __name__ == '__main__':
             rkf = sklearn.model_selection.RepeatedKFold(n_splits=cfg.n_splits,
                                                         n_repeats=2)
             scores = []
-            visualize_CV.visualize_cv(sklearn.model_selection.StratifiedKFold,
+            visualize_CV.visualize_cv(sklearn.model_selection.KFold,
                                       combined_inputs, combined_labels, cfg)
-            for train_index, val_index in skf.split(combined_inputs,
+            for train_index, val_index in kf.split(combined_inputs,
                                                     combined_labels):
                 print('train -  {}   |   test -  {}'.format(
                     np.bincount(combined_labels[train_index]), np.bincount(combined_labels[val_index])))
