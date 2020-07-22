@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - LiuFold
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
@@ -14,13 +14,13 @@ batch_size:
   value: 65536
 learning_rate:
   desc: initial learning rate
-  value: 0.001
+  value: 0.0001
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
-  value: SGD
+  value: Adam
 lr_scheduler:
   desc: if scheduler is on
   value: True
@@ -40,10 +40,10 @@ ksize:
   value: 2
 nhid:
   desc: number of filters
-  value: 80
+  value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 3
+  value: 1
 
 # MLP
 layers:
@@ -59,12 +59,12 @@ dropout:
   value: 0.4
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.01
 
 # Cross Validation
 liu_fold:
   desc: If liu fold should be done
-  value: True
+  value: False
 cross_validation:
   desc: if crossval should be performed
   value: False
@@ -84,7 +84,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 20
+  value: 32
 clip:
   desc: gradient clipping value (not skorch)
   value: -1

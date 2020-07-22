@@ -213,11 +213,11 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             print('{:<11s}{:^9s}{:^9s}{:^9s}'
                   '{:^9s}{:^9s}{:^9s}{:^9s}'
                   '{:^9s}{:^9s}'
-                  '{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch',
-                                              'Runtime', 'TSS', 'PR_AUC',
-                                              'HSS', 'BACC', 'ACC',
-                                              'Precision', 'Recall', 'F1',
-                                              'Loss', 'CP'))
+                  '{:^9s}{:^9s}{:^9s}{:^3s}'.format('Data Loader', 'Epoch',
+                                                    'Runtime', 'TSS', 'PR_AUC',
+                                                    'HSS', 'BACC', 'ACC',
+                                                    'Precision', 'Recall',
+                                                    'F1', 'Loss', 'MCC', 'CP'))
 
             if cfg.training:
                 while epoch < cfg.epochs:
