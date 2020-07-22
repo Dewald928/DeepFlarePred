@@ -190,7 +190,7 @@ def cross_val_train(num_of_fold, X_train_fold, y_train_fold, X_valid_fold,
             # scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer,
             #                                               base_lr=cfg.learning_rate,
             #                                               max_lr=0.1)
-            scheduler = lr_scheduler.OneCycleLR(optimizer, max_lr=cfg.max_lr,
+            scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=cfg.max_lr,
                                                 steps_per_epoch=len(
                                                     train_loader),
                                                 epochs=cfg.epochs)
