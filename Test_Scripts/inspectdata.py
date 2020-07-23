@@ -72,6 +72,7 @@ print(tabulate(yearly_sunspots_AR, headers="keys", tablefmt="github"))
 df = df.drop(['date'], axis=1)
 
 
+
 '''
 Flare history histogram
 '''
@@ -86,6 +87,7 @@ flares_df_prep['goes_class'] = flares_df_prep['goes_class'].apply(lambda x:
 flares_df_prep = flares_df_prep.pivot_table(index='noaa_active_region', columns='goes_class',
                            aggfunc={'goes_class': pd.Series.count}).fillna(0)
 flares_df_prep.columns = ['B', 'C', 'M', 'X']
+ar_per_class = flares_df_prep['X'].gt(0).sum()
 fp0 = flares_df_prep[flares_df_prep['X'] >= 1]
 fp1 = flares_df_prep[flares_df_prep['X'] < 1]
 # get values before only.

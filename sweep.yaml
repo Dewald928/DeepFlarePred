@@ -7,6 +7,11 @@ parameters:
     distribution: categorical
     values:
     - 65536
+  seq_len:
+    distribution: categorical
+    values:
+      - 1
+      -
   ksize:
     distribution: categorical
     values:
@@ -38,14 +43,7 @@ parameters:
   weight_decay:
     distribution: categorical
     values:
-    - 0
+    - 0.1
+    - 0.01
     - 0.001
-    - 0.0001
-    - 1e-05
-  dropout:
-    distribution: categorical
-    values:
-      - 0
-      - 0.2
-      - 0.4
 program: main_TCN_Liu.py

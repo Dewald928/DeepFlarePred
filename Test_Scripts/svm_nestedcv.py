@@ -49,7 +49,7 @@ listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
                         'MEANPOT', 'R_VALUE', 'Mhis1d', 'MEANGAM', 'TOTFX',
                         'MEANJZH', 'MEANGBZ', 'TOTFZ', 'TOTFY', 'logEdec',
                         'EPSZ', 'MEANGBH', 'MEANJZD', 'Xhis1d', 'Xdec', 'Xhis',
-                        'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']
+                        'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']  # 32
 feature_list = None
 
 X_train_data, y_train_data = data_loader.load_data(
@@ -92,10 +92,9 @@ feature_name = pd.DataFrame(data_loader.get_feature_names(
 '''
 SVM Nested CV
 '''
-seed = 1
-params = {'C': [0.0001,0.001,0.01,0.1,1,10,100]}  # choose C values
-# here
-clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
+seed = 10
+params = {'C': [0.000001,0.00001,0.0001,0.001,0.01,0.1,1,10,100]}  # choose C
+clf = LinearSVC(penalty="l2", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
 
 inner_cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=seed)
@@ -112,8 +111,6 @@ nested_score = cross_val_score(gcv, X=X, y=y,
                                scoring=make_scorer(
                                    balanced_accuracy_score,
                                    **{'adjusted': True}))
-print('%s | outer TSS %.4f +/- %.4f' % (
-    'SVM', nested_score.mean(), nested_score.std()))
 
 # Fitting a model to the whole training set
 # using the "best" algorithm
@@ -121,21 +118,35 @@ print('%s | outer TSS %.4f +/- %.4f' % (
 gcv.fit(X, y)
 
 # summarize results
-print("Best: %f using %s" % (
-gcv.best_score_, gcv.best_params_))
+tmeans = gcv.cv_results_['mean_train_score']
+tstds = gcv.cv_results_['std_train_score']
 means = gcv.cv_results_['mean_test_score']
 stds = gcv.cv_results_['std_test_score']
-params = gcv.cv_results_['params']
-for mean, stdev, param in zip(means, stds, params):
-    print("%f (%f) with: %r" % (mean, stdev, param))
+print("Nested cross-validation grid scores on development set:")
+print('')
+print('| Parameter | Training TSS ($\mu$ ± '
+      '$\sigma$) | Inner Fold Validation TSS ($\mu$ ± '
+      '$\sigma$) |')
+print('|---|---|---|')
+for tmean, tstd, mean, std, params in zip(tmeans, tstds, means, stds,
+                                          gcv.cv_results_['params']):
+    print(f"| {params} | {tmean:0.4f} ± {tstd:0.4f} | {mean:0.4f} ±"
+          f" {std:0.4f} |")
 
 train_tss = balanced_accuracy_score(y_true=y,
                            y_pred=gcv.predict(X), adjusted=True)
 test_tss = balanced_accuracy_score(y_true=y_test_tr,
                           y_pred=gcv.predict(X_test_data), adjusted=True)
+print(f"Best parameter: {gcv.best_params_}  ")
+print(f"Outer-fold TSS: {nested_score.mean():.4f} ± {nested_score.std():.4f}  ")
 
-print('Training TSS: %.4f' % (train_tss))
-print('Test TSS: %.4f' % (test_tss))
+print("The model is trained on the full development set.  ")
+print("The scores are computed on the full evaluation set.  ")
+print('')
+print("| Dataset | TSS |")
+print("|---|---|")
+print('| Training + Validation | %.4f |' % (train_tss))
+print('| Test | %.4f |' % (test_tss))
 
 
 # save to csv
@@ -146,7 +157,7 @@ df_csv.to_csv('../saved/scores/nestedcv_svm_{}_strat.csv'.format(seed))
 # calibration
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 
-cclf = CalibratedClassifierCV(base_estimator=LinearSVC(penalty='l1',
+cclf = CalibratedClassifierCV(base_estimator=LinearSVC(penalty='l2',
                                                        dual=False, C=0.001), cv=5)
 cclf.fit(X, y)
 res = cclf.predict_proba(X_test_data)[:, 1]

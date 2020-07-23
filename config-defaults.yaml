@@ -8,7 +8,7 @@ model_type:
   value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 200
+  value: 100
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -20,7 +20,7 @@ momentum:
   value: 0.9
 optim:
   desc: optimizer to use
-  value: Adam
+  value: SGD
 lr_scheduler:
   desc: if scheduler is on
   value: True
@@ -37,13 +37,13 @@ levels:
   value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 2
+  value: 3
 nhid:
   desc: number of filters
   value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 3
 
 # MLP
 layers:
@@ -93,7 +93,7 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
+  value: False
 patience:
   desc: amount of epochs for early stopping
   value: 20

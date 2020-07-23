@@ -19,7 +19,7 @@ from sklearn.metrics import balanced_accuracy_score, classification_report
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedStratifiedKFold, KFold, RepeatedKFold
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 # explore the algorithm wrapped by RFE
@@ -33,6 +33,12 @@ sys.path.insert(0, '/home/fuzzy/work/DeepFlarePred/')
 sys.path.insert(0, '/home/dewaldus/projects/DeepFlarePred/')
 from data_loader import data_loader
 from utils import confusion_matrix_plot
+
+
+class GridSearchWithCoef(GridSearchCV):
+    @property
+    def coef_(self):
+        return self.best_estimator_.coef_
 
 # Data
 n_features = 40
@@ -49,7 +55,7 @@ listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
                         'MEANPOT', 'R_VALUE', 'Mhis1d', 'MEANGAM', 'TOTFX',
                         'MEANJZH', 'MEANGBZ', 'TOTFZ', 'TOTFY', 'logEdec',
                         'EPSZ', 'MEANGBH', 'MEANJZD', 'Xhis1d', 'Xdec', 'Xhis',
-                        'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']
+                        'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']  # 32
 # feature_list = ['Bdec', 'Cdec', 'Chis1d', 'Edec', 'MEANGBZ', 'Mdec',
 #                 'Mhis1d', 'R_VALUE', 'Xdec', 'Xhis1d', 'Xmax1d']
 feature_list = None
@@ -132,8 +138,8 @@ for scorer, score_func in score_functions.items():
 '''
 Linear SVC optimization
 '''
-params = {'C': [0.01]}  # choose C values here
-clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
+params = {'C': [0.000001,0.00001,0.0001,0.001,0.01,0.1,1,10,100]}  # choose C values here
+clf = LinearSVC(penalty="l2", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
 # cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
 grid = GridSearchCV(clf, param_grid=params, cv=5, return_train_score=True,
@@ -141,37 +147,42 @@ grid = GridSearchCV(clf, param_grid=params, cv=5, return_train_score=True,
                                         **{'adjusted': True}), n_jobs=-1,
                     verbose=1)
 grid.fit(X, y)
-print("Best parameters set found on development set:")
-print(grid.best_params_)
-print("Grid scores on development set:")
+
+print("Cross-validation grid scores on development set:")
+print('')
 tmeans = grid.cv_results_['mean_train_score']
 tstds = grid.cv_results_['std_train_score']
 means = grid.cv_results_['mean_test_score']
 stds = grid.cv_results_['std_test_score']
+print('| Parameter | Training TSS ($\mu$ ± '
+      '$\sigma$) | Validation TSS ($\mu$ ± '
+      '$\sigma$) |')
+print('|---|---|---|')
 for tmean, tstd, mean, std, params in zip(tmeans, tstds, means, stds,
                                           grid.cv_results_['params']):
-    print(f"Training: {tmean:0.4f} ± {tstd:0.4f} | Validation: {mean:0.4f} ± {std:0.4f} for {params}")
+    print(f"| {params} | {tmean:0.4f} ± {tstd:0.4f} | {mean:0.4f} ±"
+          f" {std:0.4f} |")
 
-print("Detailed classification report:")
+print("Best parameters set found on development set:")
+print(grid.best_params_)
+
 print("The model is trained on the full development set.")
 print("The scores are computed on the full evaluation set.")
-y_true, y_pred = y_test_tr, grid.predict(X_test_data)
-print(classification_report(y_true, y_pred))
-average_tss = balanced_accuracy_score(y_test_tr, y_pred, adjusted=True)
-print('Average tss score: {0:0.4f}'.format(average_tss))
+print('')
+train_tss = balanced_accuracy_score(y_true=y,
+                           y_pred=grid.predict(X), adjusted=True)
+test_tss = balanced_accuracy_score(y_true=y_test_tr,
+                          y_pred=grid.predict(X_test_data), adjusted=True)
+print('| Dataset | TSS |')
+print("|---|---|")
+print(f"| Training + Validation | {train_tss:.4f} |")
+print(f"| Test | {test_tss:.4f} |")
 
 # plot weights
 svm_weights = np.abs(grid.best_estimator_.coef_).sum(axis=0)
 svm_weights /= svm_weights.sum()
 X_indices = np.arange(X.shape[-1])
-plt.bar(X_indices, svm_weights, width=.2, label='SVM weight')
-
-# selector = SelectKBest(f_classif, k=11)
-# selector.fit(X_train_data, y_train_tr)
-# scores = -np.log10(selector.pvalues_)
-# scores /= scores.max()
-# plt.bar(X_indices - .45, scores, width=.2,
-#         label=r'Univariate score ($-Log(p_{value})$)')
+plt.bar(X_indices, svm_weights, width=.2, label=f"C:{grid.best_estimator_.C}")
 
 plt.title("SVM Coefficients")
 plt.xlabel('Features')
@@ -179,6 +190,8 @@ plt.xticks(range(0, len(feature_names[5:])), feature_names[5:], rotation=90)
 plt.yticks(())
 plt.axis('tight')
 plt.legend(loc='upper right')
+plt.tight_layout()
+plt.savefig(drop_path + "SVM_coef.png")
 plt.show()
 
 '''
@@ -186,15 +199,15 @@ Crossval from feature selection
 '''
 cs = l1_min_c(X, y)  # minimum C-value
 clf = Pipeline([('anova', SelectKBest(f_classif)), ('svc', LinearSVC(
-    C=0.01, penalty="l1", dual=False, verbose=0, max_iter=10000,
+    C=0.001, penalty="l2", dual=False, verbose=0, max_iter=10000,
     class_weight='balanced'))])
 
 # Plot the cross-validation score as a function of number of features
 score_means = list()
 score_stds = list()
-n_features = np.arange(40, 1, -1)
+n_features_list = np.arange(40, 0, -1)
 
-for k_feature in n_features:
+for k_feature in n_features_list:
     clf.set_params(anova__k=k_feature)
     # cv = RepeatedStratifiedKFold(n_splits=5)
     this_scores = cross_val_score(clf, X, y, cv=5,
@@ -204,21 +217,22 @@ for k_feature in n_features:
     score_means.append(this_scores.mean())
     score_stds.append(this_scores.std())
 
-plt.errorbar(n_features, score_means, np.array(score_stds))
+plt.errorbar(n_features_list, score_means, np.array(score_stds))
 plt.title(
-    'Performance of the SVM-Anova varying the number of features selected')
+    'Performance of the SVM varying the number of features selected')
 plt.xticks(np.linspace(100, 0, 11, endpoint=True))
 plt.xlabel('Number of Features')
 plt.ylabel('TSS')
 plt.axis('tight')
+plt.tight_layout()
 plt.savefig(drop_path + "SVM_CV_F.png")
 plt.show()
 
 '''
 Recursive Feature Elimination
 '''
-clf = LinearSVC(penalty="l1", dual=False, verbose=0, max_iter=10000,
-                class_weight='balanced', random_state=1, C=0.0001)
+clf = LinearSVC(penalty="l2", dual=False, verbose=0, max_iter=10000,
+                class_weight='balanced', random_state=1, C=0.001)
 
 # Get feature ranking
 try:
@@ -228,6 +242,9 @@ except:
     rfecv = RFECV(clf, cv=5, scoring=make_scorer(balanced_accuracy_score,
                                                  **{'adjusted': True}),
                   n_jobs=-1, verbose=1)
+
+# grid = GridSearchWithCoef(rfecv, param_grid={'estimator__C':[0.0001,0.001,0.01,0.1,1,10]})
+# grid.fit(X,y)
 rfecv.fit(X, y)
 
 # plot scores
@@ -236,6 +253,7 @@ plt.title('Recursive Feature Elimination with Cross-Validation')
 plt.xlabel('Number of features selected')
 plt.ylabel('TSS')
 plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
+plt.tight_layout()
 plt.savefig(drop_path+'RFECV_avg.png')
 plt.show()
 
@@ -245,56 +263,69 @@ rfe_df = pd.DataFrame(
 print(tabulate(rfe_df.T, headers="keys", tablefmt="github", showindex=False))
 
 # RFE evaluation
-y_pred = rfecv.predict(X_test_data)
-average_tss = balanced_accuracy_score(y_test_tr, y_pred, adjusted=True)
-print('Test tss score: {0:0.4f}'.format(average_tss))
-confusion_matrix_plot.plot_confusion_matrix_from_data(y_test_tr, y_pred,
+print("The model is trained on the full development set.")
+print("The scores are computed on the full evaluation set.")
+print('')
+trainval_tss = balanced_accuracy_score(y_true=y,
+                           y_pred=rfecv.predict(X), adjusted=True)
+test_tss = balanced_accuracy_score(y_true=y_test_tr,
+                          y_pred=rfecv.predict(X_test_data), adjusted=True)
+print('| Dataset | TSS |')
+print("|---|---|")
+print(f"| Training + Validation | {trainval_tss:.4f} |")
+print(f"| Test | {test_tss:.4f} |")
+confusion_matrix_plot.plot_confusion_matrix_from_data(y_test_tr, rfecv.predict(X_test_data),
                                                       ['Negative', 'Positive'])
 
 # save model
 dump(rfecv, f'../saved/models/SVM/rfecv_{clf.C:.0e}.joblib')
 
-# # get a list of models to evaluate
-# def get_models():
-#     models = dict()
-#     for i in range(1, 41):
-#         rfe = RFE(estimator=clf, n_features_to_select=i)
-#         model = clf
-#         models[str(i)] = Pipeline(steps=[('s', rfe), ('m', model)])
-#     return models
-#
-#
-# # evaluate a give model using cross-validation
-# def evaluate_model(model):
-#     cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
-#     scores = cross_val_score(model, X, y,
-#                              scoring=make_scorer(balanced_accuracy_score,
-#                                                  **{'adjusted': True}), cv=cv,
-#                              n_jobs=-1, error_score='raise')
-#     return scores
-#
-#
-# # get the models to evaluate
-# models = get_models()
-# # evaluate the models and store results
-# results, names = list(), list()
-# for name, model in models.items():
-#     scores = evaluate_model(model)
-#     results.append(scores)
-#     names.append(name)
-#     print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
-# # plot model performance for comparison
-# fig = plt.figure(figsize=(10, 8))
-# plt.boxplot(results, labels=names, showmeans=True)
-# plt.tight_layout()
-# plt.savefig(drop_path + 'RFECV_boxplot.png')
-# plt.show()
-# # rfe_results = pd.concat([pd.DataFrame(names), pd.DataFrame(results)], axis=1)
-# # rfe_results.to_csv('rfe_results.csv')
-#
-# # rfe_results = pd.read_csv('rfe_results.csv')
-# # results = rfe_results.iloc[:, 2:]
-# # names = rfe_results.index.values
+# get a list of models to evaluate
+def get_models():
+    models = dict()
+    for i in range(1, 41):
+        rfe = RFE(estimator=clf, n_features_to_select=i)
+        model = clf
+        models[str(i)] = Pipeline(steps=[('s', rfe), ('m', model)])
+    return models
+
+
+# evaluate a give model using cross-validation
+def evaluate_model(model):
+    # cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
+    scores = cross_val_score(model, X, y,
+                             scoring=make_scorer(balanced_accuracy_score,
+                                                 **{'adjusted': True}), cv=5,
+                             n_jobs=-1, error_score='raise')
+    return scores
+
+
+# get the models to evaluate
+models = get_models()
+# evaluate the models and store results
+results, names = list(), list()
+for name, model in models.items():
+    scores = evaluate_model(model)
+    results.append(scores)
+    names.append(name)
+    print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
+# plot model performance for comparison
+fig = plt.figure(figsize=(10, 8))
+# plt.boxplot(results, labels=names, showmeans=True, showfliers=False)
+plt.errorbar(np.arange(n_features), np.mean(results, axis=1),
+             np.std(results, axis=1))
+plt.title('Recursive Feature Elimination with Cross-Validation')
+plt.xlabel('Number of features selected')
+plt.ylabel('TSS')
+plt.tight_layout()
+plt.savefig(drop_path + 'RFECV_boxplot.png')
+plt.show()
+# rfe_results = pd.concat([pd.DataFrame(names), pd.DataFrame(results)], axis=1)
+# rfe_results.to_csv('rfe_results.csv')
+
+# rfe_results = pd.read_csv('rfe_results.csv')
+# results = rfe_results.iloc[:, 2:]
+# names = rfe_results.index.values
 
 
 '''
