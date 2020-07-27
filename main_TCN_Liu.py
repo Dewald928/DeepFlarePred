@@ -429,7 +429,7 @@ if __name__ == '__main__':
                             'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
                             'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
                             'Bdec', 'Bhis1d'] # 32
-    feature_list = None  #
+    feature_list = listofuncorrfeatures  #
     # can be
     # None, need to change
     # cfg.n_features to match length

@@ -92,7 +92,7 @@ feature_name = pd.DataFrame(data_loader.get_feature_names(
 '''
 SVM Nested CV
 '''
-seed = 10
+seed = 5
 params = {'C': [0.000001,0.00001,0.0001,0.001,0.01,0.1,1,10,100]}  # choose C
 clf = LinearSVC(penalty="l2", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
