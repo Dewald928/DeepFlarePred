@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - Interpret
+    - LiuFold
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
@@ -14,7 +14,7 @@ batch_size:
   value: 65536
 learning_rate:
   desc: initial learning rate
-  value: 0.001
+  value: 0.0001
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -64,7 +64,7 @@ weight_decay:
 # Cross Validation
 liu_fold:
   desc: If liu fold should be done
-  value: False
+  value: True
 cross_validation:
   desc: if crossval should be performed
   value: False
@@ -78,13 +78,13 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: False
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
 seed:
   desc: random seed
-  value: 32
+  value: 49
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -118,6 +118,5 @@ dataset:
 # Interpretation
 interpret:
   desc: activate captum/SHAP attribution methods
-  value: True
-
+  value: False
 
