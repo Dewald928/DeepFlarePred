@@ -345,11 +345,10 @@ def parse_args(cfg):
                         help='kernel size')
     parser.add_argument('--nhid', type=int, default=cfg.nhid, metavar='N',
                         help='number of filters')
-    parser.add_argument('--dropout', type=int, default=cfg.dropout,
+    parser.add_argument('--dropout', type=float, default=cfg.dropout,
                         metavar='N',
                         help='dropout amount')
-    parser.add_argument('--weight_decay', type=int, default=cfg.weight_decay,
-                        metavar='N',
+    parser.add_argument('--weight_decay', type=float, default=cfg.weight_decay,
                         help='how much weight decay')
 
     args = parser.parse_args()
