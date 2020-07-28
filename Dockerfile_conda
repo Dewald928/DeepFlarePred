@@ -1,18 +1,31 @@
-FROM continuumio/miniconda3
+# Our base image
+# docker run -it --gpus all dvd928/deep_flare_pred:1
 
-WORKDIR /app
+FROM continuumio/miniconda3
+FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
+
+#Set working directory
+WORKDIR /DeepFlarePred
 
 # Create the environment:
 COPY deepflarepred.yml .
 RUN conda env create -f deepflarepred.yml
+ENV WANDB_API_KEY=07796e7d3a148a6feceafdfef8c37e21a3f4e7c2
 
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "DeepFlarePred", "/bin/bash", "-c"]
 
 # Make sure the environment is activated:
-RUN echo "Make sure flask is installed:"
-#RUN python -c "import flask"
+RUN echo "Make sure pytorch is installed:"
+RUN python -c "import torch"
 
 # The code to run when container is started:
+#Install git
+#RUN apt-get update \
+#     apt-get install -y git
+#RUN mkdir /DeepFlarePred \
+#           cd /DeepFlarePred \
+#           git clone https://github.com/Dewald928/DeepFlarePred.git
+
 COPY main_TCN_Liu.py .
-ENTRYPOINT ["conda", "run", "-n", "DeepFlarePred", "python", "main_TCN_Liu.py"]
+#ENTRYPOINT ["conda", "run", "-n", "DeepFlarePred", "python", "main_TCN_Liu.py"]

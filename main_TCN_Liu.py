@@ -429,7 +429,7 @@ if __name__ == '__main__':
                             'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
                             'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
                             'Bdec', 'Bhis1d'] # 32
-    feature_list = listofuncorrfeatures  #
+    feature_list = None  #
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -627,7 +627,7 @@ if __name__ == '__main__':
         if cfg.training:
             while epoch < cfg.epochs:
                 train_tss = train(model, device, train_loader, optimizer, epoch,
-                                  criterion, cfg)[5]
+                                  criterion, cfg, scheduler=scheduler)[5]
                 stopping_metric, best_tss, best_pr_auc, best_epoch = validate(
                     model, device, valid_loader, criterion, epoch, best_tss,
                     best_pr_auc, best_epoch, cfg)[0:4]

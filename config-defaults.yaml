@@ -2,19 +2,19 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - Interpret
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 100
+  value: 200
 batch_size:
   desc: Size of each mini-batch
   value: 65536
 learning_rate:
   desc: initial learning rate
-  value: 0.0001
+  value: 0.001
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -40,7 +40,7 @@ ksize:
   value: 3
 nhid:
   desc: number of filters
-  value: 40
+  value: 120
 seq_len:
   desc: size of sequence (Be 1 for MLP)
   value: 3
@@ -56,7 +56,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.4
+  value: 0.8
 weight_decay:
   desc: L2 regularizing
   value: 0.01
@@ -78,7 +78,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 flare_label:
   desc: Types of flare class
   value: M5
@@ -93,10 +93,10 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: False
+  value: True
 patience:
   desc: amount of epochs for early stopping
-  value: 20
+  value: 30
 training:
   desc: Trains models, else only tests
   value: True
@@ -118,6 +118,6 @@ dataset:
 # Interpretation
 interpret:
   desc: activate captum/SHAP attribution methods
-  value: False
+  value: True
 
 

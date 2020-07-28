@@ -2,7 +2,6 @@
 # docker run -it --gpus all dvd928/deep_flare_pred:1
 
 FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
-#FROM pytorch/pytorch:1.1.0-cuda10.0-cudnn7.5-devel
 
 WORKDIR /home/fuzzy/work/DeepFlarePred
 ENV CUDA_HOME=/usr/local/cuda
