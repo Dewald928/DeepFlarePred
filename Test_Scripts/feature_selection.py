@@ -100,7 +100,7 @@ Univariate Feature selection
 '''
 f_df = pd.DataFrame()
 mi_df = pd.DataFrame()
-score_functions = {'F-score': f_classif,
+score_functions = {'F-test': f_classif,
                    'Mutual-Information': mutual_info_classif}
 for scorer, score_func in score_functions.items():
     print(scorer, score_func)
@@ -124,7 +124,7 @@ for scorer, score_func in score_functions.items():
         5:], columns=['Features']), pd.DataFrame(selector.scores_,
         columns=['Importance'])], axis=1).sort_values(by='Importance',
         ascending=False).reset_index()
-    f_df = sort_df if scorer == 'F-score' else f_df
+    f_df = sort_df if scorer == 'F-test' else f_df
     mi_df = sort_df if scorer == 'Mutual-Information' else mi_df
     sns.barplot(x='Features', y='Importance', data=sort_df,
                 order=sort_df['Features'])
