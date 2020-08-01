@@ -46,8 +46,11 @@ def visualize_importance(feature_names, attr, n_features,
                          title="Average Feature Importance", plot=True):
 
     importance_avg = np.mean(attr.detach().numpy(), axis=0)
-    importance_avg = importance_avg[:,-1] if importance_avg.shape[1] > 0 else importance_avg
     importance_std = np.std(attr.detach().numpy(), axis=0)
+    if importance_avg.shape.__len__() == 1:  # seq len 1 reshape
+        importance_avg = np.reshape(importance_avg, (-1, 1))
+        importance_std = np.reshape(importance_std, (-1, 1))
+    importance_avg = importance_avg[:,-1] if importance_avg.shape[1] > 0 else importance_avg
     importance_std = importance_std[:,-1] if importance_std.shape[1] > 0 else importance_std
 
     x_pos = (np.arange(len(feature_names)))
