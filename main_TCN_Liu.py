@@ -373,7 +373,7 @@ def init_project():
 
 if __name__ == '__main__':
     project, tags = init_project()
-    run = wandb.init(project=project, tags=tags)
+    run = wandb.init(project=project, tags=tags, name='liunorm')
     cfg = wandb.config
 
     # Parse args
@@ -383,10 +383,10 @@ if __name__ == '__main__':
     # initialize parameters
     if cfg.dataset == 'Liu':
         filepath = './Data/Liu/' + cfg.flare_label + '/'
-        artifact = wandb.Artifact('liu-dataset', type='dataset')
+        # artifact = wandb.Artifact('liu-dataset', type='dataset')
     elif cfg.dataset == 'Krynauw':
         filepath = './Data/Krynauw/'
-        artifact = wandb.Artifact('krynauw-dataset', type='dataset')
+        # artifact = wandb.Artifact('krynauw-dataset', type='dataset')
     # n_features = 0
     if cfg.flare_label == 'M5':
         n_features = cfg.n_features  # 20 original
@@ -443,7 +443,7 @@ if __name__ == '__main__':
 
     # setup dataloaders
     X_train_data, y_train_data = data_loader.load_data(
-        datafile=filepath + 'normalized_training.csv',
+        datafile=filepath + 'normalized_training_v1.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value, feature_list=feature_list)
@@ -452,7 +452,7 @@ if __name__ == '__main__':
                                                                 num_of_fold)
 
     X_valid_data, y_valid_data = data_loader.load_data(
-        datafile=filepath + 'normalized_validation.csv',
+        datafile=filepath + 'normalized_validation_v1.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value, feature_list=feature_list)
@@ -461,7 +461,7 @@ if __name__ == '__main__':
                                                                 num_of_fold)
 
     X_test_data, y_test_data = data_loader.load_data(
-        datafile=filepath + 'normalized_testing.csv',
+        datafile=filepath + 'normalized_testing_v1.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value, feature_list=feature_list)
@@ -536,7 +536,7 @@ if __name__ == '__main__':
         model = TCN(cfg.n_features, nclass, channel_sizes,
                     kernel_size=kernel_size, dropout=cfg.dropout).to(device)
     elif cfg.model_type == "CNN":
-        model = tcn.Simple1DConv(cfg.n_features, cfg.nhid,
+        model = tcn.Simple1DConv(cfg.n_features, cfg.nhid, cfg.layers,
                                  kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
     elif cfg.model_type == 'RNN':
@@ -613,13 +613,13 @@ if __name__ == '__main__':
     # print(test)
 
     # wandb artifact
-    artifact.add_file(filepath + 'normalized_training.csv',
-                      name='normalized_training')
-    artifact.add_file(filepath + 'normalized_validation.csv',
-                      name='normalized_validation')
-    artifact.add_file(filepath + 'normalized_testing.csv',
-                      name='normalized_testing')
-    run.log_artifact(artifact)
+    # artifact.add_file(filepath + 'normalized_training.csv',
+    #                   name='normalized_training')
+    # artifact.add_file(filepath + 'normalized_validation.csv',
+    #                   name='normalized_validation')
+    # artifact.add_file(filepath + 'normalized_testing.csv',
+    #                   name='normalized_testing')
+    # run.log_artifact(artifact)
 
     if not cfg.skorch:
         print('{:<11s}{:^9s}{:^9s}{:^9s}'
@@ -668,56 +668,6 @@ if __name__ == '__main__':
         test_tss = test(model, device, test_loader, criterion, epoch)[5]
         wandb.log({"Test_TSS": test_tss})
 
-        '''
-        PR Curves
-        '''
-        # Train
-        yhat = infer_model(model, device, train_loader)
-
-        f1, pr_auc = metric.plot_precision_recall(model, yhat, y_train_tr_tensor,
-                                                  'Train')[2:4]
-        metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
-        roc_auc = metric.get_roc(model, yhat, y_train_tr_tensor, device,
-                                 'Train')
-        tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
-        pdf.plot_density_estimation(model, yhat, y_train_tr_tensor,
-                                    'Train')
-
-        # Validation
-        yhat = infer_model(model, device, valid_loader)
-
-        f1, pr_auc = metric.plot_precision_recall(model, yhat, y_valid_tr_tensor,
-                                                  'Validation')[2:4]
-        metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
-        tss = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[4]
-        th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
-        roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
-                                 'Validation')
-        th_norm = pdf.plot_density_estimation(model, yhat, y_valid_tr_tensor,
-                                              'Validation')
-
-        # Test
-        yhat = infer_model(model, device, test_loader)
-        cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
-                                              metric.to_labels(yhat[:, 1],
-                                                               th))  # watch
-        tss_th = metric.calculate_metrics(cm, 2)[4]
-
-        f1, pr_auc = metric.plot_precision_recall(model, yhat,
-                                                  y_test_tr_tensor, 'Test')[2:4]
-        metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
-        tss = metric.get_metrics_threshold(yhat, y_test_tr_tensor)[4]
-
-        roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
-
-        print('Test TSS from validation threshold ({:0.3f}): {:0.3f}'.format(th,
-                                                                             tss_th))
-        wandb.log({'Test_TSS_Th': tss_th})
-
-        th_norm_test = pdf.plot_density_estimation(model, yhat,
-                                                   y_test_tr_tensor, 'Test')
-        pdf.plot_calibration_curve(model, 'Test', [], [], test_loader,
-                                   y_test_tr_tensor, yhat)
 
     if cfg.skorch:
         '''
@@ -914,11 +864,69 @@ if __name__ == '__main__':
     Model interpretation
     '''
     if cfg.interpret:
-        # df = pd.read_csv(filepath + 'normalized_testing.csv')
-        # case = df[df['NOAA'] == 12673].to_csv(
-        #     './Data/Case_Study/AR12673.csv', index=False)
-        # cas2 = df[df['NOAA'] == 12252].to_csv(
-        #     './Data/Case_Study/AR12252.csv', index=False)
+
+        '''
+        PR Curves
+        '''
+        # Train
+        yhat = infer_model(model, device, train_loader)
+
+        f1, pr_auc = metric.plot_precision_recall(model, yhat,
+                                                  y_train_tr_tensor, 'Train')[
+                     2:4]
+        metric.plot_confusion_matrix(yhat, y_train_tr_tensor, 'Train')
+        roc_auc = metric.get_roc(model, yhat, y_train_tr_tensor, device,
+                                 'Train')
+        tss = metric.get_metrics_threshold(yhat, y_train_tr_tensor)[4]
+        pdf.plot_density_estimation(model, yhat, y_train_tr_tensor, 'Train')
+
+        # Validation
+        yhat = infer_model(model, device, valid_loader)
+
+        f1, pr_auc = metric.plot_precision_recall(model, yhat,
+                                                  y_valid_tr_tensor,
+                                                  'Validation')[2:4]
+        metric.plot_confusion_matrix(yhat, y_valid_tr_tensor, 'Validation')
+        tss = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[4]
+        th = metric.get_metrics_threshold(yhat, y_valid_tr_tensor)[10]
+        roc_auc = metric.get_roc(model, yhat, y_valid_tr_tensor, device,
+                                 'Validation')
+        th_norm = pdf.plot_density_estimation(model, yhat, y_valid_tr_tensor,
+                                              'Validation')
+
+        # Test
+        yhat = infer_model(model, device, test_loader)
+        cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
+                                              metric.to_labels(yhat[:, 1],
+                                                               th))  # watch
+        tss_th = metric.calculate_metrics(cm, 2)[4]
+
+        f1, pr_auc = metric.plot_precision_recall(model, yhat,
+                                                  y_test_tr_tensor, 'Test')[
+                     2:4]
+        metric.plot_confusion_matrix(yhat, y_test_tr_tensor, 'Test')
+        tss = metric.get_metrics_threshold(yhat, y_test_tr_tensor)[4]
+
+        roc_auc = metric.get_roc(model, yhat, y_test_tr_tensor, device, 'Test')
+
+        print(
+            'Test TSS from validation threshold ({:0.3f}): {:0.3f}'.format(th,
+                                                                           tss_th))
+        wandb.log({'Test_TSS_Th': tss_th})
+
+        th_norm_test = pdf.plot_density_estimation(model, yhat,
+                                                   y_test_tr_tensor, 'Test')
+        pdf.plot_calibration_curve(model, 'Test', [], [], test_loader,
+                                   y_test_tr_tensor, yhat)
+
+        '''
+        Attribution methods
+        '''
+        df = pd.read_csv(filepath + 'normalized_testing.csv')
+        case = df[df['NOAA'] == 12673].to_csv(
+            './Data/Case_Study/AR12673.csv', index=False)
+        cas2 = df[df['NOAA'] == 12252].to_csv(
+            './Data/Case_Study/AR12252.csv', index=False)
 
         # get samples to interpret
         input_df, _ = data_loader.load_data(
