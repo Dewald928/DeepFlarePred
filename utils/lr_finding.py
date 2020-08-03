@@ -48,5 +48,6 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     # for i in range(len(valx)):
     wandb.log({'LR_Finder_img': wandb.Image(fig)})
     plt.show()
+    # return trainx[np.argmin(trainy)]
 
 
