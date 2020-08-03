@@ -200,30 +200,30 @@ class LRFinder(object):
                 e.g., moving CPU Tensors with pinned memory to CUDA devices. Default: True.
 
         Example (fastai approach):
-            >>> lr_finder = LRFinder(net, optimizer, criterion, device="cuda")
-            >>> lr_finder.range_test(dataloader, end_lr=100, num_iter=100)
-
-        Example (Leslie Smith's approach):
-            >>> lr_finder = LRFinder(net, optimizer, criterion, device="cuda")
-            >>> lr_finder.range_test(trainloader, val_loader=val_loader, end_lr=1, num_iter=100, step_mode="linear")
-
-        Gradient accumulation is supported; example:
-            >>> train_data = ...    # prepared dataset
-            >>> desired_bs, real_bs = 32, 4         # batch size
-            >>> accumulation_steps = desired_bs // real_bs     # required steps for accumulation
-            >>> dataloader = torch.utils.data.DataLoader(train_data, batch_size=real_bs, shuffle=True)
-            >>> acc_lr_finder = LRFinder(net, optimizer, criterion, device="cuda")
-            >>> acc_lr_finder.range_test(dataloader, end_lr=10, num_iter=100, accumulation_steps=accumulation_steps)
+        #     >>> lr_finder = LRFinder(net, optimizer, criterion, device="cuda")
+        #     >>> lr_finder.range_test(dataloader, end_lr=100, num_iter=100)
+        #
+        # Example (Leslie Smith's approach):
+        #     >>> lr_finder = LRFinder(net, optimizer, criterion, device="cuda")
+        #     >>> lr_finder.range_test(trainloader, val_loader=val_loader, end_lr=1, num_iter=100, step_mode="linear")
+        #
+        # Gradient accumulation is supported; example:
+        #     >>> train_data = ...    # prepared dataset
+        #     >>> desired_bs, real_bs = 32, 4         # batch size
+        #     >>> accumulation_steps = desired_bs // real_bs     # required steps for accumulation
+        #     >>> dataloader = torch.utils.data.DataLoader(train_data, batch_size=real_bs, shuffle=True)
+        #     >>> acc_lr_finder = LRFinder(net, optimizer, criterion, device="cuda")
+        #     >>> acc_lr_finder.range_test(dataloader, end_lr=10, num_iter=100, accumulation_steps=accumulation_steps)
 
         If your DataLoader returns e.g. dict, or other non standard output, intehit from TrainDataLoaderIter,
         redefine method `inputs_labels_from_batch` so that it outputs (inputs, lables) data:
-            >>> import torch_lr_finder
-            >>> class TrainIter(torch_lr_finder.TrainDataLoaderIter):
-            >>>     def inputs_labels_from_batch(self, batch_data):
-            >>>         return (batch_data['user_features'], batch_data['user_history']), batch_data['y_labels']
-            >>> train_data_iter = TrainIter(train_dl)
-            >>> finder = torch_lr_finder.LRFinder(model, optimizer, partial(model._train_loss, need_one_hot=False))
-            >>> finder.range_test(train_data_iter, end_lr=10, num_iter=300, diverge_th=10)
+            # >>> import torch_lr_finder
+            # >>> class TrainIter(torch_lr_finder.TrainDataLoaderIter):
+            # >>>     def inputs_labels_from_batch(self, batch_data):
+            # >>>         return (batch_data['user_features'], batch_data['user_history']), batch_data['y_labels']
+            # >>> train_data_iter = TrainIter(train_dl)
+            # >>> finder = torch_lr_finder.LRFinder(model, optimizer, partial(model._train_loss, need_one_hot=False))
+            # >>> finder.range_test(train_data_iter, end_lr=10, num_iter=300, diverge_th=10)
 
         Reference:
         [Training Neural Nets on Larger Batches: Practical Tips for 1-GPU, Multi-GPU & Distributed setups](
@@ -232,7 +232,7 @@ class LRFinder(object):
         """
 
         # Reset test results
-        self.history = {"lr": [], "loss": []}
+        self.history = {"lr": [], "loss": [], "TSS": []}
         self.best_loss = None
 
         # Move the model to the proper device
@@ -334,6 +334,7 @@ class LRFinder(object):
     def _train_batch(self, train_iter, accumulation_steps, non_blocking_transfer=True):
         self.model.train()
         total_loss = None  # for late initialization
+        confusion_matrix = torch.zeros(2, 2) # todo make dynamic?
 
         self.optimizer.zero_grad()
         for i in range(accumulation_steps):
@@ -345,9 +346,9 @@ class LRFinder(object):
             # Forward pass
             outputs = self.model(inputs)
             loss = self.criterion(outputs, labels)
-            _, predicted = torch.max(output.data, 1)
+            _, predicted = torch.max(outputs.data, 1)
             # confusion matrix
-            for t, p in zip(target.view(-1), predicted.view(-1)):
+            for t, p in zip(labels.view(-1), predicted.view(-1)):
                 confusion_matrix[t.long(), p.long()] += 1
 
             # Loss should be averaged in each step
@@ -399,6 +400,7 @@ class LRFinder(object):
     def _validate(self, val_iter, non_blocking_transfer=True):
         # Set model to evaluation mode and disable gradient computation
         running_loss = 0
+        confusion_matrix = torch.zeros(2, 2)  # todo make dynamic?
         self.model.eval()
         with torch.no_grad():
             for inputs, labels in val_iter:
@@ -416,9 +418,9 @@ class LRFinder(object):
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, labels)
                 running_loss += loss.item() * batch_size
-                _, predicted = torch.max(output.data, 1)
+                _, predicted = torch.max(outputs.data, 1)
                 # confusion matrix
-                for t, p in zip(target.view(-1), predicted.view(-1)):
+                for t, p in zip(labels.view(-1), predicted.view(-1)):
                     confusion_matrix[t.long(), p.long()] += 1
 
         recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn,\
@@ -427,7 +429,8 @@ class LRFinder(object):
 
         return running_loss / len(val_iter.dataset), tss
 
-    def plot(self, skip_start=10, skip_end=5, log_lr=True, show_lr=None, ax=None):
+    def plot(self, skip_start=10, skip_end=5, log_lr=True, show_lr=None,
+             ax=None, metric="TSS"):
         """Plots the learning rate range test.
 
         Arguments:
@@ -458,13 +461,13 @@ class LRFinder(object):
         # Get the data to plot from the history dictionary. Also, handle skip_end=0
         # properly so the behaviour is the expected
         lrs = self.history["lr"]
-        losses = self.history["loss"]
+        metric_value = self.history[metric]
         if skip_end == 0:
             lrs = lrs[skip_start:]
-            losses = losses[skip_start:]
+            metric_value = metric_value[skip_start:]
         else:
             lrs = lrs[skip_start:-skip_end]
-            losses = losses[skip_start:-skip_end]
+            metric_value = metric_value[skip_start:-skip_end]
 
         # Create the figure and axes object if axes was not already given
         fig = None
@@ -472,11 +475,11 @@ class LRFinder(object):
             fig, ax = plt.subplots()
 
         # Plot loss as a function of the learning rate
-        ax.plot(lrs, losses)
+        ax.plot(lrs, metric_value)
         if log_lr:
             ax.set_xscale("log")
         ax.set_xlabel("Learning rate")
-        ax.set_ylabel("Loss")
+        ax.set_ylabel(f"{metric}")
 
         if show_lr is not None:
             ax.axvline(x=show_lr, color="red")
