@@ -468,7 +468,7 @@ class LRFinder(object):
         # Get the data to plot from the history dictionary. Also, handle skip_end=0
         # properly so the behaviour is the expected
         lrs = self.history["lr"]
-        metric_value = self.history[self.metric_name]
+        metric_value = self.history[metric_name]
         if skip_end == 0:
             lrs = lrs[skip_start:]
             metric_value = metric_value[skip_start:]
