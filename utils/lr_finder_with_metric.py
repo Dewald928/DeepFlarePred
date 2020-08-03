@@ -97,10 +97,10 @@ class LRFinder(object):
             parameter will be ignored if `memory_cache` is True.
 
     Example:
-        >>> lr_finder = LRFinder(net, optimizer, criterion, device="cuda")
-        >>> lr_finder.range_test(dataloader, end_lr=100, num_iter=100)
-        >>> lr_finder.plot() # to inspect the loss-learning rate graph
-        >>> lr_finder.reset() # to reset the model and optimizer to their initial state
+        # >>> lr_finder = LRFinder(net, optimizer, criterion, device="cuda")
+        # >>> lr_finder.range_test(dataloader, end_lr=100, num_iter=100)
+        # >>> lr_finder.plot() # to inspect the loss-learning rate graph
+        # >>> lr_finder.reset() # to reset the model and optimizer to their initial state
 
     Reference:
     Cyclical Learning Rates for Training Neural Networks: https://arxiv.org/abs/1506.01186
@@ -115,10 +115,12 @@ class LRFinder(object):
         device=None,
         memory_cache=True,
         cache_dir=None,
+        metric_name='loss'
     ):
         # Check if the optimizer is already attached to a scheduler
         self.optimizer = optimizer
         self._check_for_scheduler()
+        self.metric_name = metric_name
 
         self.model = model
         self.criterion = criterion
@@ -234,6 +236,7 @@ class LRFinder(object):
         # Reset test results
         self.history = {"lr": [], "loss": [], "TSS": []}
         self.best_loss = None
+        self.best_metric_value = None
 
         # Move the model to the proper device
         self.model.to(self.device)
@@ -282,13 +285,13 @@ class LRFinder(object):
 
         for iteration in tqdm(range(num_iter)):
             # Train on batch and retrieve loss
-            loss, tss = self._train_batch(
+            loss, metric_value = self._train_batch(
                 train_iter,
                 accumulation_steps,
                 non_blocking_transfer=non_blocking_transfer,
             )
             if val_loader:
-                loss, tss = self._validate(
+                loss = self._validate(
                     val_iter, non_blocking_transfer=non_blocking_transfer
                 )
 
@@ -299,14 +302,18 @@ class LRFinder(object):
             # Track the best loss and smooth it if smooth_f is specified
             if iteration == 0:
                 self.best_loss = loss
+                self.best_metric_value = metric_value
             else:
                 if smooth_f > 0:
-                    loss = smooth_f * loss + (1 - smooth_f) * self.history["loss"][-1]
+                    loss = smooth_f * loss + (1 - smooth_f) \
+                                   * self.history["loss"][-1]
+                    metric_value = smooth_f * metric_value + (1 - smooth_f) * \
+                                   self.history[self.metric_name][-1]
                 if loss < self.best_loss:
                     self.best_loss = loss
 
             # Check if the loss has diverged; if it has, stop the test
-            self.history['TSS'].append(tss)
+            self.history[self.metric_name].append(metric_value)
             self.history["loss"].append(loss)
             if loss > diverge_th * self.best_loss:
                 print("Stopping early, the loss has diverged")
@@ -334,7 +341,7 @@ class LRFinder(object):
     def _train_batch(self, train_iter, accumulation_steps, non_blocking_transfer=True):
         self.model.train()
         total_loss = None  # for late initialization
-        confusion_matrix = torch.zeros(2, 2) # todo make dynamic?
+        confusion_matrix = torch.zeros(2, 2)  # todo make dynamic?
 
         self.optimizer.zero_grad()
         for i in range(accumulation_steps):
@@ -400,7 +407,7 @@ class LRFinder(object):
     def _validate(self, val_iter, non_blocking_transfer=True):
         # Set model to evaluation mode and disable gradient computation
         running_loss = 0
-        confusion_matrix = torch.zeros(2, 2)  # todo make dynamic?
+        confusion_matrix = torch.zeros(2, 2)
         self.model.eval()
         with torch.no_grad():
             for inputs, labels in val_iter:
@@ -423,14 +430,14 @@ class LRFinder(object):
                 for t, p in zip(labels.view(-1), predicted.view(-1)):
                     confusion_matrix[t.long(), p.long()] += 1
 
-        recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn,\
-        mcc = metric.calculate_metrics(
-            confusion_matrix.numpy(), 2)
+        # recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn, \
+        # mcc = metric.calculate_metrics(
+        #     confusion_matrix.numpy(), 2)
 
-        return running_loss / len(val_iter.dataset), tss
+        return running_loss / len(val_iter.dataset)
 
     def plot(self, skip_start=10, skip_end=5, log_lr=True, show_lr=None,
-             ax=None, metric="TSS"):
+             ax=None, metric_name="TSS"):
         """Plots the learning rate range test.
 
         Arguments:
@@ -461,7 +468,7 @@ class LRFinder(object):
         # Get the data to plot from the history dictionary. Also, handle skip_end=0
         # properly so the behaviour is the expected
         lrs = self.history["lr"]
-        metric_value = self.history[metric]
+        metric_value = self.history[self.metric_name]
         if skip_end == 0:
             lrs = lrs[skip_start:]
             metric_value = metric_value[skip_start:]
@@ -479,7 +486,7 @@ class LRFinder(object):
         if log_lr:
             ax.set_xscale("log")
         ax.set_xlabel("Learning rate")
-        ax.set_ylabel(f"{metric}")
+        ax.set_ylabel(f"{metric_name}")
 
         if show_lr is not None:
             ax.axvline(x=show_lr, color="red")
