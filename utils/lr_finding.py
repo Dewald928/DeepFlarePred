@@ -40,13 +40,17 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     valy_loss = lr_finder.history['loss']
 
     trainx = np.pad(trainx, (0, num_iter - len(trainx)), 'constant',
-           constant_values=(np.nan))
-    trainy_loss = np.pad(trainy_loss, (0, num_iter - len(trainy_loss)), 'constant',
-           constant_values=(np.nan))
+                    constant_values=np.nan)
+    trainy_loss = np.pad(trainy_loss, (0, num_iter - len(trainy_loss)),
+                         'constant', constant_values=np.nan)
+    trainy_TSS = np.pad(trainy_TSS, (0, num_iter - len(trainy_TSS)),
+                        'constant', constant_values=np.nan)
     valx = np.pad(valx, (0, num_iter - len(valx)), 'constant',
-           constant_values=(np.nan))
+                  constant_values=np.nan)
     valy_loss = np.pad(valy_loss, (0, num_iter - len(valy_loss)), 'constant',
-           constant_values=(np.nan))
+                       constant_values=np.nan)
+    valy_TSS = np.pad(valy_TSS, (0, num_iter - len(valy_TSS)), 'constant',
+                      constant_values=np.nan)
 
     fig.tight_layout()
     plt.tight_layout()
@@ -55,11 +59,12 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     axes[0][1].set_title('Validation')
     axes[1][1].set_title('Validation')
 
-    for i in range(num_iter):
-        wandb.log({'train_lr_TSS': trainy_TSS[i], 'train_lr_loss': trainy_loss,
-                   'train_lr_step': trainx[i],
-                   'valid_lr_TSS': valy_TSS[i], 'valid_lr_loss': valy_loss,
-                   'valid_lr_step': valx[i]}, step=i)
+    # num_iter = len(trainx) if len(trainx) < len(valx) else len(valx)
+    for i in range(num_iter - 1):
+        wandb.log(
+            {'train_lr_TSS': trainy_TSS[i], 'train_lr_loss': trainy_loss[i],
+             'train_lr_step': trainx[i], 'valid_lr_TSS': valy_TSS[i],
+             'valid_lr_loss': valy_loss[i], 'valid_lr_step': valx[i]}, step=i)
     wandb.log({'LR_Finder_img': wandb.Image(fig)})
     plt.show()
     # return trainx[np.argmin(trainy)]
