@@ -24,7 +24,7 @@ cd ../
 #    done
 #done
 N=4
-for model_type in CNN; do
+for dataset in Liu Liu_train Liu_z Krynauw; do
   for optim in SGD Adam; do
     for dropout in {0.0 0.4}; do
       for weight_decay in {0.0 0.01}; do
@@ -34,7 +34,7 @@ for model_type in CNN; do
           python main_TCN_Liu.py \
             --seed $seed \
             --optim $optim \
-            --model_type $model_type \
+            --dataset $dataset \
             --weight_decay $weight_decay \
             --dropout $dropout &
         done

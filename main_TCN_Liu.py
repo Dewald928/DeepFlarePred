@@ -331,6 +331,9 @@ def parse_args(cfg):
                         help='mini-batch size')
     parser.add_argument('--optim', type=str, default=cfg.optim, metavar='N',
                         help='optimizer SGD/Adam')
+    parser.add_argument('--dataset', type=str, default=cfg.dataset,
+                        metavar='N',
+                        help='(Liu/Liu_train/Liu_z/Krynauw)')
     parser.add_argument('--model_type', type=str, default=cfg.model_type,
                         metavar='N',
                         help='CNN/TCN/MLP')
@@ -540,6 +543,7 @@ if __name__ == '__main__':
     elif cfg.model_type == "TCN":
         model = TCN(cfg.n_features, nclass, channel_sizes,
                     kernel_size=kernel_size, dropout=cfg.dropout).to(device)
+        summary(model, input_size=(cfg.n_features, cfg.seq_len))
     elif cfg.model_type == "CNN":
         model = tcn.Simple1DConv(cfg.n_features, cfg.nhid, cfg.layers,
                                  kernel_size=kernel_size, dropout=cfg.dropout).to(device)
@@ -928,21 +932,19 @@ if __name__ == '__main__':
         Attribution methods
         '''
         df = pd.read_csv(filepath + 'normalized_testing.csv')
-        case = df[df['NOAA'] == 12673].to_csv(
-            './Data/Case_Study/AR12673.csv', index=False)
-        cas2 = df[df['NOAA'] == 12252].to_csv(
-            './Data/Case_Study/AR12252.csv', index=False)
+        case = df[df['NOAA'] == 12673].to_csv(filepath + '/Case_Study/AR12673.csv', index=False)
+        cas2 = df[df['NOAA'] == 12252].to_csv(filepath + '/Case_Study/AR12252.csv', index=False)
 
         # get samples to interpret
         input_df, _ = data_loader.load_data(
-            datafile='./Data/Case_Study/AR12673.csv',
+            datafile=filepath+'/Case_Study/AR12673.csv',
             flare_label=cfg.flare_label, series_len=cfg.seq_len,
             start_feature=start_feature, n_features=cfg.n_features,
             mask_value=mask_value, feature_list=feature_list)
 
         # todo pass median or weighted k-medians values as background?
         backgroud_df, _ = data_loader.load_data(
-            datafile='./Data/Case_Study/AR12252.csv',
+            datafile=filepath+'/Case_Study/AR12252.csv',
             flare_label=cfg.flare_label, series_len=cfg.seq_len,
             start_feature=start_feature, n_features=cfg.n_features,
             mask_value=mask_value, feature_list=feature_list)
