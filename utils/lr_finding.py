@@ -7,20 +7,23 @@ import numpy as np
 
 
 def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
-    num_iter = 100
+    num_iter = 50
     fig, axes = plt.subplots(2,2, figsize=(10,6))
     fig.set_tight_layout(True)
     lr_finder = LRFinder(model, optimizer, criterion, device=device,
                          metric_name='TSS')
+    # lr_finder = LRFinder(model, optimizer, criterion, device=device)
     lr_finder.range_test(train_loader, end_lr=10, num_iter=num_iter)
-    lr_finder.plot(ax=axes[0][0], skip_start=0, skip_end=0, metric_name="TSS")
-    lr_finder.plot(ax=axes[1][0], skip_start=0, skip_end=0, metric_name="loss")
-    # lr_finder.plot(ax=axes[0], skip_start=0, skip_end=0)  # to inspect the
-    # loss-learning rate graph
-    lr_finder.reset()  # to reset the model and optimizer to their initial state
     trainx = lr_finder.history['lr']
     trainy_TSS = lr_finder.history['TSS']
     trainy_loss = lr_finder.history['loss']
+
+    # plot
+    lr_finder.plot(ax=axes[0][0], skip_start=0, skip_end=0,
+                   metric_name="TSS", show_lr=trainx[np.argmax(trainy_TSS)])
+    lr_finder.plot(ax=axes[1][0], skip_start=0, skip_end=0,
+                   metric_name="loss", show_lr=trainx[np.argmin(trainy_loss)])
+    lr_finder.reset()  # to reset the model and optimizer to their initial state
 
     # halfway down slope for static
     # min max for cyclic
@@ -31,13 +34,17 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     # lr_finder = LRFinder(model, optimizer, criterion, device=device)
     lr_finder.range_test(train_loader, val_loader=valid_loader, end_lr=10,
                          num_iter=num_iter, step_mode="exp")
-    # lr_finder.plot(ax=axes[1], skip_end=0, skip_start=0)
-    lr_finder.plot(ax=axes[0][1], skip_end=0, skip_start=0, metric_name="TSS")
-    lr_finder.plot(ax=axes[1][1], skip_end=0, skip_start=0, metric_name="loss")
-    lr_finder.reset()
+
     valx = lr_finder.history['lr']
     valy_TSS = lr_finder.history['TSS']
     valy_loss = lr_finder.history['loss']
+
+    lr_finder.plot(ax=axes[0][1], skip_end=0, skip_start=0,
+                   metric_name="TSS", show_lr=valx[np.argmax(valy_TSS)])
+    lr_finder.plot(ax=axes[1][1], skip_end=0, skip_start=0,
+                   metric_name="loss", show_lr=valx[np.argmin(valy_loss)])
+    # lr_finder.plot(ax=axes[1][1], skip_end=0, skip_start=0, show_lr=valx[np.argmin(valy_loss)])
+    lr_finder.reset()
 
     trainx = np.pad(trainx, (0, num_iter - len(trainx)), 'constant',
                     constant_values=np.nan)

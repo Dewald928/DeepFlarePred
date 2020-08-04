@@ -291,8 +291,8 @@ class LRFinder(object):
                 non_blocking_transfer=non_blocking_transfer,
             )
             if val_loader:
-                loss = self._validate(
-                    val_iter, non_blocking_transfer=non_blocking_transfer
+                loss, metric_value = self._validate(
+                    val_loader, non_blocking_transfer=non_blocking_transfer
                 )
 
             # Update the learning rate
@@ -416,25 +416,20 @@ class LRFinder(object):
                     inputs, labels, non_blocking=non_blocking_transfer
                 )
 
-                if isinstance(inputs, tuple) or isinstance(inputs, list):
-                    batch_size = inputs[0].size(0)
-                else:
-                    batch_size = inputs.size(0)
-
                 # Forward pass and loss computation
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, labels)
-                running_loss += loss.item() * batch_size
+                running_loss += loss.item() * len(labels)
                 _, predicted = torch.max(outputs.data, 1)
                 # confusion matrix
                 for t, p in zip(labels.view(-1), predicted.view(-1)):
                     confusion_matrix[t.long(), p.long()] += 1
 
-        # recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn, \
-        # mcc = metric.calculate_metrics(
-        #     confusion_matrix.numpy(), 2)
+        recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn, \
+        mcc = metric.calculate_metrics(
+            confusion_matrix.numpy(), 2)
 
-        return running_loss / len(val_iter.dataset)
+        return running_loss / len(val_iter.dataset), tss
 
     def plot(self, skip_start=10, skip_end=5, log_lr=True, show_lr=None,
              ax=None, metric_name="TSS"):
