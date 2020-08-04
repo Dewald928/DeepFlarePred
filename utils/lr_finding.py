@@ -7,8 +7,8 @@ import numpy as np
 
 
 def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
-    num_iter = 50
-    fig, axes = plt.subplots(2,2, figsize=(10,6))
+    num_iter = 100
+    fig, axes = plt.subplots(2,2, figsize=(10,6), sharex=True)
     fig.set_tight_layout(True)
     lr_finder = LRFinder(model, optimizer, criterion, device=device,
                          metric_name='TSS')
@@ -65,6 +65,8 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     axes[1][0].set_title('Training')
     axes[0][1].set_title('Validation')
     axes[1][1].set_title('Validation')
+    for ax in axes.flat:
+        ax.set_ylim([0,1])
 
     for i in range(num_iter - 1):
         wandb.log(
