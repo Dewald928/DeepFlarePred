@@ -15,8 +15,8 @@ from data_loader import data_loader
 
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
-# filepath = './Data/Krynauw/'
-filepath = './Data/Liu/' + 'M5' + '/'
+filepath = './Data/Krynauw/'
+# filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
@@ -273,21 +273,33 @@ print(tabulate(corr_features_df, headers="keys", tablefmt="github",
 '''
 Heatmaps of Correlation
 '''
-# df_corr = m5_flares_data[m5_flares_data['label']=='Positive'].iloc[:,5:].corr()
-df_corr = m5_flares_data.iloc[:,5:].corr()
+sns.set(font_scale=1.4)
+df_corr = m5_flares_data[m5_flares_data['label']=='Positive'].iloc[:,5:].corr()
+# df_corr = m5_flares_data.iloc[:,5:].corr()
 # df_corr = df.iloc[:, 5:].corr()
 df_corr[df_corr == 1] = 0
 df_large_corr = df_corr[(df_corr >= 0.7) | (df_corr <= -0.7)]
-mask = np.zeros_like(df_large_corr)
-mask[np.triu_indices_from(mask)] = True
-plt.figure(figsize=(20, 15))
-ax = plt.subplot(111)
-sns.heatmap(df_large_corr, ax=ax, annot=True, fmt='.1f', center=0,
-            vmin=-1, vmax=1, mask=mask, linecolor='k', linewidths=0.2)  # put
+# df_large_corr = df_corr
+df_large_corr = df_large_corr.dropna(how='all', axis=0)
+df_large_corr = df_large_corr.dropna(how='all', axis=1)
+df_large_corr = df_large_corr.fillna(0)
+np.fill_diagonal(df_large_corr.values, 1)
+# mask = np.zeros_like(df_large_corr)
+# mask[np.triu_indices_from(mask)] = True
+# fig, ax = plt.subplots()
+# sns.heatmap(df_large_corr, ax=ax, annot=True, fmt='.1f', center=0,
+#             vmin=-1, vmax=1, mask=mask, linecolor='k', linewidths=0.2,
+#             cmap=palette)  # put
+cm = sns.clustermap(data=df_large_corr, linewidths=0, cmap='coolwarm', vmax=1,
+                    vmin=-1, figsize=(20, 20), annot=df_large_corr, fmt='.1f',
+                    dendrogram_ratio=0.01, cbar_pos=None)
+cm.ax_col_dendrogram.set_visible(False)
+cm.ax_row_dendrogram.set_visible(False)
+
 # in so for
 # summary
 plt.tight_layout()
-plt.savefig(drop_path + "feature_correlation_heatmap_flaredAR.png")
+plt.savefig(drop_path + "feature_correlation_heatmap_24h.png")
 plt.show()
 
 '''

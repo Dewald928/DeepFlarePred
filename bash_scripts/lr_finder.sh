@@ -23,39 +23,22 @@ cd ../
 #        done
 #    done
 #done
-
-for model_type in CNN ; do
-    for optim in SGD Adam ; do
-        for ksize in 2 3 ; do
-            for weight_decay in {0.0, 0.001, 0.0001, 0.00001} ; do
-                for seed in 15 124 49 ; do
-                    python main_TCN_Liu.py \
-                    --seed $seed \
-                    --optim $optim \
-                    --model_type $model_type \
-                    --weight_decay $weight_decay \
-                    --levels levels \
-                    --ksize ksize
-                done
-            done
+N=4
+for model_type in CNN; do
+  for optim in SGD Adam; do
+    for dropout in {0.0 0.4}; do
+      for weight_decay in {0.0 0.01}; do
+        for seed in 15 124; do
+          ((i = i % N))
+          ((i++ == 0)) && wait
+          python main_TCN_Liu.py \
+            --seed $seed \
+            --optim $optim \
+            --model_type $model_type \
+            --weight_decay $weight_decay \
+            --dropout $dropout &
         done
+      done
     done
+  done
 done
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

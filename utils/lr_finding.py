@@ -59,7 +59,6 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     axes[0][1].set_title('Validation')
     axes[1][1].set_title('Validation')
 
-    # num_iter = len(trainx) if len(trainx) < len(valx) else len(valx)
     for i in range(num_iter - 1):
         wandb.log(
             {'train_lr_TSS': trainy_TSS[i], 'train_lr_loss': trainy_loss[i],

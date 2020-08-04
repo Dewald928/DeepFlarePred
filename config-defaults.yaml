@@ -2,7 +2,8 @@
 tag:
   desc: wandb tags
   value:
-    - LiuFold
+    - Skorch
+    - LiuNorm
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
@@ -11,10 +12,10 @@ epochs:
   value: 200
 batch_size:
   desc: Size of each mini-batch
-  value: 65536
+  value: 16384
 learning_rate:
   desc: initial learning rate
-  value: 0.0001
+  value: 0.00001
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -26,7 +27,7 @@ lr_scheduler:
   value: True
 max_lr:
   desc: cyclic lr max value
-  value: 0.1
+  value: 0.4
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -37,13 +38,13 @@ levels:
   value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 3
+  value: 2
 nhid:
   desc: number of filters
   value: 120
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 3
+  value: 1
 
 # MLP
 layers:
@@ -56,7 +57,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.8
+  value: 0.6
 weight_decay:
   desc: L2 regularizing
   value: 0.01
@@ -64,7 +65,7 @@ weight_decay:
 # Cross Validation
 liu_fold:
   desc: If liu fold should be done
-  value: True
+  value: False
 cross_validation:
   desc: if crossval should be performed
   value: False
@@ -84,7 +85,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 49
+  value: 16
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -93,7 +94,7 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting
-  value: True
+  value: False
 patience:
   desc: amount of epochs for early stopping
   value: 30
@@ -112,7 +113,7 @@ parse_args:
 
 # Dataset
 dataset:
-  desc: which dataset to use (Liu/Krynauw)
+  desc: which dataset to use (Liu/Liu_train/Liu_z/Krynauw)
   value: Liu
 
 # Interpretation

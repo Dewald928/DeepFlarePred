@@ -373,7 +373,7 @@ def init_project():
 
 if __name__ == '__main__':
     project, tags = init_project()
-    run = wandb.init(project=project, tags=tags, name='liunorm')
+    run = wandb.init(project=project, tags=tags)
     cfg = wandb.config
 
     # Parse args
@@ -384,9 +384,14 @@ if __name__ == '__main__':
     if cfg.dataset == 'Liu':
         filepath = './Data/Liu/' + cfg.flare_label + '/'
         # artifact = wandb.Artifact('liu-dataset', type='dataset')
+    elif cfg.dataset == 'Liu_train':
+        filepath = './Data/Liu_train/'
+        # artifact = wandb.Artifact('krynauw-dataset', type='dataset')
+    elif cfg.dataset == 'Liu_z':
+        filepath = './Data/Liu_z/'
     elif cfg.dataset == 'Krynauw':
         filepath = './Data/Krynauw/'
-        # artifact = wandb.Artifact('krynauw-dataset', type='dataset')
+
     # n_features = 0
     if cfg.flare_label == 'M5':
         n_features = cfg.n_features  # 20 original
@@ -443,7 +448,7 @@ if __name__ == '__main__':
 
     # setup dataloaders
     X_train_data, y_train_data = data_loader.load_data(
-        datafile=filepath + 'normalized_training_v1.csv',
+        datafile=filepath + 'normalized_training.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value, feature_list=feature_list)
@@ -452,7 +457,7 @@ if __name__ == '__main__':
                                                                 num_of_fold)
 
     X_valid_data, y_valid_data = data_loader.load_data(
-        datafile=filepath + 'normalized_validation_v1.csv',
+        datafile=filepath + 'normalized_validation.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value, feature_list=feature_list)
@@ -461,7 +466,7 @@ if __name__ == '__main__':
                                                                 num_of_fold)
 
     X_test_data, y_test_data = data_loader.load_data(
-        datafile=filepath + 'normalized_testing_v1.csv',
+        datafile=filepath + 'normalized_testing.csv',
         flare_label=cfg.flare_label, series_len=cfg.seq_len,
         start_feature=start_feature, n_features=cfg.n_features,
         mask_value=mask_value, feature_list=feature_list)
@@ -589,7 +594,7 @@ if __name__ == '__main__':
 
     # find LR
     if not cfg.lr_scheduler:
-        lr_finding.find_lr(model, optimizer, criterion, device,
+        new_max_lr = lr_finding.find_lr(model, optimizer, criterion, device,
                            train_loader, valid_loader)
 
     # print model parameters
