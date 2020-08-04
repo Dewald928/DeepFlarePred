@@ -545,7 +545,7 @@ if __name__ == '__main__':
                     kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
     elif cfg.model_type == "CNN":
-        model = tcn.Simple1DConv(cfg.n_features, cfg.nhid, cfg.layers,
+        model = tcn.Simple1DConv(cfg.n_features, cfg.nhid, cfg.levels,
                                  kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
     elif cfg.model_type == 'RNN':

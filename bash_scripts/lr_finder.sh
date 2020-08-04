@@ -23,11 +23,11 @@ cd ../
 #        done
 #    done
 #done
-N=4
+N=1
 for dataset in Liu Liu_train Liu_z Krynauw; do
   for optim in SGD Adam; do
-    for dropout in {0.0 0.4}; do
-      for weight_decay in {0.0 0.01}; do
+    for dropout in 0.0 0.4; do
+      for weight_decay in 0.0 0.01; do
         for seed in 15 124; do
           ((i = i % N))
           ((i++ == 0)) && wait

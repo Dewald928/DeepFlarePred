@@ -75,11 +75,13 @@ class TemporalConvNet(nn.Module):
 
 
 class Simple1DConv(nn.Module):
-    def __init__(self, n_inputs, n_filters, kernel_size=2, dropout=0.2,
-                 dilation=1):
+    def __init__(self, n_inputs, n_filters, num_levels, kernel_size=2,
+                 dropout=0.2, dilation=1):
         super(Simple1DConv, self).__init__()
         self.padding = (kernel_size - 1) * dilation
         self.conv1 = nn.Conv1d(n_inputs, n_filters, kernel_size, stride=1,
+                               padding=self.padding, dilation=dilation)
+        self.conv2 = nn.Conv1d(n_filters, n_filters, kernel_size, stride=1,
                                padding=self.padding, dilation=dilation)
         self.chomp1 = Chomp1d(self.padding)
         self.relu1 = nn.ReLU()
@@ -98,10 +100,16 @@ class Simple1DConv(nn.Module):
         # self.conv1.weight = []
 
     def forward(self, x):
+        # todo deeplift needs unique activation functions
         out = self.conv1(x)
         out = self.chomp1(out)  # for causal convolution
         out = self.relu1(out)
         out = self.dropout1(out)
+
+        # out = self.conv2(out)
+        # out = self.chomp1(out)  # for causal convolution
+        # out = self.relu1(out)
+        # out = self.dropout1(out)
         # res = x if self.downsample is None else self.downsample(x)
         # out = out + res
 
