@@ -2,17 +2,17 @@
 tag:
   desc: wandb tags
   value:
-    - Skorch
-    - LiuNorm
+    - Debug
+    - LRFinder
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 200
+  value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 16384
+  value: 65536
 learning_rate:
   desc: initial learning rate
   value: 0.00001
@@ -24,7 +24,7 @@ optim:
   value: SGD
 lr_scheduler:
   desc: if scheduler is on
-  value: True
+  value: False
 max_lr:
   desc: cyclic lr max value
   value: 0.4
