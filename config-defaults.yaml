@@ -3,16 +3,15 @@ tag:
   desc: wandb tags
   value:
     - Debug
-    - LRFinder
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: CNN
+  value: TCN
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 50
 batch_size:
   desc: Size of each mini-batch
-  value: 65536
+  value: 15000
 learning_rate:
   desc: initial learning rate
   value: 0.00001
@@ -24,7 +23,7 @@ optim:
   value: SGD
 lr_scheduler:
   desc: if scheduler is on
-  value: False
+  value: True
 max_lr:
   desc: cyclic lr max value
   value: 0.4
@@ -35,16 +34,16 @@ n_features:
 # TCN HP
 levels:
   desc: num of tcn blocks
-  value: 1
+  value: 2
 ksize:
   desc: kernel size (smallest is 2)
-  value: 2
+  value: 3
 nhid:
   desc: number of filters
-  value: 120
+  value: 80
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 1
+  value: 10
 
 # MLP
 layers:
