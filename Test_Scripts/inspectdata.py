@@ -15,12 +15,13 @@ from data_loader import data_loader
 
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
-filepath = './Data/Krynauw/'
+# filepath = './Data/Krynauw/'
+filepath = './Data/Liu_z/'
 # filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_train, df_val], axis=0)
+df = pd.concat([df_train], axis=0)
 df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
@@ -184,17 +185,17 @@ sns.set_palette(colours)
 
 # ARs that eventually erupt large (24 hour ahead)
 snsdata = m5_flares_data.drop(['flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
-sns_plot = sns.PairGrid(snsdata, hue='label', hue_order=['Negative',
-                                                          'Positive'],
-                        height=4, **{'diag_sharey': False})
-sns_plot.map_lower(sns.kdeplot)
-sns_plot.map_diag(sns.kdeplot, **{'shade': True})
-# sns_plot = sns.pairplot(snsdata, hue='label',
-#                         hue_order=['Negative', 'Positive'],
-#                         # vars=['Cdec', 'Chis1d', 'Edec'],
-#                         plot_kws={'alpha': 0.6, 's': 80, 'edgecolor': 'w'},
-#                         height=4
-#                         )
+# sns_plot = sns.PairGrid(snsdata, hue='label', hue_order=['Negative',
+#                                                           'Positive'],
+#                         height=4, **{'diag_sharey': False})
+# sns_plot.map_lower(sns.kdeplot)
+# sns_plot.map_diag(sns.kdeplot, **{'shade': True})
+sns_plot = sns.pairplot(snsdata, hue='label',
+                        hue_order=['Negative', 'Positive'],
+                        # vars=['Cdec', 'Chis1d', 'Edec'],
+                        plot_kws={'alpha': 0.6, 's': 80, 'edgecolor': 'w'},
+                        height=4
+                        )
 sns_plot.savefig(drop_path + "feature_pairplot_flaredARs.png")
 # sns_plot.fig.show()
 
@@ -274,9 +275,9 @@ print(tabulate(corr_features_df, headers="keys", tablefmt="github",
 Heatmaps of Correlation
 '''
 sns.set(font_scale=1.4)
-df_corr = m5_flares_data[m5_flares_data['label']=='Positive'].iloc[:,5:].corr()
+# df_corr = m5_flares_data[m5_flares_data['label']=='Positive'].iloc[:,5:].corr()
 # df_corr = m5_flares_data.iloc[:,5:].corr()
-# df_corr = df.iloc[:, 5:].corr()
+df_corr = df.iloc[:, 5:].corr(method="spearman")
 df_corr[df_corr == 1] = 0
 df_large_corr = df_corr[(df_corr >= 0.7) | (df_corr <= -0.7)]
 # df_large_corr = df_corr
