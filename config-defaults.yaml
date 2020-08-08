@@ -5,16 +5,16 @@ tag:
     - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: TCN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 50
+  value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 15000
+  value: 65536
 learning_rate:
   desc: initial learning rate
-  value: 0.00001
+  value: 0.000001
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -23,10 +23,10 @@ optim:
   value: SGD
 lr_scheduler:
   desc: if scheduler is on
-  value: True
+  value: False
 max_lr:
   desc: cyclic lr max value
-  value: 0.4
+  value: 0.25
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -43,7 +43,7 @@ nhid:
   value: 80
 seq_len:
   desc: size of sequence (Be 1 for MLP)
-  value: 10
+  value: 1
 
 # MLP
 layers:
@@ -56,10 +56,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.6
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.01
+  value: 0.0
 
 # Cross Validation
 liu_fold:
@@ -84,7 +84,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 16
+  value: 20
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -113,7 +113,7 @@ parse_args:
 # Dataset
 dataset:
   desc: which dataset to use (Liu/Liu_train/Liu_z/Krynauw)
-  value: Liu
+  value: Liu_z
 
 # Interpretation
 interpret:

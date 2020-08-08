@@ -47,7 +47,8 @@ mask_value = 0
 drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
 # drop_path = os.path.expanduser(
 #     '~/projects/DeepFlarePred/saved/features_inspect/')
-filepath = './Data/Liu/' + 'M5' + '/'
+# filepath = './Data/Liu/' + 'M5' + '/'
+filepath = '../Data/Liu_transformed/'
 
 # todo removed redundant features
 listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',

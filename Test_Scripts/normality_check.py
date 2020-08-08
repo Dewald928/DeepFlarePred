@@ -28,7 +28,7 @@ mask_value = 0
 feature_list = None
 drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
 # filepath = './Data/Krynauw/'
-filepath = '../Data/Liu_z/'
+filepath = './Data/Liu_transformed/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
@@ -46,7 +46,7 @@ labels = pd.DataFrame(transformed, columns=['labels'])
 df = df.drop(['label','flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
 
 # QQ plot
-x = df['Cdec']
+x = df['MEANGBH']
 fig, (ax1) = plt.subplots(1, 1, figsize=(9, 4))
 ax1 = pg.qqplot(x, dist='norm', ax=ax1)
 plt.show()
@@ -67,9 +67,10 @@ print(pg.homoscedasticity(df))
 
 # 1. Do univariate normality check
 #  D’Agostino and Pearson’s
+print('Feature, W, p-value, Normal')
 for i in range(n_features):
     stat = pg.normality(df.iloc[:, i], method='normaltest')
-    print(f"{stat.index[0]} - {stat['W'][0]:.1f} - {stat['pval'][0]} -"
+    print(f"{stat.index[0]}, {stat['W'][0]:.1f}, {stat['pval'][0]:.2f}, "
           f" {stat['normal'][0]}")
 
 
@@ -84,7 +85,7 @@ print(pg.homoscedasticity(df_trans))
 fig, axes = plt.subplots(8, 5, figsize=(20, 20), sharey=False)
 for i, ax in zip(range(n_features), axes.flat):
     sns.distplot(df_trans.iloc[:, i:i + 1], fit=norm, ax=ax,
-                 label=df.iloc[:, i:i + 1].columns)
+                 label=df_trans.iloc[:, i:i + 1].columns)
     ax.legend()
 plt.tight_layout()
 plt.legend()
@@ -92,15 +93,16 @@ plt.savefig(drop_path + "features_hist_trans.png")
 plt.show()
 
 # QQ plot
-x = df_trans['Cdec']
+x = df_trans['MEANGBH']
 fig, (ax1) = plt.subplots(1, 1, figsize=(9, 4))
 ax1 = pg.qqplot(x, dist='norm', ax=ax1)
 plt.show()
 
 #  D’Agostino and Pearson’s
+print('Feature, W, p-value, Normal')
 for i in range(n_features):
     stat = pg.normality(df_trans.iloc[:, i], method='normaltest')
-    print(f"{stat.index[0]} - {stat['W'][0]:.1f} - {stat['pval'][0]:.2f} -"
+    print(f"{stat.index[0]}, {stat['W'][0]:.1f}, {stat['pval'][0]:.2f}, "
           f" {stat['normal'][0]}")
 
 
@@ -127,6 +129,7 @@ pg.qqplot(x0, dist='norm', ax=axes[0])
 pg.qqplot(x1, dist='norm', ax=axes[1])
 axes[0].title.set_text('Q-Q Plot, Cdec before transform')
 axes[1].title.set_text('Q-Q Plot, Cdec after transform')
+plt.tight_layout()
 plt.savefig(drop_path+"QQ_Cdec.png")
 plt.show()
 
@@ -144,6 +147,6 @@ t_val = pd.concat([df_val.iloc[:,:5], df_trans_val], axis=1)
 t_test = pd.concat([df_test.iloc[:,:5], df_trans_test], axis=1)
 
 new_path = '../Data/Liu_transformed/'
-t_train.to_csv(new_path + 'transformed_training.csv', index=False)
-t_val.to_csv(new_path + 'transformed_validation.csv', index=False)
-t_test.to_csv(new_path + 'transformed_testing.csv', index=False)
+t_train.to_csv(new_path + 'normalized_training.csv', index=False)
+t_val.to_csv(new_path + 'normalized_validation.csv', index=False)
+t_test.to_csv(new_path + 'normalized_testing.csv', index=False)

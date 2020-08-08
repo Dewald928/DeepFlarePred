@@ -63,6 +63,11 @@ normalized_val = pd.concat([df_val.iloc[:, :5], phys_val_norm, his_val_norm],
 normalized_test = pd.concat(
     [df_test.iloc[:, :5], phys_test_norm, his_test_norm], axis=1)
 
+cols = df_train.columns.values
+normalized_train = normalized_train[cols]
+normalized_val = normalized_val[cols]
+normalized_test = normalized_test[cols]
+
 filepath_new = '../Data/Liu_train/'
 normalized_train.to_csv(filepath_new + 'normalized_training.csv', index=False)
 normalized_val.to_csv(filepath_new + 'normalized_validation.csv', index=False)
