@@ -8,13 +8,13 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 25
 batch_size:
   desc: Size of each mini-batch
   value: 65536
 learning_rate:
   desc: initial learning rate
-  value: 0.000001
+  value: 0.1
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -24,9 +24,12 @@ optim:
 lr_scheduler:
   desc: if scheduler is on
   value: False
+lr_finder:
+  desc: is lr finder should run
+  value: False
 max_lr:
   desc: cyclic lr max value
-  value: 0.25
+  value: 0.3
 n_features:
   desc: number of features to include (max 40)
   value: 40
@@ -113,7 +116,7 @@ parse_args:
 # Dataset
 dataset:
   desc: which dataset to use (Liu/Liu_train/Liu_z/Krynauw)
-  value: Liu_z
+  value: Liu
 
 # Interpretation
 interpret:

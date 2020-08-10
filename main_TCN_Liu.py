@@ -376,7 +376,7 @@ def init_project():
 
 if __name__ == '__main__':
     project, tags = init_project()
-    run = wandb.init(project=project, tags=tags)
+    run = wandb.init(project=project, tags=tags, name='Liu')
     cfg = wandb.config
 
     # Parse args
@@ -597,7 +597,7 @@ if __name__ == '__main__':
                                                 cycle_momentum=False)
 
     # find LR
-    if not cfg.lr_scheduler:
+    if (not cfg.lr_scheduler) and (cfg.lr_finder):
         new_max_lr = lr_finding.find_lr(model, optimizer, criterion, device,
                            train_loader, valid_loader)
 
