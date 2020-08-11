@@ -394,6 +394,8 @@ if __name__ == '__main__':
         filepath = './Data/Liu_z/'
     elif cfg.dataset == 'Krynauw':
         filepath = './Data/Krynauw/'
+    elif cfg.dataset == 'Liu_transformed':
+        filepath = './Data/Liu_transformed/'
 
     # n_features = 0
     if cfg.flare_label == 'M5':

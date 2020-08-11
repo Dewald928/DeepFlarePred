@@ -2,31 +2,31 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - Train_Comp
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 25
+  value: 1
 batch_size:
   desc: Size of each mini-batch
   value: 65536
 learning_rate:
   desc: initial learning rate
-  value: 0.1
+  value: 0.000001
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
-  value: SGD
+  value: Adam
 lr_scheduler:
   desc: if scheduler is on
   value: False
 lr_finder:
   desc: is lr finder should run
-  value: False
+  value: True
 max_lr:
   desc: cyclic lr max value
   value: 0.3
@@ -54,7 +54,7 @@ layers:
   value: 2
 hidden_units:
   desc: number hidden nodes in layer
-  value: 200
+  value: 500
 
 # Regularizer
 dropout:
@@ -115,7 +115,7 @@ parse_args:
 
 # Dataset
 dataset:
-  desc: which dataset to use (Liu/Liu_train/Liu_z/Krynauw)
+  desc: which dataset to use (Liu/Liu_train/Liu_z/Liu_transformed/Krynauw)
   value: Liu
 
 # Interpretation

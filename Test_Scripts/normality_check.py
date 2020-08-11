@@ -27,6 +27,8 @@ start_feature = 5
 mask_value = 0
 feature_list = None
 drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
+# drop_path = os.path.expanduser(
+#     '~/projects/DeepFlarePred/saved/feature_boxplots/')
 # filepath = './Data/Krynauw/'
 filepath = './Data/Liu_transformed/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')

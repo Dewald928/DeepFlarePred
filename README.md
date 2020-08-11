@@ -39,7 +39,7 @@ The default configurations can be changed in ```config-defaults.yaml```.
 
 
 
-## Docker cloud gpu setup
+## Docker cloud gpu setup (not working atm)
 ### Build container
 Follow instructions [here](https://docs.paperspace.com/gradient/notebooks/notebook-containers/building-a-custom-container)
 * Install docker
