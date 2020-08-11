@@ -572,6 +572,16 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
                                     weight_decay=cfg.weight_decay,
                                     nesterov=True, momentum=cfg.momentum)
+        # find LR
+        if cfg.lr_finder:
+            min_lr, halfway_lr, max_lr = lr_finding.find_lr(model, optimizer,
+                                                            criterion, device,
+                                                            train_loader,
+                                                            valid_loader, cfg)
+            wandb.config.update(
+                {"learning_rate": halfway_lr, " max_lr": max_lr},
+                allow_val_change=True)
+
         if cfg.lr_scheduler:
             # scheduler = lr_scheduler.CyclicLR(optimizer,
             #                                   base_lr=cfg.learning_rate,
@@ -585,6 +595,17 @@ if __name__ == '__main__':
     elif cfg.optim == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate,
                                      weight_decay=cfg.weight_decay)
+
+        # find LR
+        if cfg.lr_finder:
+            min_lr, halfway_lr, max_lr = lr_finding.find_lr(model, optimizer,
+                                                            criterion, device,
+                                                            train_loader,
+                                                            valid_loader, cfg)
+            wandb.config.update(
+                {"learning_rate": halfway_lr, " max_lr": max_lr},
+                allow_val_change=True)
+
         if cfg.lr_scheduler:
             # scheduler = lr_scheduler.CyclicLR(optimizer,
             #                                   base_lr=cfg.learning_rate,
@@ -598,13 +619,6 @@ if __name__ == '__main__':
                                                 epochs=cfg.epochs,
                                                 cycle_momentum=False)
 
-    # find LR
-    if (not cfg.lr_scheduler) and (cfg.lr_finder):
-        min_lr, halfway_lr, max_lr = lr_finding.find_lr(model, optimizer,
-                                                        criterion, device,
-                                                        train_loader,
-                                                        valid_loader, cfg)
-        wandb.config.update({"learning_rate": halfway_lr, " max_lr": max_lr}, allow_val_change=True)
 
     # print model parameters
     print("Receptive Field: " + str(

@@ -8,7 +8,7 @@ import numpy as np
 
 def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
             cfg):
-    num_iter = 10
+    num_iter = 100
     fig, axes = plt.subplots(2,2, figsize=(10,6), sharex=True)
     fig.set_tight_layout(True)
     lr_finder = LRFinder(model, optimizer, criterion, device=device,
