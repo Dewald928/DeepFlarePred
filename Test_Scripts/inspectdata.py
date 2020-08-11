@@ -13,6 +13,13 @@ import numpy as np
 import os
 from data_loader import data_loader
 
+listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
+                        'Cdec', 'Chis', 'Edec', 'Mhis', 'Xmax1d', 'Mdec',
+                        'MEANPOT', 'R_VALUE', 'Mhis1d', 'MEANGAM', 'TOTFX',
+                        'MEANJZH', 'MEANGBZ', 'TOTFZ', 'TOTFY', 'logEdec',
+                        'EPSZ', 'MEANGBH', 'MEANJZD', 'Xhis1d', 'Xdec', 'Xhis',
+                        'EPSX', 'EPSY', 'Bhis', 'Bdec', 'Bhis1d']  # 32
+
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
 # filepath = './Data/Krynauw/'
@@ -277,7 +284,8 @@ Heatmaps of Correlation
 sns.set(font_scale=1.4)
 # df_corr = m5_flares_data[m5_flares_data['label']=='Positive'].iloc[:,5:].corr()
 # df_corr = m5_flares_data.iloc[:,5:].corr()
-df_corr = df.iloc[:, 5:].corr(method="spearman")
+# df_corr = df.iloc[:, 5:].corr()
+df_corr = df.loc[:,listofuncorrfeatures].corr()
 df_corr[df_corr == 1] = 0
 df_large_corr = df_corr[(df_corr >= 0.7) | (df_corr <= -0.7)]
 # df_large_corr = df_corr
@@ -300,7 +308,7 @@ cm.ax_row_dendrogram.set_visible(False)
 # in so for
 # summary
 plt.tight_layout()
-plt.savefig(drop_path + "feature_correlation_heatmap_24h.png")
+plt.savefig(drop_path + "feature_correlation_heatmap_rem.png")
 plt.show()
 
 '''

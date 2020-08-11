@@ -47,8 +47,8 @@ mask_value = 0
 drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
 # drop_path = os.path.expanduser(
 #     '~/projects/DeepFlarePred/saved/features_inspect/')
-# filepath = './Data/Liu/' + 'M5' + '/'
-filepath = '../Data/Liu_transformed/'
+filepath = './Data/Liu/' + 'M5' + '/'
+# filepath = './Data/Liu_z/'
 
 # todo removed redundant features
 listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
@@ -61,35 +61,46 @@ listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
 #                 'Mhis1d', 'R_VALUE', 'Xdec', 'Xhis1d', 'Xmax1d']
 feature_list = None
 
-X_train_data, y_train_data = data_loader.load_data(
-    datafile=filepath + 'normalized_training.csv', flare_label='M5',
-    series_len=1, start_feature=start_feature, n_features=n_features,
-    mask_value=mask_value, feature_list=feature_list)
-X_valid_data, y_valid_data = data_loader.load_data(
-    datafile=filepath + 'normalized_validation.csv', flare_label='M5',
-    series_len=1, start_feature=start_feature, n_features=n_features,
-    mask_value=mask_value, feature_list=feature_list)
-X_test_data, y_test_data = data_loader.load_data(
-    datafile=filepath + 'normalized_testing.csv', flare_label='M5',
-    series_len=1, start_feature=start_feature, n_features=n_features,
-    mask_value=mask_value, feature_list=feature_list)
-X_train_data = np.reshape(X_train_data, (len(X_train_data), n_features))
-X_valid_data = np.reshape(X_valid_data, (len(X_valid_data), n_features))
-X_test_data = np.reshape(X_test_data, (len(X_test_data), n_features))
-# combine train and validation
-X = np.concatenate((X_train_data, X_valid_data))
-y = np.concatenate((y_train_data, y_valid_data))
+datasets = ['Liu_z', 'Liu_train', 'Liu_transformed']
+X_train_datasets = {'Liu_z': [], 'Liu_train': [], 'Liu_transformed': []}
+y_train_datasets = {'Liu_z': [], 'Liu_train': [], 'Liu_transformed': []}
+feature_names = []
+for dataset in datasets:
+    filepath = f"./Data/{dataset}/"
 
-y_train_tr = data_loader.label_transform(y_train_data)
-y_valid_tr = data_loader.label_transform(y_valid_data)
-y_test_tr = data_loader.label_transform(y_test_data)
-y = data_loader.label_transform(y)
+    X_train_data, y_train_data = data_loader.load_data(
+        datafile=filepath + 'normalized_training.csv', flare_label='M5',
+        series_len=1, start_feature=start_feature, n_features=n_features,
+        mask_value=mask_value, feature_list=feature_list)
+    X_valid_data, y_valid_data = data_loader.load_data(
+        datafile=filepath + 'normalized_validation.csv', flare_label='M5',
+        series_len=1, start_feature=start_feature, n_features=n_features,
+        mask_value=mask_value, feature_list=feature_list)
+    X_test_data, y_test_data = data_loader.load_data(
+        datafile=filepath + 'normalized_testing.csv', flare_label='M5',
+        series_len=1, start_feature=start_feature, n_features=n_features,
+        mask_value=mask_value, feature_list=feature_list)
+    X_train_data = np.reshape(X_train_data, (len(X_train_data), n_features))
+    X_valid_data = np.reshape(X_valid_data, (len(X_valid_data), n_features))
+    X_test_data = np.reshape(X_test_data, (len(X_test_data), n_features))
+    # combine train and validation
+    X = np.concatenate((X_train_data, X_valid_data))
+    y = np.concatenate((y_train_data, y_valid_data))
 
-feature_name = pd.DataFrame(
-    data_loader.get_feature_names(filepath + 'normalized_training.csv'))[
-               5:].reset_index(drop=True)
-feature_names = data_loader.get_feature_names(
-    filepath + 'normalized_training.csv')
+    y_train_tr = data_loader.label_transform(y_train_data)
+    y_valid_tr = data_loader.label_transform(y_valid_data)
+    y_test_tr = data_loader.label_transform(y_test_data)
+    y = data_loader.label_transform(y)
+
+    feature_name = pd.DataFrame(
+        data_loader.get_feature_names(filepath + 'normalized_training.csv'))[
+                   5:].reset_index(drop=True)
+    feature_names = data_loader.get_feature_names(
+        filepath + 'normalized_training.csv')
+
+    # add to datasets dict
+    X_train_datasets[dataset] = X_train_data
+    y_train_datasets[dataset] = y_train_tr
 
 # X, y = make_classification(n_samples=10000, n_features=10, n_redundant=5,
 #                            n_informative=5, n_clusters_per_class=1,
@@ -105,41 +116,63 @@ score_functions = {'F-test': f_classif,
                    'Mutual-Information': mutual_info_classif}
 for scorer, score_func in score_functions.items():
     print(scorer, score_func)
-    selector = SelectKBest(score_func, k=40)
-    selected_features = selector.fit_transform(X, y)
-    plt.bar(
-        feature_names[
-        5:], selector.scores_)
+    fig = plt.figure(figsize=(10,6))
+    bars = {'Liu_z': [], 'Liu_train': [], 'Liu_transformed': []}
+    for dataset in datasets:
+
+        # print(scorer, score_func)
+        selector = SelectKBest(score_func, k=40)
+        selected_features = selector.fit_transform(X_train_datasets[dataset],
+                                                   y_train_datasets[dataset])
+        bars[dataset] = selector.scores_
+
+        # heatmap Liu_z dataset
+        importance_df = pd.concat(
+            [pd.DataFrame(feature_names[5:], columns=['Features']),
+             pd.DataFrame(bars['Liu_transformed'], columns=['Importance'])],
+            axis=1).sort_values(by='Importance', ascending=False).reset_index()
+        f_df = importance_df if scorer == 'F-test' else f_df
+        mi_df = importance_df if scorer == 'Mutual-Information' else mi_df
+
+    # set width of bar
+    barWidth = 0.25
+
+    # Set position of bar on X axis
+    r1 = np.arange(0, len(bars['Liu_z']))
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+
+    # Make the plot
+    plt.bar(r1, bars['Liu_z'], width=barWidth, edgecolor='white',
+            label='Liu_z', align='edge')
+    plt.bar(r2, bars['Liu_train'], width=barWidth, edgecolor='white',
+            label='Liu_train', align='edge')
+    plt.bar(r3, bars['Liu_transformed'], width=barWidth,
+            edgecolor='white',
+            label='Liu_transformed', align='edge')
+
+    # Add xticks on the middle of the group bars
     plt.title('{} vs. Features'.format(scorer))
     plt.xlabel('Features')
+    plt.xticks([r + barWidth for r in range(len(bars['Liu_z']))], feature_names[
+                                                                  5:])
     plt.xticks(rotation=90)
     plt.ylabel('Importance')
+    plt.legend()
     plt.tight_layout()
     plt.savefig(drop_path + "{}.png".format(scorer))
     plt.show()
     plt.close('all')
-    f_score_indexes = (-selector.scores_).argsort()[:40]
 
-    sort_df = pd.concat([pd.DataFrame(
-        feature_names[
-        5:], columns=['Features']), pd.DataFrame(selector.scores_,
-        columns=['Importance'])], axis=1).sort_values(by='Importance',
-        ascending=False).reset_index()
-    f_df = sort_df if scorer == 'F-test' else f_df
-    mi_df = sort_df if scorer == 'Mutual-Information' else mi_df
-    sns.barplot(x='Features', y='Importance', data=sort_df,
-                order=sort_df['Features'])
-    plt.xticks(rotation=90)
-    plt.title('Sorted {} vs. Features'.format(scorer))
-    plt.tight_layout()
-    plt.savefig(drop_path + "{}_sorted.png".format(scorer))
-    plt.show()
-    plt.close('all')
+
+
+
 
 '''
 Linear SVC optimization
 '''
-params = {'C': [0.000001,0.00001,0.0001,0.001,0.01,0.1,1,10,100]}  # choose C values here
+params = {'C': [0.000001,0.00001,0.0001,0.001,0.01,0.1,1,10,100]}  # choose
+# C values here
 clf = LinearSVC(penalty="l2", dual=False, verbose=0, max_iter=10000,
                 class_weight='balanced')
 # cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1)
@@ -405,11 +438,11 @@ feature_name.columns = ['Features']
 liu_df_c = pd.DataFrame(feature_name.index.values, index=feature_name[
     'Features'])
 
-rfe_df.columns = ['0', 'Features']
-rfe_df_c = pd.DataFrame(rfe_df['0'].values, index=rfe_df['Features'])
+# rfe_df.columns = ['0', 'Features']
+# rfe_df_c = pd.DataFrame(rfe_df['0'].values, index=rfe_df['Features'])
 
-df_comp = pd.concat([liu_df_c, f_df_c, mi_df_c, rfe_df_c], axis=1, sort=False)
-df_comp.columns = ['Liu', 'F-Score', 'MI', 'RFE']
+df_comp = pd.concat([liu_df_c, f_df_c, mi_df_c], axis=1, sort=False)
+df_comp.columns = ['Liu', 'F-Score', 'MI']
 plt.figure(figsize=(20, 16))
 ax = plt.subplot(111)
 sns.heatmap(df_comp, ax=ax, annot=True, fmt='.1f')
