@@ -6,8 +6,9 @@ import wandb
 import numpy as np
 
 
-def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
-    num_iter = 100
+def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
+            cfg):
+    num_iter = 10
     fig, axes = plt.subplots(2,2, figsize=(10,6), sharex=True)
     fig.set_tight_layout(True)
     lr_finder = LRFinder(model, optimizer, criterion, device=device,
@@ -68,13 +69,29 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader):
     for ax in axes.flat:
         ax.set_ylim([0,1])
 
-    for i in range(num_iter - 1):
-        wandb.log(
-            {'train_lr_TSS': trainy_TSS[i], 'train_lr_loss': trainy_loss[i],
-             'train_lr_step': trainx[i], 'valid_lr_TSS': valy_TSS[i],
-             'valid_lr_loss': valy_loss[i], 'valid_lr_step': valx[i]}, step=i)
+    if cfg.log_lr:
+        for i in range(num_iter - 1):
+            wandb.log(
+                {'train_lr_TSS': trainy_TSS[i], 'train_lr_loss': trainy_loss[i],
+                 'train_lr_step': trainx[i], 'valid_lr_TSS': valy_TSS[i],
+                 'valid_lr_loss': valy_loss[i], 'valid_lr_step': valx[i]}, step=i)
+
     wandb.log({'LR_Finder_img': wandb.Image(fig)})
     plt.show()
-    # return trainx[np.argmin(trainy)]
+
+
+    # maxlr, halwaylr
+    valy_loss = lr_finder.history['loss']
+    valx = lr_finder.history['lr']
+    max_lr = valx[np.argmin(valy_loss)]
+    before_min_loss = valy_loss[0:np.argmin(valy_loss)]
+    min_lr = valx[np.argmax(before_min_loss)]
+    halfway_lr = 0.4*(np.log(min_lr)-np.log(max_lr))
+    halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
+
+    return min_lr, halfway_lr, max_lr
+
+
+
 
 

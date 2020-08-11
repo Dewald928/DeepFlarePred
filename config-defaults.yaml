@@ -2,16 +2,16 @@
 tag:
   desc: wandb tags
   value:
-    - Train_Comp
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 50
 batch_size:
   desc: Size of each mini-batch
-  value: 65536
+  value: 8192
 learning_rate:
   desc: initial learning rate
   value: 0.000001
@@ -27,6 +27,9 @@ lr_scheduler:
 lr_finder:
   desc: is lr finder should run
   value: True
+log_lr:
+  desc: log lr finder to wandb
+  value: False
 max_lr:
   desc: cyclic lr max value
   value: 0.3

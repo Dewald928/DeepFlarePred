@@ -376,7 +376,7 @@ def init_project():
 
 if __name__ == '__main__':
     project, tags = init_project()
-    run = wandb.init(project=project, tags=tags, name='Liu')
+    run = wandb.init(project=project, tags=tags, name='Scaler_Comp')
     cfg = wandb.config
 
     # Parse args
@@ -600,8 +600,11 @@ if __name__ == '__main__':
 
     # find LR
     if (not cfg.lr_scheduler) and (cfg.lr_finder):
-        new_max_lr = lr_finding.find_lr(model, optimizer, criterion, device,
-                           train_loader, valid_loader)
+        min_lr, halfway_lr, max_lr = lr_finding.find_lr(model, optimizer,
+                                                        criterion, device,
+                                                        train_loader,
+                                                        valid_loader, cfg)
+        wandb.config.update({"learning_rate": halfway_lr, " max_lr": max_lr}, allow_val_change=True)
 
     # print model parameters
     print("Receptive Field: " + str(
