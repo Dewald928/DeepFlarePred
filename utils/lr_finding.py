@@ -86,7 +86,7 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
     max_lr = valx[np.argmin(valy_loss)]
     before_min_loss = valy_loss[0:np.argmin(valy_loss)]
     min_lr = valx[np.argmax(before_min_loss)]
-    halfway_lr = 0.4*(np.log(min_lr)-np.log(max_lr))
+    halfway_lr = 0.6*(np.log(min_lr)-np.log(max_lr))
     halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
 
     return min_lr, halfway_lr, max_lr

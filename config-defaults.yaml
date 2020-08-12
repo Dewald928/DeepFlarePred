@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - Scaler_Comp
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
@@ -14,19 +14,19 @@ batch_size:
   value: 8192
 learning_rate:
   desc: initial learning rate
-  value: 0.000001
+  value: 0.01
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
-  value: Adam
+  value: SGD
 lr_scheduler:
   desc: if scheduler is on
   value: False
 lr_finder:
   desc: is lr finder should run
-  value: True
+  value: False
 log_lr:
   desc: log lr finder to wandb
   value: False
@@ -114,7 +114,7 @@ num_workers:
   value: 9
 parse_args:
   desc: if args should be parse for bash script
-  value: True
+  value: False
 
 # Dataset
 dataset:

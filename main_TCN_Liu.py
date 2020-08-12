@@ -376,7 +376,7 @@ def init_project():
 
 if __name__ == '__main__':
     project, tags = init_project()
-    run = wandb.init(project=project, tags=tags, name='Scaler_Comp')
+    run = wandb.init(project=project, tags=tags)
     cfg = wandb.config
 
     # Parse args
