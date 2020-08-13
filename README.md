@@ -13,11 +13,16 @@ By using the [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction)
 ### Create virtual environment
 Install conda and install environment:
 
-```conda env create -f deepflarepred.yml```
+```conda env create -f environment.yml```
 
 Activate environment:
 
 ```conda activate DeepFlarePred```
+
+If you have errors with the predefined validation set do:
+
+```pip install git+https://github.com/skorch-dev/skorch.git```
+```pip install git+https://github.com/skorch-dev/skorch.git@6508d88c4044bcdb2d944081d437c706e346354a```
 
 ### Download and prepare data
 The Liu data should be downloaded from [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction).
@@ -29,7 +34,15 @@ For the ```main_LSTM_Liu.py``` and ```main_TCN_Liu.py``` the Liu dataset needs t
 │   ├── C
 │   ├── M
 │   └── M5
+
  ```
+To create the normalized dataset run:
+* for Liu_z: ```python normalize_liu_z.py```
+* for Liu_train: ```python normalize_liu.py```
+
+To create the power transformed dataset run:
+```python normality_check.py```
+
 ### Run script
 To run the script, you can either do a Weight & Biases sweep, or just simply run:
 

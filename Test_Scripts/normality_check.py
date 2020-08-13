@@ -30,7 +30,7 @@ drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
 # drop_path = os.path.expanduser(
 #     '~/projects/DeepFlarePred/saved/feature_boxplots/')
 # filepath = './Data/Krynauw/'
-filepath = './Data/Liu_transformed/'
+filepath = './Data/Liu_z/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
@@ -149,6 +149,8 @@ t_val = pd.concat([df_val.iloc[:,:5], df_trans_val], axis=1)
 t_test = pd.concat([df_test.iloc[:,:5], df_trans_test], axis=1)
 
 new_path = '../Data/Liu_transformed/'
+if not os.path.exists('../Data/Liu_transformed/'):
+    os.makedirs('../Data/Liu_transformed/')
 t_train.to_csv(new_path + 'normalized_training.csv', index=False)
 t_val.to_csv(new_path + 'normalized_validation.csv', index=False)
 t_test.to_csv(new_path + 'normalized_testing.csv', index=False)

@@ -3,6 +3,7 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
 import joblib
+import os
 
 sharps = ['USFLUX', 'MEANGBT', 'MEANJZH', 'MEANPOT', 'SHRGT45', 'TOTUSJH',
           'MEANGBH', 'MEANALP', 'MEANGAM', 'MEANGBZ', 'MEANJZD', 'TOTUSJZ',
@@ -69,6 +70,8 @@ normalized_val = normalized_val[cols]
 normalized_test = normalized_test[cols]
 
 filepath_new = '../Data/Liu_train/'
+if not os.path.exists('../Data/Liu_train/'):
+    os.makedirs('../Data/Liu_train/')
 normalized_train.to_csv(filepath_new + 'normalized_training.csv', index=False)
 normalized_val.to_csv(filepath_new + 'normalized_validation.csv', index=False)
 normalized_test.to_csv(filepath_new + 'normalized_testing.csv', index=False)

@@ -40,10 +40,10 @@ min_lr:
   value: 0.004
 max_lr:
   desc: cyclic lr max value
-  value: 0.23
+  value: 2
 lr_metric:
   desc: Loss or TSS
-  value: Loss
+  value: TSS
 
 
 # TCN HP
@@ -93,7 +93,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: False
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
