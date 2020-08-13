@@ -2,7 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - Scaler_Comp
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
@@ -12,30 +12,39 @@ epochs:
 batch_size:
   desc: Size of each mini-batch
   value: 8192
-learning_rate:
-  desc: initial learning rate
-  value: 0.01
 momentum:
   desc: momentum for SGD
   value: 0.9
 optim:
   desc: optimizer to use
   value: SGD
+n_features:
+  desc: number of features to include (max 40)
+  value: 40
+
+# Learning rate
+learning_rate:
+  desc: initial learning rate
+  value: 0.004
 lr_scheduler:
   desc: if scheduler is on
-  value: False
+  value: True
 lr_finder:
   desc: is lr finder should run
   value: False
 log_lr:
   desc: log lr finder to wandb
   value: False
+min_lr:
+  desc: minimum lr for CLR
+  value: 0.004
 max_lr:
   desc: cyclic lr max value
-  value: 0.3
-n_features:
-  desc: number of features to include (max 40)
-  value: 40
+  value: 0.23
+lr_metric:
+  desc: Loss or TSS
+  value: Loss
+
 
 # TCN HP
 levels:
@@ -54,18 +63,18 @@ seq_len:
 # MLP
 layers:
   desc: MLP layers
-  value: 2
+  value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 500
+  value: 100
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.6
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.01
 
 # Cross Validation
 liu_fold:
@@ -84,7 +93,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 flare_label:
   desc: Types of flare class
   value: M5
@@ -119,7 +128,7 @@ parse_args:
 # Dataset
 dataset:
   desc: which dataset to use (Liu/Liu_train/Liu_z/Liu_transformed/Krynauw)
-  value: Liu
+  value: Liu_z
 
 # Interpretation
 interpret:

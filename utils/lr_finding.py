@@ -80,14 +80,25 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
     plt.show()
 
 
-    # maxlr, halwaylr
-    valy_loss = lr_finder.history['loss']
-    valx = lr_finder.history['lr']
-    max_lr = valx[np.argmin(valy_loss)]
-    before_min_loss = valy_loss[0:np.argmin(valy_loss)]
-    min_lr = valx[np.argmax(before_min_loss)]
-    halfway_lr = 0.6*(np.log(min_lr)-np.log(max_lr))
-    halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
+    # maxlr, halwaylr on loss
+    if cfg.lr_metric == 'Loss':
+        print('Loss')
+        valy_loss = lr_finder.history['loss']
+        valx = lr_finder.history['lr']
+        max_lr = valx[np.argmin(valy_loss)]
+        before_min_loss = valy_loss[0:np.argmin(valy_loss)]
+        min_lr = valx[np.argmax(before_min_loss)]
+        halfway_lr = 0.5*(np.log(min_lr)-np.log(max_lr))
+        halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
+    elif cfg.lr_metric == 'TSS':
+        print("TSS")
+        valy_TSS = lr_finder.history['TSS']
+        valx = lr_finder.history['lr']
+        max_lr = valx[np.argmax(valy_TSS)]
+        before_max_TSS = valy_TSS[0:np.argmax(valy_TSS)]
+        min_lr = valx[np.argmin(before_max_TSS)]
+        halfway_lr = 0.5 * (np.log(min_lr) - np.log(max_lr))
+        halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
 
     return min_lr, halfway_lr, max_lr
 

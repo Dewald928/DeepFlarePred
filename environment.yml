@@ -9,7 +9,6 @@ dependencies:
   - matplotlib==3.2.0=1
   - pandas==0.25.1=py37hb3f55d8_0
   - torchvision==0.5.0
-  - skorch==0.8.0=pyh5ca1d4c_0
   - h5py==2.10.0=nompi_py37h513d04c_100
   - xlrd==1.2.0=py_0
   - plotly==4.2.0=py_0
@@ -18,7 +17,7 @@ dependencies:
   - cudatoolkit=10.1
   - captum==0.2.0=0
   - tensorboard==1.15.0=py37_0
-  - seaborn==0.10.0=py_1
+  - seaborn==0.10.1
   - jupyter_console==6.0.0=py_0
   - libpng==1.6.37=hed695b0_0
   - sortedcontainers==2.1.0=py_0
@@ -38,7 +37,7 @@ dependencies:
   - send2trash==1.5.0=py_0
   - pandoc==2.9.1=0
   - pygments==2.5.2=py_0
-  - pip==19.3.1=py37_0
+  - pip
   - lxml==4.4.2=py37h7ec2d77_0
   - parfive
   - libopenblas==0.3.7=h5ec1e0e_6
@@ -208,5 +207,9 @@ dependencies:
   - yaml==0.2.5=h516909a_0
   - argh==0.26.2=pyh9f0ad1d_1002
   - docker-pycreds==0.4.0=py_0
+  - wandb
+  - pingouin
+  - graphql-core==2.0
+  - git
 prefix: /home/fuzzy/local/miniconda3/envs/DeepFlarePred
 

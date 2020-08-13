@@ -24,6 +24,7 @@ from sklearn.metrics import make_scorer, balanced_accuracy_score
 from sklearn.model_selection import GridSearchCV, cross_val_score, \
     StratifiedKFold, KFold
 from sklearn.utils import class_weight
+import skorch
 from skorch import NeuralNetClassifier
 from skorch.callbacks import *
 from skorch.dataset import Dataset
@@ -579,12 +580,13 @@ if __name__ == '__main__':
                                                             train_loader,
                                                             valid_loader, cfg)
             wandb.config.update(
-                {"learning_rate": halfway_lr, " max_lr": max_lr},
+                {"min_lr":min_lr,"learning_rate": halfway_lr, " max_lr":
+                    max_lr},
                 allow_val_change=True)
 
         if cfg.lr_scheduler:
             # scheduler = lr_scheduler.CyclicLR(optimizer,
-            #                                   base_lr=cfg.learning_rate,
+            #                                   base_lr=cfg.min_lr,
             #                                   max_lr=cfg.max_lr,
             #                                   step_size_up=int(4 * (len(
             #                                       X_train_data) / cfg.batch_size)))
@@ -602,13 +604,12 @@ if __name__ == '__main__':
                                                             criterion, device,
                                                             train_loader,
                                                             valid_loader, cfg)
-            wandb.config.update(
-                {"learning_rate": halfway_lr, " max_lr": max_lr},
-                allow_val_change=True)
+            wandb.config.update({"min_lr": min_lr, "learning_rate": halfway_lr,
+                                 " max_lr": max_lr}, allow_val_change=True)
 
         if cfg.lr_scheduler:
             # scheduler = lr_scheduler.CyclicLR(optimizer,
-            #                                   base_lr=cfg.learning_rate,
+            #                                   base_lr=cfg.min_lr,
             #                                   max_lr=cfg.max_lr,
             #                                   step_size_up=int(4 * (len(
             #                                       X_train_data) / cfg.batch_size)),
@@ -778,7 +779,8 @@ if __name__ == '__main__':
                                       steps_per_epoch=len(train_loader),
                                       epochs=cfg.epochs,
                                       cycle_momentum=True if
-                                      cfg.optim == 'SGD' else False)
+                                      cfg.optim == 'SGD' else False,
+                                      step_every='batch')
         else:
             lrscheduler = None
 
