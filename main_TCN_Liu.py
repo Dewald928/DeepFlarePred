@@ -580,7 +580,7 @@ if __name__ == '__main__':
                                                             train_loader,
                                                             valid_loader, cfg)
             wandb.config.update(
-                {"min_lr":min_lr,"learning_rate": halfway_lr, " max_lr":
+                {"min_lr": min_lr, "learning_rate": halfway_lr, "max_lr":
                     max_lr},
                 allow_val_change=True)
 
@@ -605,7 +605,7 @@ if __name__ == '__main__':
                                                             train_loader,
                                                             valid_loader, cfg)
             wandb.config.update({"min_lr": min_lr, "learning_rate": halfway_lr,
-                                 " max_lr": max_lr}, allow_val_change=True)
+                                 "max_lr": max_lr}, allow_val_change=True)
 
         if cfg.lr_scheduler:
             # scheduler = lr_scheduler.CyclicLR(optimizer,

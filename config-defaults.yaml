@@ -25,19 +25,19 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.004
+  value: 0.000001
 lr_scheduler:
   desc: if scheduler is on
   value: True
 lr_finder:
   desc: is lr finder should run
-  value: False
+  value: True
 log_lr:
   desc: log lr finder to wandb
   value: False
 min_lr:
   desc: minimum lr for CLR
-  value: 0.004
+  value: 0.00001
 max_lr:
   desc: cyclic lr max value
   value: 2
@@ -71,10 +71,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.6
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.01
+  value: 0.0
 
 # Cross Validation
 liu_fold:

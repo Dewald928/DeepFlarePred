@@ -99,6 +99,8 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
         min_lr = valx[np.argmin(before_max_TSS)]
         halfway_lr = 0.5 * (np.log(min_lr) - np.log(max_lr))
         halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
+    else:
+        print('Woopsie')
 
     return min_lr, halfway_lr, max_lr
 
