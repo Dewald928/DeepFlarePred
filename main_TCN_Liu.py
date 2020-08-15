@@ -953,19 +953,21 @@ if __name__ == '__main__':
         Attribution methods
         '''
         df = pd.read_csv(filepath + 'normalized_testing.csv')
-        case = df[df['NOAA'] == 12673].to_csv(filepath + '/Case_Study/AR12673.csv', index=False)
-        cas2 = df[df['NOAA'] == 12252].to_csv(filepath + '/Case_Study/AR12252.csv', index=False)
+        if not os.path.exists(filepath + 'Case_Study/'):
+            os.makedirs(filepath + 'Case_Study/')
+        case = df[df['NOAA'] == 12673].to_csv(filepath + 'Case_Study/AR12673.csv', index=False)
+        cas2 = df[df['NOAA'] == 12252].to_csv(filepath + 'Case_Study/AR12252.csv', index=False)
 
         # get samples to interpret
         input_df, _ = data_loader.load_data(
-            datafile=filepath+'/Case_Study/AR12673.csv',
+            datafile=filepath+'Case_Study/AR12673.csv',
             flare_label=cfg.flare_label, series_len=cfg.seq_len,
             start_feature=start_feature, n_features=cfg.n_features,
             mask_value=mask_value, feature_list=feature_list)
 
         # todo pass median or weighted k-medians values as background?
         backgroud_df, _ = data_loader.load_data(
-            datafile=filepath+'/Case_Study/AR12252.csv',
+            datafile=filepath+'Case_Study/AR12252.csv',
             flare_label=cfg.flare_label, series_len=cfg.seq_len,
             start_feature=start_feature, n_features=cfg.n_features,
             mask_value=mask_value, feature_list=feature_list)
