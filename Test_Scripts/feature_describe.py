@@ -23,6 +23,15 @@ import pingouin as pg
 from sklearn.preprocessing import LabelBinarizer, power_transform, \
     PowerTransformer
 
+sharps = ['USFLUX', 'MEANGBT', 'MEANJZH', 'MEANPOT', 'SHRGT45', 'TOTUSJH',
+          'MEANGBH', 'MEANALP', 'MEANGAM', 'MEANGBZ', 'MEANJZD', 'TOTUSJZ',
+          'SAVNCPP', 'TOTPOT', 'MEANSHR', 'AREA_ACR', 'R_VALUE',
+          'ABSNJZH']  # 18
+lorentz = ['TOTBSQ', 'TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY', 'EPSZ']  # 7
+history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec', 'Bhis',
+                    'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d', 'Mhis1d',
+                    'Xhis1d', 'Xmax1d']  # 15
+
 n_features = 40
 start_feature = 5
 mask_value = 0
@@ -37,13 +46,16 @@ for dataset in datasets:
     df_train = pd.read_csv(filepath + 'normalized_training.csv')
     df_val = pd.read_csv(filepath + 'normalized_validation.csv')
     df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-    df = df_train.iloc[:, 5:]
+    df = df_train.loc[:, sharps + lorentz + history_features]
+
     dataset = 'Liu' if dataset == 'Liu/M5' else dataset
     describe_datasets[dataset] = df
 
     boxplot = df.boxplot(showfliers=False, vert=True, figsize=(10, 5),
                          showmeans=True, widths=0.6, meanline=True, rot=90,
                          meanprops={'color': 'r'})
+    plt.axvline(x=26 - 0.5, ymin=0, ymax=1, color='m')
+
     # plt.ylim(-4,4)
     plt.title(f"Boxplot of all features. Train set. ({dataset})")
     plt.tight_layout()
@@ -58,6 +70,8 @@ boxplot = diff_Liu_Liu_train.boxplot(showfliers=False, vert=True,
                                      figsize=(10, 5), showmeans=True,
                                      widths=0.6, meanline=True, rot=90,
                                      meanprops={'color': 'r'})
+plt.axvline(x=26-0.5, ymin=0, ymax=1, color='m')
+
 # plt.ylim(-4,4)
 plt.title(f"Boxplot of absolute difference between (Liu) and (Liu_train)")
 plt.tight_layout()
@@ -71,6 +85,13 @@ boxplot = diff_Liu_train_Liu_z.boxplot(showfliers=False, vert=True,
                                        figsize=(10, 5), showmeans=True,
                                        widths=0.6, meanline=True, rot=90,
                                        meanprops={'color': 'r'})
+plt.axvline(x=26-0.5, ymin=0, ymax=1, color='m')
+
+# desc_df = diff_Liu_Liu_train.describe().T
+# desc_df = desc_df.loc[:, ['mean', 'std', '50%']]
+# desc_df.columns = ['mean', 'std', 'median']
+# print(tabulate(desc_df, tablefmt='github',
+#                headers='keys', floatfmt=".3f"))
 # plt.ylim(-4,4)
 plt.title(f"Boxplot of absolute difference between (Liu_train) and ("
           f"Liu_z)")
@@ -85,7 +106,13 @@ boxplot = diff_Liu_Liu_z.boxplot(showfliers=False, vert=True,
                                        figsize=(10, 5), showmeans=True,
                                        widths=0.6, meanline=True, rot=90,
                                        meanprops={'color': 'r'})
+# desc_df = diff_Liu_Liu_z.describe().T
+# desc_df = desc_df.loc[:, ['mean', 'std', '50%']]
+# desc_df.columns = ['mean', 'std', 'median']
+# print(tabulate(desc_df, tablefmt='github',
+#                headers='keys', floatfmt=".3f"))
 # plt.ylim(-4,4)
+plt.axvline(x=26-0.5, ymin=0, ymax=1, color='m')
 plt.title(f"Boxplot of absolute difference between (Liu) and ("
           f"Liu_z)")
 plt.tight_layout()
