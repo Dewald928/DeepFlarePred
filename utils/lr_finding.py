@@ -17,16 +17,14 @@ def get_prev_max(arr):
         current = arr[-i]
         i += 1
         if current < previous:
-            c += 1
-        # else:
-        #     c = 0
-    return i-1
+            c += 1  # else:  #     c = 0
+    return i - 1
 
 
 def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
             cfg):
     num_iter = 100
-    fig, axes = plt.subplots(2,2, figsize=(10,6), sharex=True)
+    fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
     fig.set_tight_layout(True)
     lr_finder = LRFinder(model, optimizer, criterion, device=device,
                          metric_name='TSS')
@@ -37,11 +35,12 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
     trainy_loss = lr_finder.history['loss']
 
     # plot
-    lr_finder.plot(ax=axes[0][0], skip_start=0, skip_end=0,
-                   metric_name="TSS", show_lr=trainx[np.argmax(trainy_TSS)])
-    lr_finder.plot(ax=axes[1][0], skip_start=0, skip_end=0,
-                   metric_name="loss", show_lr=trainx[np.argmin(trainy_loss)])
-    lr_finder.reset()  # to reset the model and optimizer to their initial state
+    lr_finder.plot(ax=axes[0][0], skip_start=0, skip_end=0, metric_name="TSS",
+                   show_lr=trainx[np.argmax(trainy_TSS)])
+    lr_finder.plot(ax=axes[1][0], skip_start=0, skip_end=0, metric_name="loss",
+                   show_lr=trainx[np.argmin(trainy_loss)])
+    lr_finder.reset()  # to reset the model and optimizer to their initial
+    # state
 
     # halfway down slope for static
     # min max for cyclic
@@ -57,11 +56,12 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
     valy_TSS = lr_finder.history['TSS']
     valy_loss = lr_finder.history['loss']
 
-    lr_finder.plot(ax=axes[0][1], skip_end=0, skip_start=0,
-                   metric_name="TSS", show_lr=valx[np.argmax(valy_TSS)])
-    lr_finder.plot(ax=axes[1][1], skip_end=0, skip_start=0,
-                   metric_name="loss", show_lr=valx[np.argmin(valy_loss)])
-    # lr_finder.plot(ax=axes[1][1], skip_end=0, skip_start=0, show_lr=valx[np.argmin(valy_loss)])
+    lr_finder.plot(ax=axes[0][1], skip_end=0, skip_start=0, metric_name="TSS",
+                   show_lr=valx[np.argmax(valy_TSS)])
+    lr_finder.plot(ax=axes[1][1], skip_end=0, skip_start=0, metric_name="loss",
+                   show_lr=valx[np.argmin(valy_loss)])
+    # lr_finder.plot(ax=axes[1][1], skip_end=0, skip_start=0, show_lr=valx[
+    # np.argmin(valy_loss)])
     lr_finder.reset()
 
     trainx = np.pad(trainx, (0, num_iter - len(trainx)), 'constant',
@@ -84,18 +84,18 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
     axes[0][1].set_title('Validation')
     axes[1][1].set_title('Validation')
     for ax in axes.flat:
-        ax.set_ylim([0,1])
+        ax.set_ylim([0, 1])
 
     if cfg.log_lr:
         for i in range(num_iter - 1):
-            wandb.log(
-                {'train_lr_TSS': trainy_TSS[i], 'train_lr_loss': trainy_loss[i],
-                 'train_lr_step': trainx[i], 'valid_lr_TSS': valy_TSS[i],
-                 'valid_lr_loss': valy_loss[i], 'valid_lr_step': valx[i]}, step=i)
+            wandb.log({'train_lr_TSS': trainy_TSS[i],
+                       'train_lr_loss': trainy_loss[i],
+                       'train_lr_step': trainx[i], 'valid_lr_TSS': valy_TSS[i],
+                       'valid_lr_loss': valy_loss[i],
+                       'valid_lr_step': valx[i]}, step=i)
 
     wandb.log({'LR_Finder_img': wandb.Image(fig)})
     plt.show()
-
 
     # maxlr, halwaylr on loss
     if cfg.lr_metric == 'Loss':
@@ -108,13 +108,14 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
         # get turning point index
         sign = np.sign(valy_loss_g)
         turning_points = np.diff(sign, axis=0)
-        tp_idx = np.argwhere(np.abs(turning_points)==2).reshape(-1)
+        tp_idx = np.argwhere(np.abs(turning_points) == 2).reshape(-1)
         # last and before last turning point cut out
-        before_min_loss = np.array(valy_loss[tp_idx[-2]:tp_idx[-1]])
-        before_min_lr = np.array(valx[tp_idx[-2]:tp_idx[-1]])
+        start_idx = tp_idx[-2] if len(tp_idx) > 1 else 0
+        before_min_loss = np.array(valy_loss[start_idx:tp_idx[-1]])
+        before_min_lr = np.array(valx[start_idx:tp_idx[-1]])
         min_lr = before_min_lr[np.argmax(before_min_loss)]
         # min_lr = before_min_lr[-get_prev_max(before_min_loss)]
-        halfway_lr = 0.5*(np.log(min_lr)-np.log(max_lr))
+        halfway_lr = 0.5 * (np.log(min_lr) - np.log(max_lr))
         halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
     elif cfg.lr_metric == 'TSS':
         print("TSS")
@@ -136,8 +137,3 @@ def closest_arg(array, value):
     smallest_difference_index = absolute_val_array.argmin()
     closest_element = array[smallest_difference_index]
     return smallest_difference_index
-
-
-
-
-
