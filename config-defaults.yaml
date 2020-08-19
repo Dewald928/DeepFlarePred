@@ -8,7 +8,7 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 50
 batch_size:
   desc: Size of each mini-batch
   value: 8192
@@ -25,22 +25,22 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.000001
+  value: 0.00001
 lr_scheduler:
   desc: if scheduler is on
   value: True
 lr_finder:
   desc: is lr finder should run
-  value: False
+  value: True
 log_lr:
   desc: log lr finder to wandb
   value: False
 min_lr:
   desc: minimum lr for CLR
-  value: 0.000001
+  value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 2
+  value: 0.2
 lr_metric:
   desc: Loss or TSS (loss is better)
   value: Loss
@@ -71,10 +71,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.4
+  value: 0.8
 weight_decay:
   desc: L2 regularizing
-  value: 0.001
+  value: 0.01
 
 # Cross Validation
 liu_fold:

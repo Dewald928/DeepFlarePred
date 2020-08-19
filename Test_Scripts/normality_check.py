@@ -19,8 +19,31 @@ from scipy.stats import norm
 from scipy.stats import mannwhitneyu
 from scipy.stats import kruskal
 from scipy.stats import boxcox
+from scipy.stats import stats
 import pingouin as pg
 from sklearn.preprocessing import LabelBinarizer, power_transform, PowerTransformer
+
+# dagistino test
+
+x = np.random.normal(-1, 1, size=20)
+sns.distplot(x, fit=norm)
+plt.show()
+k2, p = stats.normaltest(x)
+print(k2,p)
+alpha = 1e-3
+if p < alpha:  # null hypothesis: x comes from a normal distribution
+    print("The null hypothesis can be rejected")
+else:
+    print("The null hypothesis cannot be rejected")
+
+sharps = ['USFLUX', 'SAVNCPP', 'TOTPOT', 'ABSNJZH', 'SHRGT45', 'AREA_ACR',
+          'R_VALUE', 'TOTUSJH', 'TOTUSJZ', 'MEANJZH', 'MEANJZD', 'MEANPOT',
+          'MEANSHR', 'MEANALP', 'MEANGAM', 'MEANGBZ', 'MEANGBT',
+          'MEANGBH', ]  # 18
+lorentz = ['TOTBSQ', 'TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY', 'EPSZ']  # 7
+history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec', 'Bhis',
+                    'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d', 'Mhis1d',
+                    'Xhis1d', 'Xmax1d']  # 15
 
 n_features = 40
 start_feature = 5
@@ -30,7 +53,7 @@ drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
 # drop_path = os.path.expanduser(
 #     '~/projects/DeepFlarePred/saved/feature_boxplots/')
 # filepath = './Data/Krynauw/'
-filepath = './Data/Liu_z/'
+filepath = '../Data/Liu_z/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
@@ -39,6 +62,11 @@ df_test = pd.read_csv(filepath + 'normalized_testing.csv')
 # df_val = pd.read_csv(filepath + 'validation.csv')
 # df_test = pd.read_csv(filepath + 'testing.csv')
 df = df_train
+# m5_flares = df[df['label'].str.match('Positive')]
+# m5_flared_NOAA = m5_flares['NOAA'].unique()
+# m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
+# df = m5_flares_data
+
 
 onehot = LabelBinarizer()
 onehot.fit(df['label'])
@@ -46,6 +74,7 @@ transformed = onehot.transform(df['label'])
 labels = pd.DataFrame(transformed, columns=['labels'])
 # df = pd.concat([labels, df], axis=1)
 df = df.drop(['label','flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
+df = df.loc[:, sharps+lorentz+history_features]
 
 # QQ plot
 x = df['MEANGBH']
@@ -69,11 +98,8 @@ print(pg.homoscedasticity(df))
 
 # 1. Do univariate normality check
 #  D’Agostino and Pearson’s
-print('Feature, W, p-value, Normal')
-for i in range(n_features):
-    stat = pg.normality(df.iloc[:, i], method='normaltest')
-    print(f"{stat.index[0]}, {stat['W'][0]:.1f}, {stat['pval'][0]:.2f}, "
-          f" {stat['normal'][0]}")
+stat = pg.normality(df, method='normaltest', alpha=1e-27)
+print(tabulate(stat, tablefmt='github', floatfmt='.0e', headers='keys'))
 
 
 # 3. Do transform data with box-cox
@@ -101,11 +127,8 @@ ax1 = pg.qqplot(x, dist='norm', ax=ax1)
 plt.show()
 
 #  D’Agostino and Pearson’s
-print('Feature, W, p-value, Normal')
-for i in range(n_features):
-    stat = pg.normality(df_trans.iloc[:, i], method='normaltest')
-    print(f"{stat.index[0]}, {stat['W'][0]:.1f}, {stat['pval'][0]:.2f}, "
-          f" {stat['normal'][0]}")
+stat = pg.normality(df_trans, method='normaltest', alpha=2e-37)
+print(tabulate(stat, tablefmt='github', floatfmt='.0e', headers='keys'))
 
 
 # 4. Kruskal-Wallis non-parametric ANOVA
