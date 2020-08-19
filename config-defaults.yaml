@@ -11,7 +11,7 @@ epochs:
   value: 50
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 32768
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -28,7 +28,7 @@ learning_rate:
   value: 0.00001
 lr_scheduler:
   desc: if scheduler is on
-  value: True
+  value: False
 lr_finder:
   desc: is lr finder should run
   value: True
@@ -71,10 +71,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.8
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.01
+  value: 0.0
 
 # Cross Validation
 liu_fold:
@@ -99,7 +99,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 20
+  value: 49
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -133,5 +133,5 @@ dataset:
 # Interpretation
 interpret:
   desc: activate captum/SHAP attribution methods
-  value: True
+  value: False
 

@@ -6,6 +6,23 @@ import wandb
 import numpy as np
 
 
+def get_prev_max(arr):
+    ''' gets array from previous maximum loss before final minimum'''
+    current = 0
+    previous = arr[-1]
+    i = 2
+    c = 0
+    while (c <= 1) and (i < len(arr)):
+        previous = current
+        current = arr[-i]
+        i += 1
+        if current < previous:
+            c += 1
+        # else:
+        #     c = 0
+    return i-1
+
+
 def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
             cfg):
     num_iter = 100
@@ -86,8 +103,10 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
         valy_loss = lr_finder.history['loss']
         valx = lr_finder.history['lr']
         max_lr = valx[np.argmin(valy_loss)]
-        before_min_loss = valy_loss[0:np.argmin(valy_loss)]
-        min_lr = valx[np.argmax(before_min_loss)]
+        before_min_loss = np.array(valy_loss[0:np.argmin(valy_loss)])
+        before_min_lr = np.array(valx[0:np.argmin(valy_loss)])
+        # min_lr = valx[np.argmax(before_min_loss)]
+        min_lr = before_min_lr[-get_prev_max(before_min_loss)]
         halfway_lr = 0.5*(np.log(min_lr)-np.log(max_lr))
         halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
     elif cfg.lr_metric == 'TSS':
