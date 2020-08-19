@@ -11,7 +11,7 @@ epochs:
   value: 50
 batch_size:
   desc: Size of each mini-batch
-  value: 32768
+  value: 16384
 momentum:
   desc: momentum for SGD
   value: 0.9

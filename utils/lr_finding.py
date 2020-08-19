@@ -100,13 +100,20 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
     # maxlr, halwaylr on loss
     if cfg.lr_metric == 'Loss':
         print('Loss')
-        valy_loss = lr_finder.history['loss']
-        valx = lr_finder.history['lr']
+        valy_loss = np.array(lr_finder.history['loss'])
+        valx = np.array(lr_finder.history['lr'])
         max_lr = valx[np.argmin(valy_loss)]
-        before_min_loss = np.array(valy_loss[0:np.argmin(valy_loss)])
-        before_min_lr = np.array(valx[0:np.argmin(valy_loss)])
-        # min_lr = valx[np.argmax(before_min_loss)]
-        min_lr = before_min_lr[-get_prev_max(before_min_loss)]
+        # calculate gradient of loss
+        valy_loss_g = np.gradient(valy_loss)
+        # get turning point index
+        sign = np.sign(valy_loss_g)
+        turning_points = np.diff(sign, axis=0)
+        tp_idx = np.argwhere(np.abs(turning_points)==2).reshape(-1)
+        # last and before last turning point cut out
+        before_min_loss = np.array(valy_loss[tp_idx[-2]:tp_idx[-1]])
+        before_min_lr = np.array(valx[tp_idx[-2]:tp_idx[-1]])
+        min_lr = before_min_lr[np.argmax(before_min_loss)]
+        # min_lr = before_min_lr[-get_prev_max(before_min_loss)]
         halfway_lr = 0.5*(np.log(min_lr)-np.log(max_lr))
         halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
     elif cfg.lr_metric == 'TSS':
@@ -122,6 +129,13 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
         print('Woopsie')
 
     return min_lr, halfway_lr, max_lr
+
+
+def closest_arg(array, value):
+    absolute_val_array = np.abs(array - value)
+    smallest_difference_index = absolute_val_array.argmin()
+    closest_element = array[smallest_difference_index]
+    return smallest_difference_index
 
 
 
