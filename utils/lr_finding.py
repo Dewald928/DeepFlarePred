@@ -104,16 +104,17 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
         valx = np.array(lr_finder.history['lr'])
         max_lr = valx[np.argmin(valy_loss)]
         # calculate gradient of loss
-        valy_loss_g = np.gradient(valy_loss)
-        # get turning point index
-        sign = np.sign(valy_loss_g)
-        turning_points = np.diff(sign, axis=0)
-        tp_idx = np.argwhere(np.abs(turning_points) == 2).reshape(-1)
-        # last and before last turning point cut out
-        start_idx = tp_idx[-2] if len(tp_idx) > 1 else 0
-        before_min_loss = np.array(valy_loss[start_idx:tp_idx[-1]])
-        before_min_lr = np.array(valx[start_idx:tp_idx[-1]])
-        min_lr = before_min_lr[np.argmax(before_min_loss)]
+        # valy_loss_g = np.gradient(valy_loss)
+        # # get turning point index
+        # sign = np.sign(valy_loss_g)
+        # turning_points = np.diff(sign, axis=0)
+        # tp_idx = np.argwhere(np.abs(turning_points) == 2).reshape(-1)
+        # # last and before last turning point cut out
+        # start_idx = tp_idx[-2] if len(tp_idx) > 1 else 0
+        # before_min_loss = np.array(valy_loss[start_idx:tp_idx[-1]])
+        # before_min_lr = np.array(valx[start_idx:tp_idx[-1]])
+        # min_lr = before_min_lr[np.argmax(before_min_loss)]
+        min_lr = max_lr/10
         # min_lr = before_min_lr[-get_prev_max(before_min_loss)]
         halfway_lr = 0.5 * (np.log(min_lr) - np.log(max_lr))
         halfway_lr = np.exp(np.log(max_lr) + halfway_lr)
