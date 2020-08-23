@@ -24,6 +24,8 @@ from sklearn.metrics import make_scorer, balanced_accuracy_score
 from sklearn.model_selection import GridSearchCV, cross_val_score, \
     StratifiedKFold, KFold
 from sklearn.utils import class_weight
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
 import skorch
 from skorch import NeuralNetClassifier
 from skorch.callbacks import *
@@ -397,6 +399,10 @@ if __name__ == '__main__':
         filepath = './Data/Krynauw/'
     elif cfg.dataset == 'Liu_transformed':
         filepath = './Data/Liu_transformed/'
+    elif cfg.dataset == 'Synth':
+        filepath = './Data/Synth/'
+    elif cfg.dataset == 'Sampled':
+        filepath = './Data/Sampled/'
 
     # n_features = 0
     if cfg.flare_label == 'M5':
@@ -453,41 +459,62 @@ if __name__ == '__main__':
     # cfg.n_features to match length
 
     # setup dataloaders
-    X_train_data, y_train_data = data_loader.load_data(
-        datafile=filepath + 'normalized_training.csv',
-        flare_label=cfg.flare_label, series_len=cfg.seq_len,
-        start_feature=start_feature, n_features=cfg.n_features,
-        mask_value=mask_value, feature_list=feature_list)
-    X_train_fold, y_train_fold = data_loader.partition_10_folds(X_train_data,
-                                                                y_train_data,
-                                                                num_of_fold)
+    if cfg.dataset != 'Synth':
+        X_train_data, y_train_data = data_loader.load_data(
+            datafile=filepath + 'normalized_training.csv',
+            flare_label=cfg.flare_label, series_len=cfg.seq_len,
+            start_feature=start_feature, n_features=cfg.n_features,
+            mask_value=mask_value, feature_list=feature_list)
+        X_train_fold, y_train_fold = data_loader.partition_10_folds(X_train_data,
+                                                                    y_train_data,
+                                                                    num_of_fold)
 
-    X_valid_data, y_valid_data = data_loader.load_data(
-        datafile=filepath + 'normalized_validation.csv',
-        flare_label=cfg.flare_label, series_len=cfg.seq_len,
-        start_feature=start_feature, n_features=cfg.n_features,
-        mask_value=mask_value, feature_list=feature_list)
-    X_valid_fold, y_valid_fold = data_loader.partition_10_folds(X_valid_data,
-                                                                y_valid_data,
-                                                                num_of_fold)
+        X_valid_data, y_valid_data = data_loader.load_data(
+            datafile=filepath + 'normalized_validation.csv',
+            flare_label=cfg.flare_label, series_len=cfg.seq_len,
+            start_feature=start_feature, n_features=cfg.n_features,
+            mask_value=mask_value, feature_list=feature_list)
+        X_valid_fold, y_valid_fold = data_loader.partition_10_folds(X_valid_data,
+                                                                    y_valid_data,
+                                                                    num_of_fold)
 
-    X_test_data, y_test_data = data_loader.load_data(
-        datafile=filepath + 'normalized_testing.csv',
-        flare_label=cfg.flare_label, series_len=cfg.seq_len,
-        start_feature=start_feature, n_features=cfg.n_features,
-        mask_value=mask_value, feature_list=feature_list)
-    X_test_fold, y_test_fold = data_loader.partition_10_folds(X_test_data,
-                                                              y_test_data,
-                                                              num_of_fold)
+        X_test_data, y_test_data = data_loader.load_data(
+            datafile=filepath + 'normalized_testing.csv',
+            flare_label=cfg.flare_label, series_len=cfg.seq_len,
+            start_feature=start_feature, n_features=cfg.n_features,
+            mask_value=mask_value, feature_list=feature_list)
+        X_test_fold, y_test_fold = data_loader.partition_10_folds(X_test_data,
+                                                                  y_test_data,
+                                                                  num_of_fold)
 
-    if cfg.liu_fold:
-        crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
-                                      X_valid_fold, y_valid_fold, X_test_fold,
-                                      y_test_fold, cfg, nclass, device)
+        if cfg.liu_fold:
+            crossval_fold.cross_val_train(num_of_fold, X_train_fold, y_train_fold,
+                                          X_valid_fold, y_valid_fold, X_test_fold,
+                                          y_test_fold, cfg, nclass, device)
 
-    y_train_tr = data_loader.label_transform(y_train_data)
-    y_valid_tr = data_loader.label_transform(y_valid_data)
-    y_test_tr = data_loader.label_transform(y_test_data)
+        y_train_tr = data_loader.label_transform(y_train_data)
+        y_valid_tr = data_loader.label_transform(y_valid_data)
+        y_test_tr = data_loader.label_transform(y_test_data)
+    else:
+        print('Synth dataset')
+        X, y = make_classification(n_samples=10000, n_features=cfg.n_features,
+                                   n_redundant=0, n_informative=1,
+                                   n_clusters_per_class=1,
+                                   weights=[0.01, 0.99], class_sep=1,
+                                   random_state=cfg.seed)
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                            test_size=0.33,
+                                                            random_state=cfg.seed)
+        X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train,
+                                                              test_size=0.33,
+                                                              random_state=cfg.seed)
+        X_train_data = X_train.astype(np.float32)
+        X_valid_data = X_valid.astype(np.float32)
+        X_test_data = X_test.astype(np.float32)
+        y_train_tr = y_train.astype(np.int64)
+        y_valid_tr = y_valid.astype(np.int64)
+        y_test_tr = y_test.astype(np.int64)
 
     if cfg.model_type == 'MLP':
         X_train_data = np.reshape(X_train_data,
@@ -563,8 +590,8 @@ if __name__ == '__main__':
 
     # optimizers
     class_weights = class_weight.compute_class_weight('balanced',
-                                                      np.unique(y_train_data),
-                                                      y_train_data)
+                                                      np.unique(y_train_tr),
+                                                      y_train_tr)
 
     # noinspection PyArgumentList
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(
@@ -772,7 +799,8 @@ if __name__ == '__main__':
             #                                   len(X_train_data) /
             #                                   cfg.batch_size)),
             #                           cycle_momentum=True if
-            #                           cfg.optim == 'SGD' else False)
+            #                           cfg.optim == 'SGD' else False,
+            #                           step_every='batch')
             lrscheduler = LRScheduler(policy=lr_scheduler.OneCycleLR,
                                       monitor='valid_tss',
                                       max_lr=cfg.max_lr,
@@ -780,7 +808,10 @@ if __name__ == '__main__':
                                       epochs=cfg.epochs,
                                       cycle_momentum=True if
                                       cfg.optim == 'SGD' else False,
-                                      step_every='batch')
+                                      step_every='batch',
+                                      # div_factor=10,
+                                      # total_steps=5000
+                                      )
         else:
             lrscheduler = None
 

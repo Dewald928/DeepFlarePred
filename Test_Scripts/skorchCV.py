@@ -25,8 +25,8 @@ torch.manual_seed(0)
 
 # Data prepare
 X, y = make_classification(n_samples=10000, n_features=2, n_redundant=0,
-                           n_informative=1, n_clusters_per_class=1,
-                           weights=[0.1, 0.9], class_sep=1)
+                           n_informative=2, n_clusters_per_class=1,
+                           weights=[0.01, 0.99], class_sep=1)
 X = X.astype(np.float32)
 ds = Dataset(X, y)
 y = np.array([y for _, y in iter(ds)])
@@ -69,22 +69,22 @@ net = NeuralNetClassifier(model, lr=2,
 # wandb.watch(model)
 
 # Cross Validation
-scores = cross_validate(net, X, y, scoring=make_scorer(balanced_accuracy_score,
-                                                       **{'adjusted': True}),
-                        cv=5, return_train_score=True, return_estimator=True)
-params = {}
-gs = GridSearchCV(net, params, refit=True, cv=3,
-                  scoring=make_scorer(balanced_accuracy_score,
-                                      **{'adjusted': True}),
-                  return_train_score=True, n_jobs=-1)
-
-gs.fit(X, y)
-print(gs.best_score_, gs.best_params_)
-
-print(scores)
-print("TSS: %0.2f (+/- %0.2f)" % (
-    scores['test_score'].mean(), scores['test_score'].std() / math.sqrt(len(
-        scores['test_score']))))
+# scores = cross_validate(net, X, y, scoring=make_scorer(balanced_accuracy_score,
+#                                                        **{'adjusted': True}),
+#                         cv=5, return_train_score=True, return_estimator=True)
+# params = {}
+# gs = GridSearchCV(net, params, refit=True, cv=3,
+#                   scoring=make_scorer(balanced_accuracy_score,
+#                                       **{'adjusted': True}),
+#                   return_train_score=True, n_jobs=-1)
+#
+# gs.fit(X, y)
+# print(gs.best_score_, gs.best_params_)
+#
+# print(scores)
+# print("TSS: %0.2f (+/- %0.2f)" % (
+#     scores['test_score'].mean(), scores['test_score'].std() / math.sqrt(len(
+#         scores['test_score']))))
 
 
 # net.initialize()  # This is important!
