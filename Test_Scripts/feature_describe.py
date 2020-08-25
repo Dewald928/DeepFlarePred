@@ -38,17 +38,16 @@ mask_value = 0
 feature_list = None
 drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/feature_boxplots/')
 
-datasets = ['Liu_z', 'Liu/M5', 'Liu_train', 'Liu_transformed']
-describe_datasets = {'Liu_z': [], 'Liu/M5': [], 'Liu_train': [], \
-                     'Liu_transformed': []}
+datasets = ['z_minmax_all', 'z_minmax_train', 'z_train', 'z_p_transformed']
+describe_datasets = {'z_minmax_all': [], 'z_minmax_train': [], 'z_train': [], \
+                     'z_p_transformed': []}
 for dataset in datasets:
-    filepath = f"../Data/{dataset}/"
+    filepath = f"../Data/Liu/{dataset}/"
     df_train = pd.read_csv(filepath + 'normalized_training.csv')
     df_val = pd.read_csv(filepath + 'normalized_validation.csv')
     df_test = pd.read_csv(filepath + 'normalized_testing.csv')
     df = df_train.loc[:, sharps + lorentz + history_features]
 
-    dataset = 'Liu' if dataset == 'Liu/M5' else dataset
     describe_datasets[dataset] = df
 
     boxplot = df.boxplot(showfliers=False, vert=True, figsize=(10, 5),
@@ -64,7 +63,7 @@ for dataset in datasets:
 
 # quantify absolute difference between datasets
 diff_Liu_Liu_train = np.abs(
-    describe_datasets['Liu'] - describe_datasets['Liu_train'])
+    describe_datasets['z_minmax_all'] - describe_datasets['z_minmax_train'])
 
 boxplot = diff_Liu_Liu_train.boxplot(showfliers=False, vert=True,
                                      figsize=(10, 5), showmeans=True,
@@ -73,13 +72,13 @@ boxplot = diff_Liu_Liu_train.boxplot(showfliers=False, vert=True,
 plt.axvline(x=26-0.5, ymin=0, ymax=1, color='m')
 
 # plt.ylim(-4,4)
-plt.title(f"Boxplot of absolute difference between (Liu) and (Liu_train)")
+plt.title(f"Boxplot of absolute difference between (z_minmax_all) and (z_minmax_train)")
 plt.tight_layout()
 plt.savefig(drop_path + f"diff_train.png")
 plt.show()
 
 diff_Liu_train_Liu_z = np.abs(
-    describe_datasets['Liu_train'] - describe_datasets['Liu_z'])
+    describe_datasets['z_minmax_train'] - describe_datasets['z_train'])
 
 boxplot = diff_Liu_train_Liu_z.boxplot(showfliers=False, vert=True,
                                        figsize=(10, 5), showmeans=True,
@@ -93,14 +92,14 @@ plt.axvline(x=26-0.5, ymin=0, ymax=1, color='m')
 # print(tabulate(desc_df, tablefmt='github',
 #                headers='keys', floatfmt=".3f"))
 # plt.ylim(-4,4)
-plt.title(f"Boxplot of absolute difference between (Liu_train) and ("
-          f"Liu_z)")
+plt.title(f"Boxplot of absolute difference between (z_minmax_train) and ("
+          f"z_train)")
 plt.tight_layout()
 plt.savefig(drop_path + f"diff_z.png")
 plt.show()
 
 diff_Liu_Liu_z = np.abs(
-    describe_datasets['Liu'] - describe_datasets['Liu_z'])
+    describe_datasets['z_minmax_all'] - describe_datasets['z_train'])
 
 boxplot = diff_Liu_Liu_z.boxplot(showfliers=False, vert=True,
                                        figsize=(10, 5), showmeans=True,
@@ -113,8 +112,8 @@ boxplot = diff_Liu_Liu_z.boxplot(showfliers=False, vert=True,
 #                headers='keys', floatfmt=".3f"))
 # plt.ylim(-4,4)
 plt.axvline(x=26-0.5, ymin=0, ymax=1, color='m')
-plt.title(f"Boxplot of absolute difference between (Liu) and ("
-          f"Liu_z)")
+plt.title(f"Boxplot of absolute difference between (z_minmax_all) and ("
+          f"z_train)")
 plt.tight_layout()
 plt.savefig(drop_path + f"diff_liu_z.png")
 plt.show()

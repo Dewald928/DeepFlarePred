@@ -53,7 +53,7 @@ drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/features_inspect/')
 # drop_path = os.path.expanduser(
 #     '~/projects/DeepFlarePred/saved/feature_boxplots/')
 # filepath = './Data/Krynauw/'
-filepath = '../Data/Liu_z/'
+filepath = '../Data/Liu/z_train/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
@@ -62,22 +62,23 @@ df_test = pd.read_csv(filepath + 'normalized_testing.csv')
 # df_val = pd.read_csv(filepath + 'validation.csv')
 # df_test = pd.read_csv(filepath + 'testing.csv')
 df = df_train
+
 # m5_flares = df[df['label'].str.match('Positive')]
 # m5_flared_NOAA = m5_flares['NOAA'].unique()
 # m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
-# df = m5_flares_data
+# df_train = m5_flares_data
 
 
 onehot = LabelBinarizer()
 onehot.fit(df['label'])
 transformed = onehot.transform(df['label'])
 labels = pd.DataFrame(transformed, columns=['labels'])
-# df = pd.concat([labels, df], axis=1)
-df = df.drop(['label','flare', 'timestamp', 'NOAA', 'HARP'], axis=1)
-df = df.loc[:, sharps+lorentz+history_features]
+df_train = df_train.loc[:, sharps+lorentz+history_features]
+df_val = df_val.loc[:, sharps+lorentz+history_features]
+df_test = df_test.loc[:, sharps+lorentz+history_features]
 
 # QQ plot
-x = df['MEANGBH']
+x = df_train['MEANGBH']
 fig, (ax1) = plt.subplots(1, 1, figsize=(9, 4))
 ax1 = pg.qqplot(x, dist='norm', ax=ax1)
 plt.show()
@@ -85,8 +86,8 @@ plt.show()
 # histogram
 fig, axes = plt.subplots(8, 5, figsize=(20, 20), sharey=False)
 for i, ax in zip(range(n_features), axes.flat):
-    sns.distplot(df.iloc[:, i:i + 1], fit=norm, ax=ax,
-                 label=df.iloc[:, i:i + 1].columns)
+    sns.distplot(df_train.iloc[:, i:i + 1], fit=norm, ax=ax,
+                 label=df_train.iloc[:, i:i + 1].columns)
     ax.legend()
 plt.tight_layout()
 plt.savefig(drop_path + "features_histogram.png")
@@ -94,18 +95,19 @@ plt.show()
 
 
 # 0. homoscedasticity
-print(pg.homoscedasticity(df))
+print(pg.homoscedasticity(df_train))
 
 # 1. Do univariate normality check
 #  D’Agostino and Pearson’s
-stat = pg.normality(df, method='normaltest', alpha=1e-27)
-print(tabulate(stat, tablefmt='github', floatfmt='.0e', headers='keys'))
+stat = pg.normality(df_train, method='normaltest', alpha=2e-37)
+print(tabulate(stat, tablefmt='github', floatfmt=('.0f', '.2f', '.0e'),
+               headers='keys'))
 
 
 # 3. Do transform data with box-cox
 pt = PowerTransformer(method='yeo-johnson')
-transformed = pt.fit_transform(df)
-df_trans = pd.DataFrame(transformed, columns=df.columns)
+transformed = pt.fit_transform(df_train)
+df_trans = pd.DataFrame(transformed, columns=df_train.columns)
 # test
 print(pg.homoscedasticity(df_trans))
 
@@ -128,7 +130,8 @@ plt.show()
 
 #  D’Agostino and Pearson’s
 stat = pg.normality(df_trans, method='normaltest', alpha=2e-37)
-print(tabulate(stat, tablefmt='github', floatfmt='.0e', headers='keys'))
+print(tabulate(stat, tablefmt='github', floatfmt=('.0f', '.2f', '.0e'),
+               headers='keys'))
 
 
 # 4. Kruskal-Wallis non-parametric ANOVA
@@ -148,7 +151,7 @@ print(tabulate(stat, tablefmt='github', floatfmt='.0e', headers='keys'))
 
 # final qqplot comparison
 fig, axes = plt.subplots(1, 2, figsize=(9, 4))
-x0 = df['Cdec']
+x0 = df_train['Cdec']
 x1 = df_trans['Cdec']
 pg.qqplot(x0, dist='norm', ax=axes[0])
 pg.qqplot(x1, dist='norm', ax=axes[1])
@@ -159,21 +162,21 @@ plt.savefig(drop_path+"QQ_Cdec.png")
 plt.show()
 
 # save new dataset
-trans_train = pt.transform(df_train.iloc[:,5:])
-trans_val = pt.transform(df_val.iloc[:,5:])
-trans_test = pt.transform(df_test.iloc[:,5:])
+trans_train = pt.transform(df_train)
+trans_val = pt.transform(df_val)
+trans_test = pt.transform(df_test)
 
-df_trans_train = pd.DataFrame(trans_train, columns=df.columns)
-df_trans_val = pd.DataFrame(trans_val, columns=df.columns)
-df_trans_test = pd.DataFrame(trans_val, columns=df.columns)
+df_trans_train = pd.DataFrame(trans_train, columns=df_train.columns)
+df_trans_val = pd.DataFrame(trans_val, columns=df_train.columns)
+df_trans_test = pd.DataFrame(trans_val, columns=df_train.columns)
 
-t_train = pd.concat([df_train.iloc[:,:5], df_trans_train], axis=1)
-t_val = pd.concat([df_val.iloc[:,:5], df_trans_val], axis=1)
-t_test = pd.concat([df_test.iloc[:,:5], df_trans_test], axis=1)
+t_train = pd.concat([df.iloc[:,:5], df_trans_train], axis=1)
+t_val = pd.concat([df.iloc[:,:5], df_trans_val], axis=1)
+t_test = pd.concat([df.iloc[:,:5], df_trans_test], axis=1)
 
-new_path = '../Data/Liu_transformed/'
-if not os.path.exists('../Data/Liu_transformed/'):
-    os.makedirs('../Data/Liu_transformed/')
+new_path = '../Data/Liu/z_p_transformed/'
+if not os.path.exists(new_path):
+    os.makedirs(new_path)
 t_train.to_csv(new_path + 'normalized_training.csv', index=False)
 t_val.to_csv(new_path + 'normalized_validation.csv', index=False)
 t_test.to_csv(new_path + 'normalized_testing.csv', index=False)
