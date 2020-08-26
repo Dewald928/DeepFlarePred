@@ -387,18 +387,18 @@ if __name__ == '__main__':
         parse_args(cfg)
 
     # initialize parameters
-    if cfg.dataset == 'Liu':
-        filepath = './Data/Liu/' + cfg.flare_label + '/'
+    if cfg.dataset == 'z_minmax_all':
+        filepath = './Data/Liu/z_minmax_all/'
         # artifact = wandb.Artifact('liu-dataset', type='dataset')
-    elif cfg.dataset == 'Liu_train':
-        filepath = './Data/Liu_train/'
+    elif cfg.dataset == 'z_minmax_train':
+        filepath = './Data/Liu/z_minmax_train/'
         # artifact = wandb.Artifact('krynauw-dataset', type='dataset')
-    elif cfg.dataset == 'Liu_z':
-        filepath = './Data/Liu_z/'
+    elif cfg.dataset == 'z_train':
+        filepath = './Data/Liu/z_train/'
     elif cfg.dataset == 'Krynauw':
         filepath = './Data/Krynauw/'
-    elif cfg.dataset == 'Liu_transformed':
-        filepath = './Data/Liu_transformed/'
+    elif cfg.dataset == 'z_p_transformed':
+        filepath = './Data/Liu/z_p_transformed/'
     elif cfg.dataset == 'Synth':
         filepath = './Data/Synth/'
     elif cfg.dataset == 'Sampled':
@@ -914,8 +914,11 @@ if __name__ == '__main__':
 
             y_test = net.predict(test_inputs)
             tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+            hss_test_score = skorch_utils.get_hss(test_labels, y_test)
             wandb.log({'Test_TSS': tss_test_score})
+            wandb.log({'Test_HSS': hss_test_score})
             print("Test TSS:" + str(tss_test_score))
+            print("Test HSS:" + str(hss_test_score))
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
