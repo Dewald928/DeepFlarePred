@@ -37,8 +37,9 @@ For the ```main_LSTM_Liu.py``` and ```main_TCN_Liu.py``` the Liu dataset needs t
 
  ```
 To create the normalized dataset run:
-* for Liu_z: ```python normalize_liu_z.py```
-* for Liu_train: ```python normalize_liu.py```
+* for z_train: ```python normalize_z_train.py```
+* for z_minmax_train: ```python normalize_z_minmax_train.py```
+* fot z_minmax_all: ```cp Data/Liu/M5/ Data/Liu/z_minmax_all -rf```
 
 To create the power transformed dataset run:
 ```python normality_check.py```

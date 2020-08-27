@@ -459,7 +459,7 @@ if __name__ == '__main__':
     # cfg.n_features to match length
 
     # setup dataloaders
-    if cfg.dataset != 'Synth':
+    if (cfg.dataset != 'Synth') and (cfg.dataset != 'Sampled'):
         X_train_data, y_train_data = data_loader.load_data(
             datafile=filepath + 'normalized_training.csv',
             flare_label=cfg.flare_label, series_len=cfg.seq_len,
@@ -495,7 +495,7 @@ if __name__ == '__main__':
         y_train_tr = data_loader.label_transform(y_train_data)
         y_valid_tr = data_loader.label_transform(y_valid_data)
         y_test_tr = data_loader.label_transform(y_test_data)
-    else:
+    elif cfg.dataset == 'Synth':
         print('Synth dataset')
         X, y = make_classification(n_samples=10000, n_features=cfg.n_features,
                                    n_redundant=0, n_informative=1,
@@ -515,6 +515,32 @@ if __name__ == '__main__':
         y_train_tr = y_train.astype(np.int64)
         y_valid_tr = y_valid.astype(np.int64)
         y_test_tr = y_test.astype(np.int64)
+    elif cfg.dataset == 'Sampled':
+        df_train = pd.read_csv(filepath + 'normalized_training.csv')
+        X_train = df_train.iloc[:,1:].to_numpy()
+        y_train = df_train.iloc[:,0].to_numpy()
+
+        print(X_train.shape)
+
+        X_valid_data, y_valid_data = data_loader.load_data(
+            datafile=filepath + 'normalized_validation.csv',
+            flare_label=cfg.flare_label, series_len=cfg.seq_len,
+            start_feature=start_feature, n_features=cfg.n_features,
+            mask_value=mask_value, feature_list=feature_list)
+
+        X_test_data, y_test_data = data_loader.load_data(
+            datafile=filepath + 'normalized_testing.csv',
+            flare_label=cfg.flare_label, series_len=cfg.seq_len,
+            start_feature=start_feature, n_features=cfg.n_features,
+            mask_value=mask_value, feature_list=feature_list)
+
+        y_valid_tr = data_loader.label_transform(y_valid_data)
+        y_test_tr = data_loader.label_transform(y_test_data)
+
+        X_train_data = X_train.astype(np.float32)
+        y_train_tr = y_train.astype(np.int64)
+
+
 
     if cfg.model_type == 'MLP':
         X_train_data = np.reshape(X_train_data,
@@ -809,7 +835,7 @@ if __name__ == '__main__':
                                       cycle_momentum=True if
                                       cfg.optim == 'SGD' else False,
                                       step_every='batch',
-                                      # div_factor=10,
+                                      div_factor=15,
                                       # total_steps=5000
                                       )
         else:

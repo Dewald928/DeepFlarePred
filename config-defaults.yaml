@@ -20,7 +20,7 @@ optim:
   value: SGD
 n_features:
   desc: number of features to include (max 40)
-  value: 32
+  value: 40
 
 # Learning rate
 learning_rate:
@@ -40,7 +40,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.9
+  value: 0.5
 lr_metric:
   desc: Loss or TSS (loss is better)
   value: Loss
@@ -99,7 +99,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 49
+  value: 156
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -129,7 +129,7 @@ parse_args:
 dataset:
   desc: which dataset to use \
     (z_minmax_all/z_minmax_train/z_train/z_p_transformed/Krynauw/ Synth/ Sampled)
-  value: z_train
+  value: Sampled
 
 # Interpretation
 interpret:
