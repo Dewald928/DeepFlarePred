@@ -3,6 +3,7 @@ tag:
   desc: wandb tags
   value:
     - Debug
+    - z_train
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
@@ -11,7 +12,7 @@ epochs:
   value: 50
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 256
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -40,7 +41,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.5
+  value: 0.2
 lr_metric:
   desc: Loss or TSS (loss is better)
   value: Loss
@@ -71,10 +72,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.8
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.001
 
 # Cross Validation
 liu_fold:
@@ -99,7 +100,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 156
+  value: 201
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -128,8 +129,9 @@ parse_args:
 # Dataset
 dataset:
   desc: which dataset to use \
-    (z_minmax_all/z_minmax_train/z_train/z_p_transformed/Krynauw/ Synth/ Sampled)
-  value: Sampled
+    (z_minmax_all/z_minmax_train/z_train/z_p_transformed/Krynauw/ Synth/ \
+    Sampled/ M5_only)
+  value: Liu/z_train/
 
 # Interpretation
 interpret:

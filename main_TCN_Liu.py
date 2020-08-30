@@ -387,22 +387,8 @@ if __name__ == '__main__':
         parse_args(cfg)
 
     # initialize parameters
-    if cfg.dataset == 'z_minmax_all':
-        filepath = './Data/Liu/z_minmax_all/'
-        # artifact = wandb.Artifact('liu-dataset', type='dataset')
-    elif cfg.dataset == 'z_minmax_train':
-        filepath = './Data/Liu/z_minmax_train/'
-        # artifact = wandb.Artifact('krynauw-dataset', type='dataset')
-    elif cfg.dataset == 'z_train':
-        filepath = './Data/Liu/z_train/'
-    elif cfg.dataset == 'Krynauw':
-        filepath = './Data/Krynauw/'
-    elif cfg.dataset == 'z_p_transformed':
-        filepath = './Data/Liu/z_p_transformed/'
-    elif cfg.dataset == 'Synth':
-        filepath = './Data/Synth/'
-    elif cfg.dataset == 'Sampled':
-        filepath = './Data/Sampled/'
+    filepath = './Data/' + cfg.dataset
+    # artifact = wandb.Artifact('liu-dataset', type='dataset')
 
     # n_features = 0
     if cfg.flare_label == 'M5':
