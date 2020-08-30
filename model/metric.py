@@ -45,11 +45,11 @@ def calculate_metrics(confusion_matrix, nclass):
         precision[p] = round(float(tp[p]) / float(tp[p] + fp[p] + 1e-6), 4)
         accuracy[p] = round(float(tp[p] + tn[p]) / float(N), 3)
         bacc[p] = round(0.5 * (
-                float(tp[p]) / float(tp[p] + fn[p]) + float(tn[p]) / float(
-                    tn[p] + fp[p])), 4)
+                float(tp[p]) / float(tp[p] + fn[p]+ 1e-6) + float(tn[p]) / float(
+                    tn[p] + fp[p]+ 1e-6)), 4)
         hss[p] = round(2 * float(tp[p] * tn[p] - fp[p] * fn[p]) / float(
             (tp[p] + fn[p]) * (fn[p] + tn[p]) + (tp[p] + fp[p]) * (
-                    fp[p] + tn[p])), 4)
+                    fp[p] + tn[p]) + 1e-6), 4)
         tss[p] = round((float(tp[p]) / float(tp[p] + fn[p] + 1e-6) - float(
             fp[p]) / float(fp[p] + tn[p] + 1e-6)), 4)
         mcc[p] = round(float(tp[p] * tn[p] - fp[p] * fn[p]) / float(np.sqrt(
