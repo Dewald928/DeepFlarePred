@@ -20,8 +20,11 @@ from scipy.stats import mannwhitneyu
 from scipy.stats import kruskal
 from scipy.stats import boxcox
 from scipy.stats import stats
+from scipy.stats import skew, skewtest
+from scipy.stats import norm, kurtosis, kurtosistest
 import pingouin as pg
-from sklearn.preprocessing import LabelBinarizer, power_transform, PowerTransformer
+from sklearn.preprocessing import LabelBinarizer, power_transform, \
+    PowerTransformer
 
 # dagistino test
 
@@ -29,7 +32,7 @@ x = np.random.normal(-1, 1, size=20)
 sns.distplot(x, fit=norm)
 plt.show()
 k2, p = stats.normaltest(x)
-print(k2,p)
+print(k2, p)
 alpha = 1e-3
 if p < alpha:  # null hypothesis: x comes from a normal distribution
     print("The null hypothesis can be rejected")
@@ -68,14 +71,16 @@ df = df_train
 # m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 # df_train = m5_flares_data
 
+print(tabulate(pd.DataFrame(df['Cdec'].describe()), headers='keys',
+               floatfmt='.4f', tablefmt='github'))
 
 onehot = LabelBinarizer()
 onehot.fit(df['label'])
 transformed = onehot.transform(df['label'])
 labels = pd.DataFrame(transformed, columns=['labels'])
-df_train = df_train.loc[:, sharps+lorentz+history_features]
-df_val = df_val.loc[:, sharps+lorentz+history_features]
-df_test = df_test.loc[:, sharps+lorentz+history_features]
+df_train = df_train.loc[:, sharps + lorentz + history_features]
+df_val = df_val.loc[:, sharps + lorentz + history_features]
+df_test = df_test.loc[:, sharps + lorentz + history_features]
 
 # QQ plot
 x = df_train['MEANGBH']
@@ -84,15 +89,25 @@ ax1 = pg.qqplot(x, dist='norm', ax=ax1)
 plt.show()
 
 # histogram
+strong_normal = ['MEANGBZ', 'MEANGBT', 'MEANGBH', 'EPSZ']
+weak_leptokurtic = ['MEANJZH', 'MEANJZD', 'MEANALP', 'TOTFX', 'TOTFY']
+bimodal = ['EPSX', 'EPSY']
 fig, axes = plt.subplots(8, 5, figsize=(20, 20), sharey=False)
 for i, ax in zip(range(n_features), axes.flat):
+    if df_train.iloc[:, i:i + 1].columns in strong_normal:
+        colour = '#42ff4b'
+    elif df_train.iloc[:, i:i + 1].columns in weak_leptokurtic:
+        colour = '#ffff42'
+    elif df_train.iloc[:, i:i + 1].columns in bimodal:
+        colour = '#ff4242'
+    else:
+        colour = '#428eff'
     sns.distplot(df_train.iloc[:, i:i + 1], fit=norm, ax=ax,
-                 label=df_train.iloc[:, i:i + 1].columns)
+                 label=df_train.iloc[:, i:i + 1].columns, color=colour)
     ax.legend()
 plt.tight_layout()
 plt.savefig(drop_path + "features_histogram.png")
 plt.show()
-
 
 # 0. homoscedasticity
 print(pg.homoscedasticity(df_train))
@@ -100,9 +115,22 @@ print(pg.homoscedasticity(df_train))
 # 1. Do univariate normality check
 #  D’Agostino and Pearson’s
 stat = pg.normality(df_train, method='normaltest', alpha=2e-37)
-print(tabulate(stat, tablefmt='github', floatfmt=('.0f', '.2f', '.0e'),
-               headers='keys'))
+# skewness and kurtosis
+skew_df = pd.DataFrame()
+kurt_df = pd.DataFrame()
+for i in range(n_features):
+    skewness = pd.DataFrame(skew(df_train.iloc[:, i:i + 1]),
+                            columns=df_train.iloc[:, i:i + 1].columns)
+    skew_df = pd.concat([skew_df, skewness], axis=1)
+    kurt = pd.DataFrame(kurtosis(df_train.iloc[:, i:i + 1]),
+                        columns=df_train.iloc[:, i:i + 1].columns)
+    kurt_df = pd.concat([kurt_df, kurt], axis=1)
 
+stat.insert(0, 'skewness', skew_df.T)
+stat.insert(1, 'kurtosis', kurt_df.T)
+print(tabulate(stat, tablefmt='github', floatfmt=('.0f','.1f','.1f', '.2f',
+                                                  '.0e'),
+               headers='keys'))
 
 # 3. Do transform data with box-cox
 pt = PowerTransformer(method='yeo-johnson')
@@ -112,10 +140,21 @@ df_trans = pd.DataFrame(transformed, columns=df_train.columns)
 print(pg.homoscedasticity(df_trans))
 
 # plot transformed data
+strong_normal = ['MEANGBZ', 'MEANGBT', 'MEANGBH', 'EPSZ', 'R_VALUE', 'TOTFZ']
+weak_leptokurtic = ['MEANJZH', 'MEANJZD', 'MEANALP', 'TOTFX', 'TOTFY']
+bimodal = ['EPSX', 'EPSY']
 fig, axes = plt.subplots(8, 5, figsize=(20, 20), sharey=False)
 for i, ax in zip(range(n_features), axes.flat):
+    if df_train.iloc[:, i:i + 1].columns in strong_normal:
+        colour = '#42ff4b'
+    elif df_train.iloc[:, i:i + 1].columns in weak_leptokurtic:
+        colour = '#ffff42'
+    elif df_train.iloc[:, i:i + 1].columns in bimodal:
+        colour = '#ff4242'
+    else:
+        colour = '#428eff'
     sns.distplot(df_trans.iloc[:, i:i + 1], fit=norm, ax=ax,
-                 label=df_trans.iloc[:, i:i + 1].columns)
+                 label=df_trans.iloc[:, i:i + 1].columns, color=colour)
     ax.legend()
 plt.tight_layout()
 plt.legend()
@@ -130,9 +169,21 @@ plt.show()
 
 #  D’Agostino and Pearson’s
 stat = pg.normality(df_trans, method='normaltest', alpha=2e-37)
-print(tabulate(stat, tablefmt='github', floatfmt=('.0f', '.2f', '.0e'),
-               headers='keys'))
+# skewness and kurtosis (not be be confused with z-score of skewness)
+skew_df = pd.DataFrame()
+kurt_df = pd.DataFrame()
+for i in range(n_features):
+    skewness = pd.DataFrame(skew(df_trans.iloc[:, i:i + 1]),
+                            columns=df_trans.iloc[:, i:i + 1].columns)
+    skew_df = pd.concat([skew_df, skewness], axis=1)
+    kurt = pd.DataFrame(kurtosis(df_trans.iloc[:, i:i + 1]),
+                        columns=df_trans.iloc[:, i:i + 1].columns)
+    kurt_df = pd.concat([kurt_df, kurt], axis=1)
 
+stat.insert(0, 'skewness', skew_df.T)
+stat.insert(1, 'kurtosis', kurt_df.T)
+print(tabulate(stat, tablefmt='github',
+               floatfmt=('.0f', '.1f', '.1f', '.2f', '.0e'), headers='keys'))
 
 # 4. Kruskal-Wallis non-parametric ANOVA
 # non-parametric
@@ -158,7 +209,7 @@ pg.qqplot(x1, dist='norm', ax=axes[1])
 axes[0].title.set_text('Q-Q Plot, Cdec before transform')
 axes[1].title.set_text('Q-Q Plot, Cdec after transform')
 plt.tight_layout()
-plt.savefig(drop_path+"QQ_Cdec.png")
+plt.savefig(drop_path + "QQ_Cdec.png")
 plt.show()
 
 # save new dataset
@@ -170,9 +221,9 @@ df_trans_train = pd.DataFrame(trans_train, columns=df_train.columns)
 df_trans_val = pd.DataFrame(trans_val, columns=df_train.columns)
 df_trans_test = pd.DataFrame(trans_val, columns=df_train.columns)
 
-t_train = pd.concat([df.iloc[:,:5], df_trans_train], axis=1)
-t_val = pd.concat([df.iloc[:,:5], df_trans_val], axis=1)
-t_test = pd.concat([df.iloc[:,:5], df_trans_test], axis=1)
+t_train = pd.concat([df.iloc[:, :5], df_trans_train], axis=1)
+t_val = pd.concat([df.iloc[:, :5], df_trans_val], axis=1)
+t_test = pd.concat([df.iloc[:, :5], df_trans_test], axis=1)
 
 new_path = '../Data/Liu/z_p_transformed/'
 if not os.path.exists(new_path):
