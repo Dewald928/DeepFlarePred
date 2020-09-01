@@ -3,16 +3,15 @@ tag:
   desc: wandb tags
   value:
     - Debug
-    - z_train
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 50
+  value: 200
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 8192
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -32,7 +31,7 @@ lr_scheduler:
   value: True
 lr_finder:
   desc: is lr finder should run
-  value: True
+  value: False
 log_lr:
   desc: log lr finder to wandb
   value: False
@@ -50,13 +49,13 @@ lr_metric:
 # TCN HP
 levels:
   desc: num of tcn blocks
-  value: 1
+  value: 2
 ksize:
   desc: kernel size (smallest is 2)
-  value: 2
+  value: 3
 nhid:
   desc: number of filters
-  value: 40
+  value: 80
 seq_len:
   desc: size of sequence (Be 1 for MLP)
   value: 1
@@ -72,7 +71,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.8
+  value: 0.2
 weight_decay:
   desc: L2 regularizing
   value: 0.001
@@ -108,11 +107,11 @@ cuda:
   desc: enables cuda training
   value: True
 early_stop:
-  desc: stops training if overfitting
+  desc: stops training if overfitting, Don't use with lr scheduler
   value: False
 patience:
   desc: amount of epochs for early stopping
-  value: 30
+  value: 10
 training:
   desc: Trains models, else only tests
   value: True
@@ -131,7 +130,7 @@ dataset:
   desc: which dataset to use \
     (z_minmax_all/z_minmax_train/z_train/z_p_transformed/Krynauw/ Synth/ \
     Sampled/ M5_only)
-  value: Liu/z_train/
+  value: Liu/z_minmax_all/
 
 # Interpretation
 interpret:
