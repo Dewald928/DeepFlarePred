@@ -786,14 +786,14 @@ if __name__ == '__main__':
     # if cfg.training:
     #     for epoch in range(cfg.epochs):
     #         train(model, device, train_loader, optimizer, epoch, criterion)
-    #         tss, best_tss, best_epoch = validate(model, device, valid_loader,
-    #                                              criterion, epoch, best_tss,
+    #         tss, best_val_tss, best_epoch = validate(model, device, valid_loader,
+    #                                              criterion, epoch, best_val_tss,
     #                                              best_epoch)
     #         if early_stop.step(tss):
     #             break
     #
     # wandb.log(
-    #     {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
+    #     {"Best_Validation_TSS": best_val_tss, "Best_Validation_epoch":
     #     best_epoch})
     #
     # # reload best tss checkpoint and test
