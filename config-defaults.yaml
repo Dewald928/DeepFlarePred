@@ -2,16 +2,16 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - LR_Iterations
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 200
+  value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 256
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -31,7 +31,7 @@ lr_scheduler:
   value: True
 lr_finder:
   desc: is lr finder should run
-  value: False
+  value: True
 log_lr:
   desc: log lr finder to wandb
   value: False
@@ -40,10 +40,13 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.2
+  value: 0.1
 lr_metric:
   desc: Loss or TSS (loss is better)
   value: Loss
+lr_rangetest_iter:
+  desc: number of iterations for range test
+  value: 100
 
 
 # TCN HP
@@ -71,10 +74,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.2
+  value: 0.0
 weight_decay:
   desc: L2 regularizing
-  value: 0.001
+  value: 0.0
 
 # Cross Validation
 liu_fold:
@@ -130,7 +133,7 @@ dataset:
   desc: which dataset to use \
     (z_minmax_all/z_minmax_train/z_train/z_p_transformed/Krynauw/ Synth/ \
     Sampled/ M5_only)
-  value: Liu/z_minmax_all/
+  value: Liu/z_train/
 
 # Interpretation
 interpret:

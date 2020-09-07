@@ -23,13 +23,14 @@ def get_prev_max(arr):
 
 def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
             cfg):
-    num_iter = 100
+    num_iter = cfg.lr_rangetest_iter
     fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
     fig.set_tight_layout(True)
     lr_finder = LRFinder(model, optimizer, criterion, device=device,
                          metric_name='TSS')
     # lr_finder = LRFinder(model, optimizer, criterion, device=device)
-    lr_finder.range_test(train_loader, end_lr=10, num_iter=num_iter)
+    lr_finder.range_test(train_loader, end_lr=10, num_iter=num_iter, 
+                         smooth_f=0)
     trainx = lr_finder.history['lr']
     trainy_TSS = lr_finder.history['TSS']
     trainy_loss = lr_finder.history['loss']
@@ -50,7 +51,7 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
                          metric_name='TSS')
     # lr_finder = LRFinder(model, optimizer, criterion, device=device)
     lr_finder.range_test(train_loader, val_loader=valid_loader, end_lr=10,
-                         num_iter=num_iter, step_mode="exp")
+                         num_iter=num_iter, step_mode="exp", smooth_f=0)
 
     valx = lr_finder.history['lr']
     valy_TSS = lr_finder.history['TSS']
