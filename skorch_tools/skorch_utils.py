@@ -81,8 +81,10 @@ class LoggingCallback(Callback):
     def on_train_end(self, net, X=None, y=None, **kwargs):
         h = net.history
         best_tss_epoch = np.argmax(h[:, 'valid_tss'])
-        best_tss = np.max(h[:, 'valid_tss'])
-        wandb.log({'Best_Validation_TSS': best_tss,
+        best_val_tss = np.max(h[:, 'valid_tss'])
+        best_train_tss = h[best_tss_epoch, 'train_tss']
+        wandb.log({'Best_Validation_TSS': best_val_tss,
+                   'Best_Train_TSS': best_train_tss,
                    'Best_Validation_epoch': best_tss_epoch})
 
     def on_epoch_end(self, net, dataset_trn=None, dataset_vld=None, **kwargs):
