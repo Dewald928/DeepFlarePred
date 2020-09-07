@@ -193,7 +193,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         cp = '+'
     if pr_auc >= best_pr_auc:  # saves best auc model
         # best_pr_auc = pr_auc
-        # best_tss = tss[0]
+        # best_val_tss = tss[0]
         # best_epoch = epoch
         torch.save(model.state_dict(),
                    os.path.join(wandb.run.dir, 'model_pr_auc.pt'))
@@ -445,7 +445,7 @@ if __name__ == '__main__':
     # cfg.n_features to match length
 
     # setup dataloaders
-    if (cfg.dataset != 'Synth') and (cfg.dataset != 'Sampled'):
+    if (cfg.dataset != 'Synth/') and (cfg.dataset != 'Sampled/'):
         X_train_data, y_train_data = data_loader.load_data(
             datafile=filepath + 'normalized_training.csv',
             flare_label=cfg.flare_label, series_len=cfg.seq_len,
@@ -481,12 +481,12 @@ if __name__ == '__main__':
         y_train_tr = data_loader.label_transform(y_train_data)
         y_valid_tr = data_loader.label_transform(y_valid_data)
         y_test_tr = data_loader.label_transform(y_test_data)
-    elif cfg.dataset == 'Synth':
+    elif cfg.dataset == 'Synth/':
         print('Synth dataset')
-        X, y = make_classification(n_samples=10000, n_features=cfg.n_features,
+        X, y = make_classification(n_samples=100000, n_features=cfg.n_features,
                                    n_redundant=0, n_informative=1,
                                    n_clusters_per_class=1,
-                                   weights=[0.01, 0.99], class_sep=1,
+                                   weights=[0.99, 0.01], class_sep=1,
                                    random_state=cfg.seed)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y,
@@ -501,7 +501,7 @@ if __name__ == '__main__':
         y_train_tr = y_train.astype(np.int64)
         y_valid_tr = y_valid.astype(np.int64)
         y_test_tr = y_test.astype(np.int64)
-    elif cfg.dataset == 'Sampled':
+    elif cfg.dataset == 'Sampled/':
         df_train = pd.read_csv(filepath + 'normalized_training.csv')
         X_train = df_train.iloc[:,1:].to_numpy()
         y_train = df_train.iloc[:,0].to_numpy()
@@ -670,7 +670,8 @@ if __name__ == '__main__':
     # early stopping check
     early_stop = early_stopping.EarlyStopping(mode='max',
                                               patience=cfg.patience)
-    best_tss = 0.0
+    best_val_tss = 0.0
+    best_train_tss = 0.0
     best_pr_auc = 0.0
     best_epoch = 0
     epoch = 0
@@ -703,9 +704,11 @@ if __name__ == '__main__':
             while epoch < cfg.epochs:
                 train_tss = train(model, device, train_loader, optimizer, epoch,
                                   criterion, cfg, scheduler=scheduler)[5]
-                stopping_metric, best_tss, best_pr_auc, best_epoch = validate(
-                    model, device, valid_loader, criterion, epoch, best_tss,
+                stopping_metric, best_val_tss, best_pr_auc, best_epoch = validate(
+                    model, device, valid_loader, criterion, epoch, best_val_tss,
                     best_pr_auc, best_epoch, cfg)[0:4]
+                if best_epoch == epoch:
+                    best_train_tss = train_tss
 
                 test_tss = test(model, device, test_loader, criterion, epoch)[
                     5]
@@ -717,8 +720,8 @@ if __name__ == '__main__':
                 epoch += 1
 
         wandb.log(
-            {"Best_Validation_TSS": best_tss, "Best_Validation_epoch":
-                best_epoch,
+            {"Best_Validation_TSS": best_val_tss, "Best_Validation_epoch":
+                best_epoch, "Best_Train_TSS": best_train_tss,
              'Best_Validation_PR_AUC': best_pr_auc})
 
         # reload best tss checkpoint and test
@@ -822,7 +825,7 @@ if __name__ == '__main__':
                                       cycle_momentum=True if
                                       cfg.optim == 'SGD' else False,
                                       step_every='batch',
-                                      div_factor=15,
+                                      div_factor=10,
                                       # total_steps=5000
                                       )
         else:
