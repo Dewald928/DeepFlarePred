@@ -356,6 +356,9 @@ def parse_args(cfg):
                         help='dropout amount')
     parser.add_argument('--weight_decay', type=float, default=cfg.weight_decay,
                         help='how much weight decay')
+    parser.add_argument('--lr_rangetest_iter', type=int,
+                        default=cfg.lr_rangetest_iter,
+                        help='how many iterations')
 
     args = parser.parse_args()
     wandb.config.update(args, allow_val_change=True)  # adds all of the arguments as config
