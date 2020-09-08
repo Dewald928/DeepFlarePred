@@ -23,12 +23,12 @@ listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
 # filepath = './Data/Krynauw/'
-filepath = './Data/Liu_z/'
-# filepath = './Data/Liu/' + 'M5' + '/'
+# filepath = './Data/Liu_train/'
+filepath = './Data/Liu/' + 'M5' + '/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
-df = pd.concat([df_train], axis=0)
+df = pd.concat([df_train, df_val, df_test], axis=0)
 df = df.sort_values(by=['NOAA', 'timestamp'])
 
 a = df[df.duplicated(subset=['timestamp', 'NOAA'], keep=False)]
@@ -63,6 +63,8 @@ x_flares_data = df[df['NOAA'].isin(x_flares_NOAA)]
 m5_flares = df[df['label'].str.match('Positive')]
 m5_flared_NOAA = m5_flares['NOAA'].unique()
 m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
+
+m_x_flares_data = pd.concat([m_flares_data, x_flares_data])
 
 # get average duration of sunspot
 # samples_per_AR = df['NOAA'].value_counts()
