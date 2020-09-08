@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 cd ../
 
-for dataset in Liu Liu_train Liu_z ; do
-    for seed in 15 124 49; do
-        python main_TCN_Liu.py \
-        --seed $seed \
-        --dataset $dataset
-    done
+for lr_rangetest_iter in 50 100 200 ; do
+    python main_TCN_Liu.py \
+    --lr_rangetest_iter $lr_rangetest_iter
 done
 

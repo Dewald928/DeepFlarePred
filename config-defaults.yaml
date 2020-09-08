@@ -11,7 +11,7 @@ epochs:
   value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 65536
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -34,7 +34,7 @@ lr_finder:
   value: True
 log_lr:
   desc: log lr finder to wandb
-  value: False
+  value: True
 min_lr:
   desc: minimum lr for CLR
   value: 0.00001
@@ -126,7 +126,7 @@ num_workers:
   value: 9
 parse_args:
   desc: if args should be parse for bash script
-  value: False
+  value: True
 
 # Dataset
 dataset:
