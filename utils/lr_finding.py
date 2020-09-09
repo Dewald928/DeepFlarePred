@@ -30,7 +30,7 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
                          metric_name='TSS')
     # lr_finder = LRFinder(model, optimizer, criterion, device=device)
     lr_finder.range_test(train_loader, end_lr=10, num_iter=num_iter, 
-                         smooth_f=0, diverge_th=1.5)
+                         smooth_f=0, diverge_th=5)
     trainx = lr_finder.history['lr']
     trainy_TSS = lr_finder.history['TSS']
     trainy_loss = lr_finder.history['loss']
@@ -52,7 +52,7 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
     # lr_finder = LRFinder(model, optimizer, criterion, device=device)
     lr_finder.range_test(train_loader, val_loader=valid_loader, end_lr=10,
                          num_iter=num_iter, step_mode="exp", smooth_f=0,
-                         diverge_th=1.5)
+                         diverge_th=5)
 
     valx = lr_finder.history['lr']
     valy_TSS = lr_finder.history['TSS']
