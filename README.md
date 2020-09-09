@@ -36,6 +36,9 @@ For the ```main_LSTM_Liu.py``` and ```main_TCN_Liu.py``` the Liu dataset needs t
 │   └── M5
 
  ```
+To fix the incorrect column names used, run the following:
+``````
+
 To create the normalized dataset run:
 * for z_train: ```python normalize_z_train.py```
 * for z_minmax_train: ```python normalize_z_minmax_train.py```

@@ -20,6 +20,9 @@ filepath = '../Data/Liu/' + 'M5' + '/'
 splits = ['training', 'validation', 'testing']
 
 for split in splits:
+    # rename dataset to _old version
+    os.rename(filepath + 'normalized_{}.csv'.format(split), filepath + 'normalized_{}_old.csv'.format(split))
+
     df = pd.read_csv(filepath + 'normalized_{}_old.csv'.format(split))
 
     df = df.rename(columns={'SAVNCPP': 'USFLUX',
