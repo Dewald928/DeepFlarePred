@@ -11,8 +11,12 @@ api = wandb.Api()
 # specify HPs
 model_type = 'MLP'  # 'TCN 'or 'MLP'
 if model_type == 'MLP':
-    HP_list = ['layers', 'hidden_units', 'batch_size', 'learning_rate', 'seed']
-    HP_groupby = ['layers', 'hidden_units', 'batch_size', 'learning_rate']
+    HP_list = ['dataset','layers', 'hidden_units', 'batch_size',
+               'learning_rate', 'seed']
+    # HP_list = ['layers', 'hidden_units', 'batch_size', 'learning_rate', 'seed']
+    HP_groupby = ['dataset','layers', 'hidden_units', 'batch_size',
+                  'learning_rate']
+    # HP_groupby = ['layers', 'hidden_units', 'batch_size', 'learning_rate']
 elif model_type == 'TCN':
     HP_list = ['levels', 'ksize', 'seq_len', 'nhid', 'dropout', 'batch_size',
                'learning_rate', 'weight_decay', 'seed']
@@ -29,7 +33,7 @@ all_runs = pd.read_csv(pathname + filename) if os.path.isfile(
 def get_wandb_runs():
     # Get runs from a specific sweep
     sweep0 = api.runs(path="dewald123/liu_pytorch_MLP",
-                      filters={'sweep': "forcrr6p"}, per_page=1200)
+                      filters={'sweep': "sapcuf56"}, per_page=1200)
     # sweep1 = api.sweep("dewald123/liu_pytorch_MLP/2yk81dhq")
     # sweep2 = api.sweep("dewald123/liu_pytorch_MLP/1c6ig5mc")
     # sweep3 = api.sweep("dewald123/liu_pytorch_MLP/grw0rrpp")
@@ -295,6 +299,7 @@ Get wandb runs, save to csv
 
 all_runs = pd.read_csv(pathname + filename) if os.path.isfile(
     pathname + filename) is True else pd.DataFrame()
+all_runs = all_runs[all_runs['dataset']=='Liu/z_train/']
 
 # get the validation tss threshold at 30% of the top values.
 sorted_tss = all_runs.groupby('id')[
@@ -305,14 +310,14 @@ ax = sns.regplot(x=sorted_tss.index, y="Validation_TSS", data=sorted_tss)
 line = ax.lines[0]
 tss_min = line.get_ydata()[-1]
 val_tss_th = sorted_tss["Validation_TSS"].max() - (
-            (sorted_tss["Validation_TSS"].max() - tss_min) * 0.30)
+            (sorted_tss["Validation_TSS"].max() - tss_min) * 0.40)
 # val_tss_th = sorted_tss.quantile(0.8)['Validation_TSS']
 # get std threshold at 70% of smallest values.
 sorted_std_idx = all_runs.groupby('id')['Validation_TSS'].idxmax()
 sorted_std = all_runs['moving_std_w'][
     sorted_std_idx].sort_values().reset_index(drop=True)
 # val_std_th = sorted_std.quantile(0.85)
-val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min()) * 0.15)
+val_std_th = sorted_std.min() + ((sorted_std.max() - sorted_std.min()) * 0.1)
 
 # plot all runs tss and mvg_std_w
 plt.plot(sorted_std)
@@ -337,7 +342,7 @@ for id in id_list:
     flag, hp_df = check_network(id, val_tss_th, val_std_th, HP_list, hp_df)
 
 counted_valid_hps = count_valid_network(hp_df)
-final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 3]
+final_possible_hps = counted_valid_hps[counted_valid_hps['count'] >= 2]
 # Check test performance of final networks
 final_net_scores = final_model_scores(final_possible_hps, hp_df)
 
@@ -350,31 +355,36 @@ top3_tbl = final_net_scores.groupby(HP_groupby).apply(
     lambda x: x.nlargest(3, ['Best_Val_TSS', 'Test_TSS'])).reset_index(
     drop=True)
 # create final tables with average and standard errors
-final_table = top3_tbl.groupby(HP_groupby).mean().reset_index().drop(
-    columns='seed').rename(
+final_table = top3_tbl.groupby(HP_groupby).mean().reset_index().rename(
     columns={'Best_Val_TSS': 'avg_val_TSS', 'Test_TSS': 'avg_test_TSS'})
+# final_table = top3_tbl.groupby(HP_groupby).mean().reset_index().drop(
+#     columns='seed').rename(
+#     columns={'Best_Val_TSS': 'avg_val_TSS', 'Test_TSS': 'avg_test_TSS'})
 
 hp_se = top3_tbl.groupby(HP_groupby).sem().reset_index().rename(
     columns={'Best_Val_TSS': 'val_se', 'Test_TSS': 'test_se'})
-final_table.insert(5, 'val_se', hp_se['val_se'])
-final_table.insert(7, 'test_se', hp_se['test_se'])
+final_table.insert(final_table.columns.get_loc("avg_val_TSS")+1, 'val_se',
+                   hp_se['val_se'])
+final_table.insert(final_table.columns.get_loc("avg_test_TSS")+1, 'test_se',
+                   hp_se['test_se'])
 
 sorted_ft = final_table.sort_values(['avg_val_TSS', 'val_se'],
                                     ascending=[False, True])
 
 print(tabulate(sorted_ft, headers="keys", tablefmt="github", floatfmt=(
-".0f", ".0f", '.0f', '.0e', '.4f', '.4f', '.4f', '.4f', '.4f'),
+".0f", ".0f", '.0f', '.1e', '.4f', '.4f', '.4f', '.4f', '.4f'),
                showindex=False))
 
 '''
 plot val moving std std
 '''
-layers = 1
+layers = 2
 hidden_units = 500
-batch_size = 512
-learning_rate = 1e-3
-seeds = [335, 49, 124, 15, 273]
-# seeds = [49, 124, 15]
+batch_size = 65536
+learning_rate = 0.0097
+# seeds = [335, 49, 124, 15, 273]
+# seeds = [49]
+seeds = [49, 124, 15]
 for seed in seeds:
     plot_val_std_MLP(layers, hidden_units, batch_size, learning_rate, seed,
                      avg=False)
