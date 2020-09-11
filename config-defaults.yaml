@@ -2,13 +2,13 @@
 tag:
   desc: wandb tags
   value:
-    - LR_Iterations
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 500
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -25,28 +25,28 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.00001
+  value: 0.01
 lr_scheduler:
   desc: if scheduler is on
-  value: True
+  value: False
 lr_finder:
   desc: is lr finder should run
-  value: True
+  value: False
 log_lr:
   desc: log lr finder to wandb
-  value: True
+  value: False
 min_lr:
   desc: minimum lr for CLR
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.1
+  value: 0.2
 lr_metric:
   desc: Loss or TSS (loss is better)
   value: Loss
 lr_rangetest_iter:
-  desc: number of iterations for range test
-  value: 100
+  desc: number of iterations for range test (200 seems best)
+  value: 200
 
 
 # TCN HP
@@ -69,7 +69,7 @@ layers:
   value: 2
 hidden_units:
   desc: number hidden nodes in layer
-  value: 500
+  value: 200
 
 # Regularizer
 dropout:
@@ -102,7 +102,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 201
+  value: 10
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -111,10 +111,10 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting, Don't use with lr scheduler
-  value: False
+  value: True
 patience:
   desc: amount of epochs for early stopping
-  value: 10
+  value: 30
 training:
   desc: Trains models, else only tests
   value: True
@@ -126,7 +126,7 @@ num_workers:
   value: 9
 parse_args:
   desc: if args should be parse for bash script
-  value: True
+  value: False
 
 # Dataset
 dataset:

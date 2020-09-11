@@ -783,7 +783,7 @@ if __name__ == '__main__':
             name='train_bacc', use_caching=True, on_train=True)
 
         if cfg.early_stop:
-            earlystop = EarlyStopping(monitor='train_tss',
+            earlystop = EarlyStopping(monitor='valid_tss',
                                       lower_is_better=False,
                                       patience=cfg.patience)
         else:
