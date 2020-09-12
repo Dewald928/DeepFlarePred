@@ -769,6 +769,9 @@ if __name__ == '__main__':
                                                      needs_proba=False),
                                  lower_is_better=False, name='valid_tss',
                                  use_caching=True)
+        valid_pr_auc_cb = EpochScoring(
+            scoring=make_scorer(skorch_utils.get_pr_auc, needs_proba=False),
+            lower_is_better=False, name='valid_pr_auc', use_caching=True)
         train_tss_cb = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
                                                      needs_proba=False),
                                  lower_is_better=False, name='train_tss',
@@ -782,9 +785,10 @@ if __name__ == '__main__':
                                 needs_proba=False), lower_is_better=False,
             name='train_bacc', use_caching=True, on_train=True)
 
+
         if cfg.early_stop:
-            earlystop = EarlyStopping(monitor='valid_tss',
-                                      lower_is_better=False,
+            earlystop = EarlyStopping(monitor='train_loss',
+                                      lower_is_better=True,
                                       patience=cfg.patience)
         else:
             earlystop = None
@@ -823,14 +827,21 @@ if __name__ == '__main__':
             lrscheduler = LRScheduler(policy=lr_scheduler.OneCycleLR,
                                       monitor='valid_tss',
                                       max_lr=cfg.max_lr,
+                                      # base_lr=cfg.max_lr/10,
+                                      # step_size_up = 150,
                                       steps_per_epoch=len(train_loader),
                                       epochs=cfg.epochs,
                                       cycle_momentum=True if
                                       cfg.optim == 'SGD' else False,
                                       step_every='batch',
-                                      div_factor=10,
+                                      # div_factor=25,
                                       # total_steps=5000
                                       )
+            # plot lr over iterations
+            lrs = lrscheduler.simulate(cfg.epochs*len(train_loader),
+                                       cfg.max_lr)
+            plt.plot(lrs)
+            plt.show()
         else:
             lrscheduler = None
 
@@ -852,7 +863,7 @@ if __name__ == '__main__':
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss_cb, valid_tss_cb,
-                                             valid_hss_cb,
+                                             valid_hss_cb, valid_pr_auc_cb,
                                              earlystop, checkpoint,
                                              # load_state,
                                              reload_at_end, logger,

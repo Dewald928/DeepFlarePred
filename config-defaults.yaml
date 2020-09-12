@@ -8,10 +8,10 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 500
+  value: 100
 batch_size:
   desc: Size of each mini-batch
-  value: 65536
+  value: 8192
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -25,10 +25,10 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.01
+  value: 0.00001
 lr_scheduler:
   desc: if scheduler is on
-  value: False
+  value: True
 lr_finder:
   desc: is lr finder should run
   value: False
@@ -40,7 +40,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.2
+  value: 0.06
 lr_metric:
   desc: Loss or TSS (loss is better)
   value: Loss
@@ -69,12 +69,12 @@ layers:
   value: 2
 hidden_units:
   desc: number hidden nodes in layer
-  value: 200
+  value: 500
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.0
+  value: 0.4
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -111,7 +111,7 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting, Don't use with lr scheduler
-  value: True
+  value: False
 patience:
   desc: amount of epochs for early stopping
   value: 30

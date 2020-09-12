@@ -1,13 +1,19 @@
 import sklearn
 import wandb
 import numpy as np
-
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import auc
 from skorch.callbacks import *
 
 
 def get_metric(y_true, y_pred, nclass, metric_name='tss'):
     # print('Calculating skill scores: ')
     confusion_matrix = []
+
+    precision, recall, thresholds = precision_recall_curve(y_true, y_pred)
+    pr_auc = auc(recall, precision)
+
+
     confusion_matrix = sklearn.metrics.confusion_matrix(y_true, y_pred)
     N = np.sum(confusion_matrix)
 
@@ -53,6 +59,8 @@ def get_metric(y_true, y_pred, nclass, metric_name='tss'):
         return tss[0]
     if metric_name == 'hss':
         return hss[0]
+    if metric_name == 'pr_auc':
+        return pr_auc
     else:
         return recall, precision, accuracy, bacc, tss, hss, tp, fn, fp, tn
 
@@ -64,6 +72,9 @@ def get_tss(y_true, y_pred):
 
 def get_hss(y_true, y_pred):
     return get_metric(y_true, y_pred, 2, metric_name='hss')
+
+def get_pr_auc(y_true, y_pred):
+    return get_metric(y_true, y_pred, 2, metric_name='pr_auc')
 
 
 class LoggingCallback(Callback):
@@ -96,6 +107,7 @@ class LoggingCallback(Callback):
                    'Training_TSS': h['train_tss'],
                    'Validation_HSS': h['valid_hss'],
                    'Validation_Loss': h['valid_loss'],
+                   'Validation_PR_AUC': h['valid_pr_auc'],
                    'Test_TSS_curve': tss_test_score}, step=h['epoch'])
 
 
