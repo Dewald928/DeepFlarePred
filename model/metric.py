@@ -190,7 +190,7 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
 def get_metrics_threshold(yhat, ytrue):
     probs = yhat[:, 1]
     # define thresholds
-    thresholds = np.arange(0, 1, 0.005)
+    thresholds = np.arange(-5, 5, 0.005)
     N = len(thresholds)
     tn = [None] * N
     fp = [None] * N
