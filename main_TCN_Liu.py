@@ -863,7 +863,7 @@ if __name__ == '__main__':
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss_cb, valid_tss_cb,
-                                             valid_hss_cb, valid_pr_auc_cb,
+                                             valid_hss_cb,
                                              earlystop, checkpoint,
                                              # load_state,
                                              reload_at_end, logger,
