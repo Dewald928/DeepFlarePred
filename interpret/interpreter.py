@@ -121,11 +121,11 @@ def get_shap(model, input_df, backgroud_df, device, cfg, feature_names,
     # plot shap values
     fig_shap = plt.figure()
     plt.title('SHAP Summary Plot')
-    plt.tight_layout()
     shap.summary_plot(shap_numpy[1], test_numpy,
                       feature_names=feature_names[start_feature:start_feature +
                                                                 cfg.n_features],
                       max_display=cfg.n_features)
+    plt.tight_layout()
     fig_shap.show()
     wandb.log({'SHAP Summary Plot': wandb.Image(fig_shap)})
     # plt.close(fig_shap)
