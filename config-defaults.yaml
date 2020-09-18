@@ -8,10 +8,10 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 100
+  value: 600
 batch_size:
   desc: Size of each mini-batch
-  value: 8192
+  value: 65536
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -25,7 +25,7 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.00001
+  value: 0.03
 lr_scheduler:
   desc: if scheduler is on
   value: True
@@ -40,10 +40,10 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.06
+  value: 1
 lr_metric:
-  desc: Loss or TSS (loss is better)
-  value: Loss
+  desc: Loss or TSS (loss is better, or is it??)
+  value: TSS
 lr_rangetest_iter:
   desc: number of iterations for range test (200 seems best)
   value: 200
@@ -66,15 +66,15 @@ seq_len:
 # MLP
 layers:
   desc: MLP layers
-  value: 2
+  value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 500
+  value: 100
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.4
+  value: 0.8
 weight_decay:
   desc: L2 regularizing
   value: 0.0

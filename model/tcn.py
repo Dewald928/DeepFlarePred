@@ -17,16 +17,22 @@ class TemporalBlock(nn.Module):
     def __init__(self, n_inputs, n_outputs, kernel_size, stride, dilation,
                  padding, dropout=0.2):
         super(TemporalBlock, self).__init__()
-        self.conv1 = weight_norm(
-            nn.Conv1d(n_inputs, n_outputs, kernel_size, stride=stride,
-                      padding=padding, dilation=dilation))
+        self.conv1 = nn.Conv1d(n_inputs, n_outputs, kernel_size, stride=stride,
+                      padding=padding, dilation=dilation)
+        # self.conv1 = weight_norm(
+        #     nn.Conv1d(n_inputs, n_outputs, kernel_size, stride=stride,
+        #               padding=padding, dilation=dilation))
+        # del(self.conv1.weight)  # todo error with graph leaves
         self.chomp1 = Chomp1d(padding)
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout)
 
-        self.conv2 = weight_norm(
-            nn.Conv1d(n_outputs, n_outputs, kernel_size, stride=stride,
-                      padding=padding, dilation=dilation))
+        self.conv2 = nn.Conv1d(n_outputs, n_outputs, kernel_size, stride=stride,
+                      padding=padding, dilation=dilation)
+        # self.conv2 = weight_norm(
+        #     nn.Conv1d(n_outputs, n_outputs, kernel_size, stride=stride,
+        #               padding=padding, dilation=dilation))
+        # del (self.conv2.weight)
         self.chomp2 = Chomp1d(padding)
         self.relu2 = nn.ReLU()
         self.dropout2 = nn.Dropout(dropout)
@@ -40,10 +46,12 @@ class TemporalBlock(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        self.conv1.weight = []
-        self.conv2.weight = []
-        self.conv1.weight_v.data.normal_(0, 0.01)
-        self.conv2.weight_v.data.normal_(0, 0.01)
+        # self.conv1.weight = []
+        # self.conv2.weight = []
+        # self.conv1.weight_v.data.normal_(0, 0.01) # uncomment for weight norm
+        # self.conv2.weight_v.data.normal_(0, 0.01)
+        self.conv1.weight.data.normal_(0, 0.01)
+        self.conv2.weight.data.normal_(0, 0.01)
         if self.downsample is not None:
             self.downsample.weight.data.normal_(0, 0.01)
 

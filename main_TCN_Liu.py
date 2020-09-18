@@ -10,7 +10,7 @@ import time
 
 import numpy as np
 import pandas as pd
-import sklearn.metrics
+from sklearn.metrics import *
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -841,6 +841,8 @@ if __name__ == '__main__':
             lrs = lrscheduler.simulate(cfg.epochs*len(train_loader),
                                        cfg.max_lr)
             plt.plot(lrs)
+            plt.ylabel('Learning rate')
+            plt.xlabel('Iterations')
             plt.show()
         else:
             lrscheduler = None
@@ -943,9 +945,12 @@ if __name__ == '__main__':
             net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
 
             y_test = net.predict(test_inputs)
+            y_proba = net.predict_proba(test_inputs)
             tss_test_score = skorch_utils.get_tss(test_labels, y_test)
             hss_test_score = skorch_utils.get_hss(test_labels, y_test)
-            wandb.log({'Test_TSS': tss_test_score})
+            test_bss = brier_score_loss(y_prob=y_proba[:,1],
+                                        y_true=test_labels)
+            wandb.log({'Test_TSS': tss_test_score, 'Test_BSS':test_bss})
             wandb.log({'Test_HSS': hss_test_score})
             print("Test TSS:" + str(tss_test_score))
             print("Test HSS:" + str(hss_test_score))
