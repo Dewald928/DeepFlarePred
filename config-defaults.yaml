@@ -8,10 +8,10 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 200
+  value: 1
 batch_size:
   desc: Size of each mini-batch
-  value: 256
+  value: 65536
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -28,7 +28,7 @@ learning_rate:
   value: 0.00001
 lr_scheduler:
   desc: if scheduler is on
-  value: True
+  value: False
 lr_finder:
   desc: is lr finder should run
   value: False
