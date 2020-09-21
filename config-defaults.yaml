@@ -8,7 +8,7 @@ model_type:
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 600
+  value: 200
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -25,7 +25,7 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.03
+  value: 0.00001
 lr_scheduler:
   desc: if scheduler is on
   value: True
@@ -40,7 +40,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 1
+  value: 0.6
 lr_metric:
   desc: Loss or TSS (loss is better, or is it??)
   value: TSS
@@ -69,7 +69,7 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 100
+  value: 10
 
 # Regularizer
 dropout:
@@ -97,6 +97,9 @@ n_splits:
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
   value: True
+checkpoint:
+  desc: should use network on best checkpoint?
+  value: False
 flare_label:
   desc: Types of flare class
   value: M5
@@ -134,6 +137,9 @@ dataset:
     (z_minmax_all/z_minmax_train/z_train/z_p_transformed/Krynauw/ Synth/ \
     Sampled/ M5_only)
   value: Liu/z_train/
+shuffle:
+  desc: if data should be shuffled or not
+  value: True
 
 # Interpretation
 interpret:

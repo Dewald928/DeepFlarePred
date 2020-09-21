@@ -442,7 +442,7 @@ if __name__ == '__main__':
                             'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
                             'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
                             'Bdec', 'Bhis1d'] # 32
-    feature_list = None  #
+    feature_list = None #
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -566,7 +566,8 @@ if __name__ == '__main__':
               'pin_memory': True} if use_cuda else {}
 
     train_loader = torch.utils.data.DataLoader(datasets['train'],
-                                               cfg.batch_size, shuffle=False,
+                                               cfg.batch_size,
+                                               shuffle=True if cfg.shuffle else False,
                                                drop_last=False, **kwargs)
     valid_loader = torch.utils.data.DataLoader(datasets['valid'],
                                                cfg.batch_size, shuffle=False,
@@ -585,6 +586,7 @@ if __name__ == '__main__':
                               hidden_units=cfg.hidden_units,
                               num_hidden=cfg.layers,
                               dropout=cfg.dropout).to(device)
+        summary(model, input_size=(cfg.n_features, ))
     elif cfg.model_type == "TCN":
         model = TCN(cfg.n_features, nclass, channel_sizes,
                     kernel_size=kernel_size, dropout=cfg.dropout).to(device)
@@ -870,7 +872,7 @@ if __name__ == '__main__':
                                              # load_state,
                                              reload_at_end, logger,
                                              lrscheduler],
-                                  # iterator_train__shuffle=True,
+                                  iterator_train__shuffle=True if cfg.shuffle else False,
                                   warm_start=False)
 
         # set optimizer dynamically
@@ -941,19 +943,20 @@ if __name__ == '__main__':
             print('Test TSS: %.4f' % (tss_test_score))
 
         else:
-            net.initialize()
-            net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
-
-            y_test = net.predict(test_inputs)
-            y_proba = net.predict_proba(test_inputs)
-            tss_test_score = skorch_utils.get_tss(test_labels, y_test)
-            hss_test_score = skorch_utils.get_hss(test_labels, y_test)
-            test_bss = brier_score_loss(y_prob=y_proba[:,1],
-                                        y_true=test_labels)
-            wandb.log({'Test_TSS': tss_test_score, 'Test_BSS':test_bss})
-            wandb.log({'Test_HSS': hss_test_score})
-            print("Test TSS:" + str(tss_test_score))
-            print("Test HSS:" + str(hss_test_score))
+            if cfg.checkpoint:
+                net.initialize()
+                net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
+            else:
+                y_test = net.predict(test_inputs)
+                y_proba = net.predict_proba(test_inputs)
+                tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+                hss_test_score = skorch_utils.get_hss(test_labels, y_test)
+                test_bss = brier_score_loss(y_prob=y_proba[:,1],
+                                            y_true=test_labels)
+                wandb.log({'Test_TSS': tss_test_score, 'Test_BSS':test_bss})
+                wandb.log({'Test_HSS': hss_test_score})
+                print("Test TSS:" + str(tss_test_score))
+                print("Test HSS:" + str(hss_test_score))
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
