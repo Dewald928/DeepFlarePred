@@ -11,7 +11,7 @@ epochs:
   value: 200
 batch_size:
   desc: Size of each mini-batch
-  value: 65536
+  value: 256
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -40,7 +40,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.6
+  value: 0.1
 lr_metric:
   desc: Loss or TSS (loss is better, or is it??)
   value: TSS
@@ -69,7 +69,7 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 10
+  value: 100
 
 # Regularizer
 dropout:
@@ -139,7 +139,7 @@ dataset:
   value: Liu/z_train/
 shuffle:
   desc: if data should be shuffled or not
-  value: True
+  value: False
 
 # Interpretation
 interpret:

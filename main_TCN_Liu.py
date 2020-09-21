@@ -947,16 +947,17 @@ if __name__ == '__main__':
                 net.initialize()
                 net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
             else:
-                y_test = net.predict(test_inputs)
-                y_proba = net.predict_proba(test_inputs)
-                tss_test_score = skorch_utils.get_tss(test_labels, y_test)
-                hss_test_score = skorch_utils.get_hss(test_labels, y_test)
-                test_bss = brier_score_loss(y_prob=y_proba[:,1],
-                                            y_true=test_labels)
-                wandb.log({'Test_TSS': tss_test_score, 'Test_BSS':test_bss})
-                wandb.log({'Test_HSS': hss_test_score})
-                print("Test TSS:" + str(tss_test_score))
-                print("Test HSS:" + str(hss_test_score))
+                pass
+            y_test = net.predict(test_inputs)
+            y_proba = net.predict_proba(test_inputs)
+            tss_test_score = skorch_utils.get_tss(test_labels, y_test)
+            hss_test_score = skorch_utils.get_hss(test_labels, y_test)
+            test_bss = brier_score_loss(y_prob=y_proba[:,1],
+                                        y_true=test_labels)
+            wandb.log({'Test_TSS': tss_test_score, 'Test_BSS':test_bss})
+            wandb.log({'Test_HSS': hss_test_score})
+            print("Test TSS:" + str(tss_test_score))
+            print("Test HSS:" + str(hss_test_score))
 
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))

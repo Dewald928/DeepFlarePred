@@ -9,7 +9,7 @@ tune_config = tune.run(
     search_alg=HyperOptSearch(
         dict(
             dropout=hp.uniform("dropout", 0.2, 1),
-            learning_rate=hp.choice('learning_rate', [0.01,0.05,0.1,0.5,1])),
+            learning_rate=hp.loguniform(1e-3, 1)),
     metric="Validation_TSS",
     mode="max"),
     num_samples=100)
