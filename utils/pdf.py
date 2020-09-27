@@ -72,6 +72,7 @@ def plot_calibration_curve(est, name, X_valid, y_valid, X_test, y_test,
     #     clf.fit(X_valid, y_valid)
     #     y_pred = clf.predict(X_test)
 
+    # todo predict proba, brier skill score?
     fraction_of_positives, mean_predicted_value = calibration_curve(y_test,
                                                                     y_pred[:,
                                                                     1],

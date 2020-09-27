@@ -41,7 +41,7 @@ start_feature = 5
 mask_value = 0
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
-filepath = '../Data/Liu/' + 'M5' + '/'
+filepath = './Data/Liu/M5_only'
 
 # todo removed redundant features
 listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
@@ -71,8 +71,10 @@ X_train_data = np.reshape(X_train_data, (len(X_train_data), n_features))
 X_valid_data = np.reshape(X_valid_data, (len(X_valid_data), n_features))
 X_test_data = np.reshape(X_test_data, (len(X_test_data), n_features))
 # combine train and validation
-X = np.concatenate((X_train_data, X_valid_data))
-y = np.concatenate((y_train_data, y_valid_data))
+X= X_train_data
+y = y_train_data
+# X = np.concatenate((X_train_data, X_valid_data))
+# y = np.concatenate((y_train_data, y_valid_data))
 
 y_train_tr = data_loader.label_transform(y_train_data)
 y_valid_tr = data_loader.label_transform(y_valid_data)

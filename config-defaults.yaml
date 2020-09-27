@@ -2,13 +2,15 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - Interpret
+    - Liu_Top20
+    - OCLR
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 200
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -20,7 +22,7 @@ optim:
   value: SGD
 n_features:
   desc: number of features to include (max 40)
-  value: 40
+  value: 20
 
 # Learning rate
 learning_rate:
@@ -28,7 +30,7 @@ learning_rate:
   value: 0.00001
 lr_scheduler:
   desc: if scheduler is on
-  value: False
+  value: True
 lr_finder:
   desc: is lr finder should run
   value: False
@@ -40,7 +42,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.1
+  value: 1
 lr_metric:
   desc: Loss or TSS (loss is better, or is it??)
   value: TSS
@@ -74,7 +76,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.8
+  value: 0.9
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -105,7 +107,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 10
+  value: 11
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -122,8 +124,8 @@ training:
   desc: Trains models, else only tests
   value: True
 model_name:
-  dsec: The model used for evaluation (if training disabled, 1_100_8192_1e-3)
-  value: dewald123/liu_pytorch_MLP/ogkzvcf0
+  dsec: The model used for evaluation (if training disabled, 1_100_65536_9e-2)
+  value: dewald123/liu_pytorch_MLP/qyzfsefo
 num_workers:
   desc: number of gpu workers
   value: 9
@@ -144,5 +146,5 @@ shuffle:
 # Interpretation
 interpret:
   desc: activate captum/SHAP attribution methods
-  value: False
+  value: True
 

@@ -61,12 +61,12 @@ listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
 #                 'Mhis1d', 'R_VALUE', 'Xdec', 'Xhis1d', 'Xmax1d']
 feature_list = None
 
-datasets = ['Liu_z', 'Liu_train', 'Liu_transformed']
-X_train_datasets = {'Liu_z': [], 'Liu_train': [], 'Liu_transformed': []}
-y_train_datasets = {'Liu_z': [], 'Liu_train': [], 'Liu_transformed': []}
+datasets = ['z_train', 'z_minmax_train']
+X_train_datasets = {'z_train': [],'z_minmax_train': []}
+y_train_datasets = {'z_train': [],'z_minmax_train': []}
 feature_names = []
 for dataset in datasets:
-    filepath = f"./Data/{dataset}/"
+    filepath = f"./Data/Liu/{dataset}/"
 
     X_train_data, y_train_data = data_loader.load_data(
         datafile=filepath + 'normalized_training.csv', flare_label='M5',
@@ -117,7 +117,7 @@ score_functions = {'F-test': f_classif,
 for scorer, score_func in score_functions.items():
     print(scorer, score_func)
     fig = plt.figure(figsize=(10,6))
-    bars = {'Liu_z': [], 'Liu_train': [], 'Liu_transformed': []}
+    bars = {'z_train': [], 'z_minmax_train': []}
     for dataset in datasets:
 
         # print(scorer, score_func)
@@ -129,7 +129,7 @@ for scorer, score_func in score_functions.items():
         # heatmap Liu_z dataset
         importance_df = pd.concat(
             [pd.DataFrame(feature_names[5:], columns=['Features']),
-             pd.DataFrame(bars['Liu_transformed'], columns=['Importance'])],
+             pd.DataFrame(bars[dataset], columns=['Importance'])],
             axis=1).sort_values(by='Importance', ascending=False).reset_index()
         f_df = importance_df if scorer == 'F-test' else f_df
         mi_df = importance_df if scorer == 'Mutual-Information' else mi_df
@@ -138,23 +138,23 @@ for scorer, score_func in score_functions.items():
     barWidth = 0.25
 
     # Set position of bar on X axis
-    r1 = np.arange(0, len(bars['Liu_z']))
+    r1 = np.arange(0, len(bars['z_train']))
     r2 = [x + barWidth for x in r1]
     r3 = [x + barWidth for x in r2]
 
     # Make the plot
-    plt.bar(r1, bars['Liu_z'], width=barWidth, edgecolor='white',
-            label='Liu_z', align='edge')
-    plt.bar(r2, bars['Liu_train'], width=barWidth, edgecolor='white',
-            label='Liu_train', align='edge')
-    plt.bar(r3, bars['Liu_transformed'], width=barWidth,
-            edgecolor='white',
-            label='Liu_transformed', align='edge')
+    plt.bar(r1, bars['z_train'], width=barWidth, edgecolor='white',
+            label='z_train', align='edge')
+    plt.bar(r2, bars['z_minmax_train'], width=barWidth, edgecolor='white',
+            label='z_minmax_train', align='edge')
+    # plt.bar(r3, bars['Liu_transformed'], width=barWidth,
+    #         edgecolor='white',
+    #         label='Liu_transformed', align='edge')
 
     # Add xticks on the middle of the group bars
     plt.title('{} vs. Features'.format(scorer))
     plt.xlabel('Features')
-    plt.xticks([r + barWidth for r in range(len(bars['Liu_z']))], feature_names[
+    plt.xticks([r + barWidth for r in range(len(bars['z_train']))], feature_names[
                                                                   5:])
     plt.xticks(rotation=90)
     plt.ylabel('Importance')

@@ -20,6 +20,7 @@ from torch.optim.lr_scheduler import *
 from torch.autograd import gradcheck
 import wandb
 import yaml
+import sklearn
 from sklearn.metrics import make_scorer, balanced_accuracy_score
 from sklearn.model_selection import GridSearchCV, cross_val_score, \
     StratifiedKFold, KFold
@@ -34,6 +35,7 @@ from skorch.helper import predefined_split
 from torchsummary import summary
 import matplotlib.pyplot as plt
 from torch_lr_finder import LRFinder
+from wandb import sklearn
 
 from interpret import interpreter
 import crossval_fold
@@ -392,7 +394,6 @@ if __name__ == '__main__':
     # initialize parameters
     filepath = './Data/' + cfg.dataset
     # artifact = wandb.Artifact('liu-dataset', type='dataset')
-
     # n_features = 0
     if cfg.flare_label == 'M5':
         n_features = cfg.n_features  # 20 original
@@ -860,7 +861,7 @@ if __name__ == '__main__':
                                   criterion=nn.CrossEntropyLoss,
                                   criterion__weight=torch.FloatTensor(
                                       class_weights).to(device),
-                                  optimizer=torch.optim.Adam,
+                                  optimizer=torch.optim.SGD,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
                                   device=device,
@@ -870,7 +871,8 @@ if __name__ == '__main__':
                                              valid_hss_cb,
                                              earlystop, checkpoint,
                                              # load_state,
-                                             reload_at_end, logger,
+                                             # reload_at_end,
+                                             logger,
                                              lrscheduler],
                                   iterator_train__shuffle=True if cfg.shuffle else False,
                                   warm_start=False)
@@ -947,7 +949,7 @@ if __name__ == '__main__':
                 net.initialize()
                 net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
             else:
-                pass
+                pass  # todo why doesn't this work?
             y_test = net.predict(test_inputs)
             y_proba = net.predict_proba(test_inputs)
             tss_test_score = skorch_utils.get_tss(test_labels, y_test)
