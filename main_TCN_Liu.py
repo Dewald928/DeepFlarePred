@@ -847,6 +847,8 @@ if __name__ == '__main__':
             plt.ylabel('Learning rate')
             plt.xlabel('Iterations')
             plt.show()
+            # for i in range(len(lrs)):
+            #     wandb.log({'Learning Rate': lrs[i], 'Iterations': i})
         else:
             lrscheduler = None
 
@@ -949,14 +951,14 @@ if __name__ == '__main__':
                 net.initialize()
                 net.load_params(checkpoint=checkpoint)  # Select best TSS epoch
             else:
-                pass  # todo why doesn't this work?
+                pass
             y_test = net.predict(test_inputs)
             y_proba = net.predict_proba(test_inputs)
             tss_test_score = skorch_utils.get_tss(test_labels, y_test)
             hss_test_score = skorch_utils.get_hss(test_labels, y_test)
-            # test_bss = brier_score_loss(y_prob=y_proba[:,1],
-            #                             y_true=test_labels)
-            wandb.log({'Test_TSS': tss_test_score})
+            test_bss = brier_score_loss(y_prob=y_proba[:,1],
+                                        y_true=test_labels)
+            wandb.log({'Test_TSS': tss_test_score, 'Test_BSS': test_bss})
             wandb.log({'Test_HSS': hss_test_score})
             print("Test TSS:" + str(tss_test_score))
             print("Test HSS:" + str(hss_test_score))

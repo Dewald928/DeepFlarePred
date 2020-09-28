@@ -2,9 +2,7 @@
 tag:
   desc: wandb tags
   value:
-    - Interpret
-    - Liu_Top20
-    - OCLR
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
@@ -22,7 +20,7 @@ optim:
   value: SGD
 n_features:
   desc: number of features to include (max 40)
-  value: 20
+  value: 40
 
 # Learning rate
 learning_rate:
@@ -98,7 +96,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 checkpoint:
   desc: should use network on best checkpoint?
   value: False
@@ -122,7 +120,7 @@ patience:
   value: 30
 training:
   desc: Trains models, else only tests
-  value: True
+  value: False
 model_name:
   dsec: The model used for evaluation (if training disabled, 1_100_65536_9e-2)
   value: dewald123/liu_pytorch_MLP/qyzfsefo
@@ -146,5 +144,5 @@ shuffle:
 # Interpretation
 interpret:
   desc: activate captum/SHAP attribution methods
-  value: True
+  value: False
 
