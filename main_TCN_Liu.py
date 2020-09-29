@@ -382,6 +382,10 @@ def init_project():
     return project, tags
 
 
+
+
+
+
 if __name__ == '__main__':
     project, tags = init_project()
     run = wandb.init(project=project, tags=tags)
@@ -893,7 +897,7 @@ if __name__ == '__main__':
                                                          cfg.seed))
         net.save_params(f_params=init_savename)
 
-        if not (cfg.cross_validation) and not (cfg.nested_cv):
+        if not (cfg.cross_validation) and not (cfg.nested_cv) and (cfg.training):
             net.fit(inputs, labels)
 
         # '''
@@ -953,16 +957,16 @@ if __name__ == '__main__':
             else:
                 pass
             y_test = net.predict(test_inputs)
-            y_proba = net.predict_proba(test_inputs)
             tss_test_score = skorch_utils.get_tss(test_labels, y_test)
             hss_test_score = skorch_utils.get_hss(test_labels, y_test)
-            # test_bss_loss = brier_score_loss(y_prob=y_proba[:,1],
-            #                             y_true=test_labels) # todo make this bss
             wandb.log({'Test_TSS': tss_test_score})
             wandb.log({'Test_HSS': hss_test_score})
             print("Test TSS:" + str(tss_test_score))
             print("Test HSS:" + str(hss_test_score))
 
+            # probabalistic eval
+            y_proba = net.predict_proba(test_inputs)
+            bss_analysis(test_labels, y_proba[:,1])
     # Save model to W&B
     torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
 
@@ -1084,5 +1088,4 @@ if __name__ == '__main__':
                              feature_names, start_feature)
 
     print('Finished')
-
 

@@ -23,13 +23,13 @@ import os
 
 # model already trained
 
-dump_path = '../saved/figures/dump/'
-filepath = '../Data/Liu/z_train/'
+dump_path = './saved/figures/dump/'
+filepath = './Data/Liu/z_train/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
 # Get flux and dates
-df = pd.concat([df_train], axis=0)
+df = pd.concat([df_test], axis=0)
 df['flux'] = df['flare'].apply(data_loader.flare_to_flux)
 df['date'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%dT%H:%M:%S.%fZ')
 df = df.sort_values(by=['NOAA', 'timestamp'])
@@ -41,7 +41,7 @@ m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
 
 # Predict probabilites
-y_proba = net.predict_proba(inputs)
+y_proba = net.predict_proba(test_inputs)
 df['prob'] = y_proba[:,1]
 
 
@@ -50,10 +50,12 @@ for i, noaa in enumerate(m5_flared_NOAA):
     print(noaa)
     df_ar = df[df['NOAA']==noaa]
     ax = df_ar.plot(x="date", y="prob", legend=False)
+    plt.ylabel('Probability')
     plt.ylim(0,1)
     ax2 = ax.twinx()
     df_ar.plot(x="date", y="flux", ax=ax2, color="r", legend=False)
     plt.yscale('log')
-    ax.figure.legend()
+    plt.ylabel('Flux')
+    ax.figure.legend(loc=4)
     plt.title(f'NOAA: {noaa}')
     plt.show()
