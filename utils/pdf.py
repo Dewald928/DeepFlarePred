@@ -5,6 +5,7 @@ import seaborn as sns
 import wandb
 from scipy.stats import norm
 from sklearn.calibration import calibration_curve, CalibratedClassifierCV
+from model import metric
 
 
 def plot_density_estimation(net, yhat, labels, dataset_name):
@@ -76,12 +77,13 @@ def plot_calibration_curve(est, name, X_valid, y_valid, X_test, y_test,
     fraction_of_positives, mean_predicted_value = calibration_curve(y_test,
                                                                     y_pred[:,
                                                                     1],
-                                                                    n_bins=20, normalize=True)
+                                                                    n_bins=20,
+                                                                    normalize=True)
     ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
              label="%s" % (name))
 
-    ax2.hist(y_pred[:, 1], range=(0, 1), bins=20, label=name,
-             histtype="step", lw=2)
+    ax2.hist(y_pred[:, 1], range=(0, 1), bins=20, label=name, histtype="step",
+             lw=2)
     ax1.set_ylabel("Fraction of positives")
     ax1.set_ylim([-0.05, 1.05])
     ax1.legend(loc="lower right")
@@ -93,5 +95,28 @@ def plot_calibration_curve(est, name, X_valid, y_valid, X_test, y_test,
 
     plt.tight_layout()
     fig.show()
-    wandb.log(
-        {name + ' Probability Calibration Curve': wandb.Image(fig)})
+    wandb.log({name + ' Probability Calibration Curve': wandb.Image(fig)})
+
+
+def plot_ssp(yprob, ytrue, ax):
+    tss, hss, thresholds = metric.get_metrics_threshold(yprob, ytrue)[8:11]
+    ax.plot(thresholds, tss, label='TSS')
+    ax.plot(thresholds, hss, label='HSS')
+    ax.legend()
+    ax.set(xlabel='Threshold Probability')
+    ax.set(ylabel='TSS, HSS')
+    ax.set(xlim=(0,1))
+    ax.set(ylim=(0,1))
+    print('yay queen')
+
+
+def plot_eval_graphs(yprob, ytrue, dataset='Test'):
+    # plot Reliability diagram
+    # plot ROC
+    # plot thresholded metrics (SSP) skill score profiles
+    fig, axes = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
+    plot_ssp(yprob, ytrue, axes[0])
+
+    plt.tight_layout()
+    fig.show()
+    print('Yay plots')

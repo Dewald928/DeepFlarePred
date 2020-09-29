@@ -16,6 +16,7 @@ from sklearn.metrics import brier_score_loss
 from matplotlib import pyplot as plt
 
 from utils import confusion_matrix_plot
+import torch.nn.functional as nnf
 
 
 def calculate_metrics(confusion_matrix, nclass):
@@ -188,10 +189,10 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
         return precision, recall, f1, pr_auc
 
 
-def get_metrics_threshold(yhat, ytrue):
-    probs = yhat[:, 1]
+def get_metrics_threshold(yprob, ytrue):
+    probs = yprob[:, 1]
     # define thresholds
-    thresholds = np.arange(-3, 3, 0.005)
+    thresholds = np.arange(0, 1, 0.02)
     N = len(thresholds)
     tn = [None] * N
     fp = [None] * N
@@ -215,8 +216,7 @@ def get_metrics_threshold(yhat, ytrue):
     # get best threshold
     ix = np.argmax(tss)
     print('Best Threshold=%f, TSS=%.3f' % (thresholds[ix], tss[ix]))
-    return recall[ix], precision[ix], accuracy[ix], bacc[ix], tss[ix], hss[
-        ix], tp[ix], fn[ix], fp[ix], tn[ix], thresholds[ix]
+    return [tp, fn, fp, tn, recall, precision, accuracy, bacc, tss, hss, thresholds]
 
 
 # calculate the brier skill score
@@ -268,6 +268,11 @@ def bss_analysis(y, y_proba):
     # actual bss
     bss = brier_skill_score(y, y_proba, brier_ref)
     print('Actual: BSS=%.4f' % (bss))
+
+
+def get_proba(outputs):
+    y_proba = nnf.softmax(outputs,dim=1).cpu().detach().numpy()
+    return y_proba
 
 
 
