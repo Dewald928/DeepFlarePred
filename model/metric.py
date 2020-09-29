@@ -69,10 +69,9 @@ def get_roc(model, yhat, ytrue, device, dataset='Test'):
     with torch.no_grad():
         # calculate roc curve
         # retrieve just the probabilities for the positive class
-        pos_probs = yhat[:, 1]
+        pos_probs = yhat
         # get predictied labels
-        _, ypred = torch.max(torch.tensor(yhat), 1)
-        ypred = ypred.cpu().detach().numpy()
+        ypred = to_labels(pos_probs)
 
         # calculate roc curve for model
         fpr, tpr, thresholds = roc_curve(ytrue, pos_probs)
@@ -119,7 +118,7 @@ def plot_confusion_matrix(yhat, ytrue, dataset, threshold=0.5):
     ytrue = ytrue.cpu().detach().numpy()
     # retrieve just the probabilities for the positive class
     # get predicted labels
-    ypred = to_labels(yhat[:, 1], threshold)
+    ypred = to_labels(yhat, threshold)
     # ypred = ypred.cpu().detach().numpy()
     fig_cm = confusion_matrix_plot.plot_confusion_matrix_from_data(ytrue,
                                                                    ypred,
@@ -129,19 +128,18 @@ def plot_confusion_matrix(yhat, ytrue, dataset, threshold=0.5):
 
 
 # apply threshold to positive probabilities to create labels
-def to_labels(pos_probs, threshold):
+def to_labels(pos_probs, threshold=0.5):
     return (pos_probs >= threshold).astype('int')
 
 
-def get_pr_auc(yhat, ytrue):
+def get_pr_auc(yprob, ytrue):
     ytrue = ytrue.cpu().detach().numpy()
     # retrieve just the probabilities for the positive class
-    pos_probs = yhat[:, 1]
     # get predicted labels
-    _, ypred = torch.max(torch.tensor(yhat), 1)
-    ypred = ypred.cpu().detach().numpy()
+    ypred = to_labels(yprob)
+    # ypred = ypred.cpu().detach().numpy()
     # predict class values
-    precision, recall, thresholds = precision_recall_curve(ytrue, pos_probs)
+    precision, recall, thresholds = precision_recall_curve(ytrue, yprob)
     f1, pr_auc = f1_score(ytrue, ypred), auc(recall, precision)
 
     return precision, recall, f1, pr_auc, thresholds
@@ -190,7 +188,6 @@ def plot_precision_recall(model, yhat, ytrue, dataset='Test'):
 
 
 def get_metrics_threshold(yprob, ytrue):
-    probs = yprob[:, 1]
     # define thresholds
     thresholds = np.arange(0, 1, 0.02)
     N = len(thresholds)
@@ -207,7 +204,7 @@ def get_metrics_threshold(yprob, ytrue):
     mcc = [None] * N
 
     # evaluate each threshold
-    cm = [sklearn.metrics.confusion_matrix(ytrue, to_labels(probs, t))
+    cm = [sklearn.metrics.confusion_matrix(ytrue, to_labels(yprob, t))
           for t in thresholds]
     for p in range(len(thresholds)):
         recall[p], precision[p], accuracy[p], bacc[p], tss[p], hss[p], tp[p], \
@@ -216,7 +213,8 @@ def get_metrics_threshold(yprob, ytrue):
     # get best threshold
     ix = np.argmax(tss)
     print('Best Threshold=%f, TSS=%.3f' % (thresholds[ix], tss[ix]))
-    return [tp, fn, fp, tn, recall, precision, accuracy, bacc, tss, hss, thresholds]
+    return tp, fn, fp, tn, recall, precision, accuracy, bacc, tss, hss, \
+           thresholds, thresholds[ix]
 
 
 # calculate the brier skill score
@@ -227,7 +225,7 @@ def brier_skill_score(y, yhat, brier_ref):
     return 1.0 - (bs / brier_ref)
 
 
-def bss_analysis(y, y_proba):
+def bss_analysis(y_proba, y):
     # no skill prediction 0
     probabilities = [0.0 for _ in range(len(y))]
     avg_brier = brier_score_loss(y, probabilities)
@@ -268,6 +266,7 @@ def bss_analysis(y, y_proba):
     # actual bss
     bss = brier_skill_score(y, y_proba, brier_ref)
     print('Actual: BSS=%.4f' % (bss))
+    return bss
 
 
 def get_proba(outputs):
