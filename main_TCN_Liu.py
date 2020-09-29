@@ -979,7 +979,7 @@ if __name__ == '__main__':
         yprob = metric.get_proba(model(X_train_data_tensor.to(device)))[:,1]
 
         pdf.plot_eval_graphs(yprob, y_train_tr_tensor.numpy(), 'Train')
-        f1, pr_auc = metric.plot_precision_recall(model, yprob, y_train_tr_tensor, 'Train')[2:4]
+        metric.plot_precision_recall(model, yprob, y_train_tr_tensor, 'Train')
         metric.plot_confusion_matrix(yprob, y_train_tr_tensor, 'Train')
         roc_auc = metric.get_roc(model, yprob, y_train_tr_tensor, device, 'Train')
         # tss, hss, thresholds = metric.get_metrics_threshold(yprob,y_train_tr_tensor)[8:11]
@@ -990,8 +990,8 @@ if __name__ == '__main__':
         # yprob = infer_model(model, device, valid_loader)
         yprob = metric.get_proba(model(X_valid_data_tensor.to(device)))[:,1]
 
-        pdf.plot_eval_graphs(yprob, y_train_tr_tensor.numpy(), 'Validation')
-        f1, pr_auc = metric.plot_precision_recall(model, yprob, y_valid_tr_tensor, 'Validation')[2:4]
+        pdf.plot_eval_graphs(yprob, y_valid_tr_tensor.numpy(), 'Validation')
+        metric.plot_precision_recall(model, yprob, y_valid_tr_tensor, 'Validation')
         metric.plot_confusion_matrix(yprob, y_valid_tr_tensor, 'Validation')
         roc_auc = metric.get_roc(model, yprob, y_valid_tr_tensor, device, 'Validation')
         th_norm = pdf.plot_density_estimation(model, yprob, y_valid_tr_tensor,'Validation')
@@ -1002,21 +1002,18 @@ if __name__ == '__main__':
         # yprob = infer_model(model, device, test_loader)
         yprob = metric.get_proba(model(X_test_data_tensor.to(device)))[:,1]
 
-        pdf.plot_eval_graphs(yprob, y_train_tr_tensor.numpy(), 'Train')
+        pdf.plot_eval_graphs(yprob, y_test_tr_tensor.numpy(), 'Test')
         cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,metric.to_labels(yprob, th))
         tss_th = metric.calculate_metrics(cm, 2)[4]
-        f1, pr_auc = metric.plot_precision_recall(model, yprob, y_test_tr_tensor, 'Test')[ 2:4]
+        metric.plot_precision_recall(model, yprob, y_test_tr_tensor, 'Test')
         metric.plot_confusion_matrix(yprob, y_test_tr_tensor, 'Test')
         tss = metric.get_metrics_threshold(yprob, y_test_tr_tensor)[8]
         roc_auc = metric.get_roc(model, yprob, y_test_tr_tensor, device, 'Test')
+        th_norm_test = pdf.plot_density_estimation(model, yprob, y_test_tr_tensor, 'Test')
 
         print(
             'Test TSS from validation threshold ({:0.3f}): {:0.3f}'.format(th, tss_th))
         wandb.log({'Test_TSS_Th': tss_th})
-
-        th_norm_test = pdf.plot_density_estimation(model, yprob, y_test_tr_tensor, 'Test')
-
-        pdf.plot_calibration_curve(model, 'Test', [], [], test_loader,y_test_tr_tensor, yprob)
 
 
 
