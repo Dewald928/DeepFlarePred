@@ -56,16 +56,15 @@ def plot_calibration_curve(yprob, ytrue, ax, name='Test'):
 
     ax.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
 
-    # todo predict proba, brier skill score?
     # fraction of positives
     fop, mean_predicted_value = calibration_curve(ytrue, yprob, n_bins=20,
                                                   normalize=True)
     bss = metric.bss_analysis(yprob, ytrue)
-    ax.plot(mean_predicted_value, fop, "s-", label="%s (BSS: %1.3f)" % (name,
-                                                                     bss))
+    ax.plot(mean_predicted_value, fop, "s-",
+            label="%s (BSS: %1.1f)" % (name, bss), zorder=1)
 
     ax2.hist(yprob, range=(0, 1), bins=20, label=name, histtype="step",
-             lw=2, color='r')
+             lw=2, color='r', zorder=0)
     ax.set_ylabel("Fraction of positives")
     ax.set_xlabel("Probability")
     ax.set_ylim([-0.05, 1.05])
@@ -128,4 +127,5 @@ def plot_eval_graphs(yprob, ytrue, dataset='Test'):
     plot_roc_curve(yprob, ytrue, axes[1])
     plot_calibration_curve(yprob, ytrue, axes[2], dataset)
     plt.tight_layout()
+    wandb.log({dataset+' Evaluation Plot': wandb.Image(fig)})
     fig.show()

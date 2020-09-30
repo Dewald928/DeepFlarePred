@@ -2,7 +2,8 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - CE
+    - OCLR
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
@@ -25,7 +26,7 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.00001
+  value: 0.001
 lr_scheduler:
   desc: if scheduler is on
   value: True
@@ -105,7 +106,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 11
+  value: 12
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -122,7 +123,7 @@ training:
   desc: Trains models, else only tests
   value: False
 model_name:
-  dsec: The model used for evaluation (if training disabled, 1_100_65536_9e-2)
+  desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2)
   value: dewald123/liu_pytorch_MLP/qyzfsefo
 num_workers:
   desc: number of gpu workers

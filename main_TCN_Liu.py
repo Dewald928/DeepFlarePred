@@ -967,13 +967,7 @@ if __name__ == '__main__':
     Model interpretation
     '''
     if cfg.evaluation:
-        # probabalistic eval
-        y_proba = metric.get_proba(model(X_train_data_tensor.to(device)))[:,1]
-        bss = metric.bss_analysis(y_proba, y_train_tr_tensor.numpy())
 
-        '''
-        PR Curves
-        '''
         # Train
         # yprob = infer_model(model, device, train_loader)
         yprob = metric.get_proba(model(X_train_data_tensor.to(device)))[:,1]
@@ -982,7 +976,7 @@ if __name__ == '__main__':
         metric.plot_precision_recall(model, yprob, y_train_tr_tensor, 'Train')
         metric.plot_confusion_matrix(yprob, y_train_tr_tensor, 'Train')
         roc_auc = metric.get_roc(model, yprob, y_train_tr_tensor, device, 'Train')
-        # tss, hss, thresholds = metric.get_metrics_threshold(yprob,y_train_tr_tensor)[8:11]
+        th = metric.get_metrics_threshold(yprob,y_train_tr_tensor)[11]
         pdf.plot_density_estimation(model, yprob, y_train_tr_tensor, 'Train')
 
 

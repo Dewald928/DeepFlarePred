@@ -1,8 +1,13 @@
+'''
+Get flux and probability plots over time for each AR
+'''
+
 import wandb
 import matplotlib.pyplot as plt
 import numpy as np
 import skorch
 from model import mlp
+from model import metric
 import torch
 from data_loader import data_loader
 import pandas as pd
@@ -24,6 +29,8 @@ import os
 # model already trained
 
 dump_path = './saved/figures/dump/'
+if not os.path.exists(dump_path):
+    os.makedirs(dump_path)
 filepath = './Data/Liu/z_train/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
@@ -41,7 +48,7 @@ m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
 
 # Predict probabilites
-y_proba = net.predict_proba(test_inputs)
+y_proba = metric.get_proba(model(X_test_data_tensor.to(device)))
 df['prob'] = y_proba[:,1]
 
 
@@ -58,4 +65,5 @@ for i, noaa in enumerate(m5_flared_NOAA):
     plt.ylabel('Flux')
     ax.figure.legend(loc=4)
     plt.title(f'NOAA: {noaa}')
+    plt.savefig(dump_path + f"NOAA_{noaa}.png")
     plt.show()
