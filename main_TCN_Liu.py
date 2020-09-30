@@ -137,7 +137,8 @@ def train(model, device, train_loader, optimizer, epoch, criterion, cfg,
                "Training_HSS": hss, "Training_BACC": bacc,
                "Training_Precision": precision, "Training_Recall": recall,
                "Training_Loss": loss_epoch, "Training_F1": f1,
-               "Training_PR_AUC": pr_auc, 'Train_MCC': mcc}, step=epoch)
+               "Training_PR_AUC": pr_auc, 'Train_MCC': mcc, 'Epoch':epoch},
+              step=epoch)
 
     return recall, precision, accuracy, bacc, hss, tss
 
@@ -182,7 +183,8 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
                "Validation_HSS": hss, "Validation_BACC": bacc,
                "Validation_Precision": precision, "Validation_Recall": recall,
                "Validation_Loss": valid_loss, "Validation_F1": f1,
-               "Validation_PR_AUC": pr_auc, "Validation_MCC": mcc}, step=epoch)
+               "Validation_PR_AUC": pr_auc, "Validation_MCC": mcc,'Epoch':epoch},
+              step=epoch)
 
     # checkpoint on best metric
     cp = ''
@@ -251,7 +253,7 @@ def test(model, device, test_loader, criterion, epoch, nclass=2):
     wandb.log({"Test_Accuracy_curve": accuracy, "Test_TSS_curve": tss,
                "Test_HSS_curve": hss, "Test_BACC_curve": bacc,
                "Test_Precision_curve": precision, "Test_Recall_curve": recall,
-               "Test_Loss_curve": test_loss, "Test_MCC_curve": mcc})
+               "Test_Loss_curve": test_loss, "Test_MCC_curve": mcc,'Epoch':epoch})
 
     return recall, precision, accuracy, bacc, hss, tss
 
@@ -443,7 +445,11 @@ if __name__ == '__main__':
                             'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
                             'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
                             'Bdec', 'Bhis1d'] # 32
-    feature_list = None #
+    all = sharps+lorentz+history_features
+    bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
+                    'Bhis1d']
+    # feature_list = [x for x in all if x not in bad_features] #
+    feature_list = None
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -1043,9 +1049,11 @@ if __name__ == '__main__':
             input_df = torch.tensor(input_df).float().permute(0, 2, 1)
 
         # interpret using captum
-        [attr_sal, attr_ig, delta_ig, attr_dl, delta_dl, attr_ixg,
-         attr_gbp] = interpreter.interpret_model(model, device, input_df,
-                                                 backgroud_df)
+        [attr_sal, attr_ig, delta_ig, attr_dl, delta_dl, attr_ixg, attr_gbp,
+         attr_occ, attr_abl, attr_shap] = interpreter.interpret_model(model,
+                                                                      device,
+                                                                      input_df,
+                                                                      backgroud_df)
 
         # visualize interpretation
         interpreter.visualize_importance(np.array(
@@ -1063,6 +1071,15 @@ if __name__ == '__main__':
         interpreter.visualize_importance(np.array(
             feature_names[start_feature:start_feature + cfg.n_features]),
             attr_gbp, cfg.n_features, title="Guided Backprop")
+        interpreter.visualize_importance(np.array(
+            feature_names[start_feature:start_feature + cfg.n_features]),
+            attr_occ, cfg.n_features, title="Occlusion")
+        interpreter.visualize_importance(np.array(
+            feature_names[start_feature:start_feature + cfg.n_features]),
+            attr_abl, cfg.n_features, title="Ablation")
+        interpreter.visualize_importance(np.array(
+            feature_names[start_feature:start_feature + cfg.n_features]),
+            attr_shap, cfg.n_features, title="Shapley Value Sampling")
 
         '''SHAP'''
         plt.close('all')

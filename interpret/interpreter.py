@@ -28,6 +28,9 @@ def interpret_model(model, device, input_df, backgroud_df):
     dl = DeepLift(model)
     input_x_gradient = InputXGradient(model)
     gbp = GuidedBackprop(model)
+    occ = Occlusion(model)
+    abl = FeatureAblation(model)
+    svs = ShapleyValueSampling(model)
 
 
     attr_sal = sal.attribute(input_tensor, target=1)
@@ -37,8 +40,13 @@ def interpret_model(model, device, input_df, backgroud_df):
                                      return_convergence_delta=True)
     attr_ixg = input_x_gradient.attribute(input_tensor, target=1)
     attr_gbp = gbp.attribute(input_tensor, target=1)
+    attr_occ = occ.attribute(input_tensor, target=1,
+                                 sliding_window_shapes=(1,))
+    attr_abl = abl.attribute(input_tensor, target=1)
+    attr_shap = svs.attribute(input_tensor, target=1)
 
-    return [attr_sal, attr_ig, delta_ig, attr_dl, delta_dl, attr_ixg, attr_gbp]
+    return [attr_sal, attr_ig, delta_ig, attr_dl, delta_dl, attr_ixg,
+            attr_gbp, attr_occ, attr_abl, attr_shap]
 
 
 # Helper method to print importance and visualize distribution
