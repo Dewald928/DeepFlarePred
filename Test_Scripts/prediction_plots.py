@@ -57,11 +57,20 @@ for i, noaa in enumerate(m5_flared_NOAA):
     print(noaa)
     df_ar = df[df['NOAA']==noaa]
     ax = df_ar.plot(x="date", y="prob", legend=False)
+    ax.axvspan(xmin=df_ar['date'].iloc[1], xmax=df_ar['date'].iloc[-1],
+               ymin=0.5,
+               ymax=1, alpha=0.2,
+               color='r')
     plt.ylabel('Probability')
     plt.ylim(0,1)
     ax2 = ax.twinx()
     df_ar.plot(x="date", y="flux", ax=ax2, color="r", legend=False)
+    ax2.axvspan(xmin=df_ar['date'].iloc[1], xmax=df_ar['date'].iloc[-1],
+               ymin=0.68,
+               ymax=1, alpha=0.2,
+               color='g')
     plt.yscale('log')
+    plt.ylim(1e-7, 1e-3)
     plt.ylabel('Flux')
     ax.figure.legend(loc=4)
     plt.title(f'NOAA: {noaa}')
