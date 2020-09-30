@@ -94,7 +94,7 @@ def find_lr(model, optimizer, criterion, device, train_loader, valid_loader,
                        'train_lr_loss': trainy_loss[i],
                        'train_lr_step': trainx[i], 'valid_lr_TSS': valy_TSS[i],
                        'valid_lr_loss': valy_loss[i],
-                       'valid_lr_step': valx[i]}, step=i)
+                       'valid_lr_step': valx[i]})
 
     wandb.log({'LR_Finder_img': wandb.Image(fig)})
     plt.show()

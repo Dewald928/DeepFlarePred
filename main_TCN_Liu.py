@@ -996,10 +996,10 @@ if __name__ == '__main__':
         # yprob = infer_model(model, device, test_loader)
         yprob = metric.get_proba(model(X_test_data_tensor.to(device)))[:,1]
 
+        metric.plot_precision_recall(model, yprob, y_test_tr_tensor, 'Test')
         pdf.plot_eval_graphs(yprob, y_test_tr_tensor.numpy(), 'Test')
         cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,metric.to_labels(yprob, th))
         tss_th = metric.calculate_metrics(cm, 2)[4]
-        metric.plot_precision_recall(model, yprob, y_test_tr_tensor, 'Test')
         metric.plot_confusion_matrix(yprob, y_test_tr_tensor, 'Test')
         tss = metric.get_metrics_threshold(yprob, y_test_tr_tensor)[8]
         roc_auc = metric.get_roc(model, yprob, y_test_tr_tensor, device, 'Test')

@@ -245,7 +245,7 @@ def bss_analysis(y_proba, y):
     avg_brier = brier_score_loss(y, y_proba)
     # print('Actual: Brier Score=%.4f' % (avg_brier))
     # calculate reference
-    probabilities = [0.007 for _ in range(len(y))]
+    probabilities = [0.009 for _ in range(len(y))]
     brier_ref = brier_score_loss(y, probabilities)
     # print('Reference: Brier Score=%.4f' % (brier_ref))
     # no skill prediction 0

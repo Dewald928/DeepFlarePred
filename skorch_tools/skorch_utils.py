@@ -86,8 +86,8 @@ class LoggingCallback(Callback):
     # def initialize(self):
     #     wandb.log(step=0)
 
-    def on_train_begin(self, net, X=None, y=None, **kwargs):
-        wandb.log(step=0)
+    # def on_train_begin(self, net, X=None, y=None, **kwargs):
+    #     wandb.log(step=0)
 
     def on_train_end(self, net, X=None, y=None, **kwargs):
         h = net.history
@@ -108,7 +108,8 @@ class LoggingCallback(Callback):
                    'Validation_HSS': h['valid_hss'],
                    'Validation_Loss': h['valid_loss'],
                    # 'Validation_PR_AUC': h['valid_pr_auc'],
-                   'Test_TSS_curve': tss_test_score}, step=h['epoch'])
+                   'Test_TSS_curve': tss_test_score,
+                   'Epoch': h['epoch']})
 
 
 class LoadBestCP(Callback):

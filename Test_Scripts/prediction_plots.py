@@ -62,6 +62,7 @@ for i, noaa in enumerate(m5_flared_NOAA):
                ymax=1, alpha=0.2,
                color='r')
     plt.ylabel('Probability')
+    plt.xlabel('Date')
     plt.ylim(0,1)
     ax2 = ax.twinx()
     df_ar.plot(x="date", y="flux", ax=ax2, color="r", legend=False)
