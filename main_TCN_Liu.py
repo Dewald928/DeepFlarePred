@@ -774,10 +774,12 @@ if __name__ == '__main__':
         combined_labels = np.array([labels for _, labels in iter(ds)])
 
         # Metrics + Callbacks
-        valid_tss_cb = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
-                                                     needs_proba=False),
-                                 lower_is_better=False, name='valid_tss',
-                                 use_caching=True)
+        valid_tss_cb = EpochScoring(
+            scoring=make_scorer(skorch_utils.get_tss, needs_proba=False),
+            lower_is_better=False, name='valid_tss', use_caching=True)
+        valid_bss_cb = EpochScoring(
+            scoring=skorch_utils.get_bss,
+            lower_is_better=False, name='valid_bss', use_caching=False)
         valid_pr_auc_cb = EpochScoring(
             scoring=make_scorer(skorch_utils.get_pr_auc, needs_proba=False),
             lower_is_better=False, name='valid_pr_auc', use_caching=True)
@@ -876,7 +878,7 @@ if __name__ == '__main__':
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss_cb, valid_tss_cb,
-                                             valid_hss_cb,
+                                             valid_hss_cb, valid_bss_cb,
                                              earlystop, checkpoint,
                                              # load_state,
                                              # reload_at_end,

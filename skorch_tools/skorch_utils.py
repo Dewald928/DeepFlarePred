@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import auc
 from skorch.callbacks import *
+from model import metric
 
 
 def get_metric(y_true, y_pred, nclass, metric_name='tss'):
@@ -136,3 +137,9 @@ class MyCheckpoint(Checkpoint):
         files_dict = super().get_formatted_files(*args, **kwargs)
         # add code to modify the values of the dict using "counter"
         return files_dict
+
+
+def get_bss(net, ds, y=None):
+    y_prob = net.predict_proba(ds)[:,1]
+    bss = metric.get_bss(y_prob,y)
+    return bss
