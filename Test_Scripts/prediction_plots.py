@@ -48,6 +48,15 @@ m5_flares = df[df['label'].str.match('Positive')]
 m5_flared_NOAA = m5_flares['NOAA'].unique()
 m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
+# m_flares = df[df['flare'].str.contains('M')]
+# m_flares_NOAA = m_flares['NOAA'].unique()
+# m_flares_data = df[df['NOAA'].isin(m_flares_NOAA)]
+#
+# x_flares = df[df['flare'].str.contains('X')]
+# x_flares_NOAA = x_flares['NOAA'].unique()
+# x_flares_data = df[df['NOAA'].isin(x_flares_NOAA)]
+
+
 # Predict probabilites
 y_proba = metric.get_proba(model(X_test_data_tensor.to(device)))
 y_pred = metric.to_labels(y_proba)

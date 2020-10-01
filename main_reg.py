@@ -8,7 +8,7 @@ import yaml
 import sklearn
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from skorch import NeuralNetRegressor
 from skorch.dataset import Dataset
 from skorch.helper import predefined_split
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     cfg = wandb.config
 
     # initialize parameters
-    filepath = './Data/Liu/' + cfg.flare_label + '/'
+    filepath = './Data/' + cfg.dataset
     # n_features = 0
     if cfg.flare_label == 'M5':
         n_features = cfg.n_features  # 20 original
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     y_test = y_test.numpy()
 
     # normalize
-    scaler = MinMaxScaler()
+    scaler = StandardScaler()
     y_train = scaler.fit_transform(y_train)
     y_valid = scaler.transform(y_valid)
     y_test = scaler.transform(y_test)
@@ -180,6 +180,7 @@ if __name__ == '__main__':
                             name='train_r2', use_caching=True, on_train=True)
     train_mse = EpochScoring(scoring='neg_mean_squared_error', on_train=True,
                              lower_is_better=False)
+    checkpoint = Checkpoint(monitor='train_r2_best', dirname='./saved/models/')
 
     # Make model
     model = LSTM(lstm_input_size, h1, batch_size=cfg.batch_size,
@@ -189,7 +190,7 @@ if __name__ == '__main__':
                              max_epochs=cfg.epochs, criterion=nn.MSELoss,
                              batch_size=cfg.batch_size,
                              train_split=predefined_split(valid_ds),
-                             callbacks=[train_r2, valid_r2, train_mse],
+                             callbacks=[train_r2, valid_r2, train_mse, checkpoint],
                              device=device, warm_start=False)
 
     net.fit(X_train, y_train)
@@ -208,22 +209,22 @@ if __name__ == '__main__':
 
     # Plot prediction
     fig = plt.figure()
-    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_true)
+    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_true - y_train_pred_true, 'b-')
     plt.plot(
         np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
-        y_valid_true)
+        y_valid_true-y_valid_pred_true, 'g-')
     plt.plot(np.linspace(len(y_train) + len(y_valid),
                          len(y_train) + len(y_valid) + len(y_test),
-                         len(y_test)), y_test_true)
+                         len(y_test)), y_test_true-y_test_pred_true ,'y-')
 
-    plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_pred_true)
-    plt.plot(
-        np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
-        y_valid_pred_true)
-    plt.plot(np.linspace(len(y_train) + len(y_valid),
-                         len(y_train) + len(y_valid) + len(y_test),
-                         len(y_test)), y_test_pred_true)
+    # plt.plot(np.linspace(0, len(y_train), len(y_train)), y_train_pred_true)
+    # plt.plot(
+    #     np.linspace(len(y_train), len(y_train) + len(y_valid), len(y_valid)),
+    #     y_valid_pred_true)
+    # plt.plot(np.linspace(len(y_train) + len(y_valid),
+    #                      len(y_train) + len(y_valid) + len(y_test),
+    #                      len(y_test)), y_test_pred_true)
 
-    plt.yscale('log')
+    # plt.yscale('log')
     fig.show()
     wandb.log({'Regression_Plot': wandb.Image(fig)})

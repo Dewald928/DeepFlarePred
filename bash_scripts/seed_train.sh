@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 cd ../
 
-for lr_rangetest_iter in 50 100 200 ; do
-    python main_TCN_Liu.py \
-    --lr_rangetest_iter $lr_rangetest_iter
+for seed in 15 49 124 ; do
+    tmux new "conda activate DeepFlarePred;  read" ';' split 'python main_TCN_Liu.py \
+    --seed $seed'
 done
 

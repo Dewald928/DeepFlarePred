@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from data_loader import data_loader
+import torch.nn.functional as nnf
 
 listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
                         'Cdec', 'Chis', 'Edec', 'Mhis', 'Xmax1d', 'Mdec',
@@ -24,7 +25,7 @@ drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
 # filepath = './Data/Krynauw/'
 # filepath = './Data/Liu_train/'
-filepath = './Data/Liu/' + 'M5' + '/'
+filepath = './Data/Liu/z_train/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
@@ -353,14 +354,16 @@ Infer values
 '''
 x_flares_idx = df_test.index[df_test['NOAA'].isin(m5_flared_NOAA)].tolist()
 test_sample_x = test_loader.dataset.data[x_flares_idx].to(device)
-test_sample_x = test_loader.dataset.data[41957:42147].to(device)
+# test_sample_x = test_loader.dataset.data[41957:42147].to(device)
 inferred = model(test_sample_x)
 _, predicted = torch.max(inferred.data, 1)
+inferred = nnf.softmax(inferred, dim=1)
 df_inf = pd.DataFrame(inferred.cpu().detach().numpy()[:, 1], columns=list('1'))
-df_pred = pd.DataFrame(predicted.cpu().detach().numpy(), columns=list('p'))
+df_pred = pd.DataFrame(predicted.cpu().detach().numpy(), columns=list(
+    'p'))
 concattable = pd.concat(
     [df_pred.reset_index(drop=True), df_inf.reset_index(drop=True),
-     df_test.iloc[41957:42147].reset_index(drop=True)], sort=False,
+     df_test.loc[x_flares_idx,:].reset_index(drop=True)], sort=False,
     axis=1)
 ARs_classified = concattable[(concattable['p'] == 1) & (concattable['label']
                                                         == 'Positive')]

@@ -68,10 +68,10 @@ plot_2d_space(X, y, 'Imbalanced dataset (2 PCA components)')
 # plot_2d_space(X_rus, y_rus, 'Random under-sampling')
 
 # cluster centroids under sampling
-# cc = ClusterCentroids()
-# X_cc, y_cc = cc.fit_sample(X, y)
-#
-# plot_2d_space(X_cc, y_cc, 'Cluster Centroids under-sampling')
+cc = ClusterCentroids()
+X_cc, y_cc = cc.fit_sample(X, y)
+
+plot_2d_space(X_cc, y_cc, 'Cluster Centroids under-sampling')
 
 # Random over sampling
 ros = RandomOverSampler()
@@ -97,43 +97,43 @@ X_smt, y_smt = smt.fit_sample(X, y)
 plot_2d_space(X_smt, y_smt, 'SMOTE + Tomek links')
 plt.show()
 # inverse pca?
-# X_inv = pca.inverse_transform(X_cc)
+X_inv = pca.inverse_transform(X_cc)
+
+# Make new dataset
+df_X = pd.DataFrame(data=X_inv, columns=df_train.iloc[:, 5:].columns)
+onehot = LabelBinarizer()
+y = onehot.fit_transform(y_cc)
+df_y = pd.DataFrame(y, columns=['label'])
+df_train_sampled = pd.concat([df_y, df_X], axis=1)
+
+# '''Only use samples of ARs that flare'''
+# m5_flares = df_train[df_train['label'].str.match('Positive')]
+# m5_flared_NOAA = m5_flares['NOAA'].unique()
+# m5_flares_data = df_train[df_train['NOAA'].isin(m5_flared_NOAA)]
+# not_m5_data = df_train[~df_train['NOAA'].isin(m5_flared_NOAA)]
+# not_m5_data.loc[:, 'label'] = '<M5'
+# m5_flares_data.loc[m5_flares_data['label'] == 'Negative','label'] = '>M5, ' \
+#                                                                     '>24h ' \
+#                                                                     'before'
+# m5_flares_data.loc[m5_flares_data['label'] == 'Positive','label'] = '>M5, ' \
+#                                                                     '0-24h ' \
+#                                                                     'before'
 #
-# # Make new dataset
-# df_X = pd.DataFrame(data=X_inv, columns=df_train.iloc[:, 5:].columns)
-# onehot = LabelBinarizer()
-# y = onehot.fit_transform(y_cc)
-# df_y = pd.DataFrame(y, columns=['label'])
-# df_train_sampled = pd.concat([df_y, df_X], axis=1)
+# df = pd.concat([not_m5_data, m5_flares_data])
+#
+# # todo doen pca van die ook
+# pca = PCA(n_components=2)
+# X = pca.fit_transform(df.iloc[:, 5:])
+# y = df['label']
+#
+# fig = plt.figure(figsize=(16,10))
+# plot_2d_space(X, y, 'PCA of ARs')
+# plt.savefig(drop_path + 'M5_PCA.png')
+# plt.show()
+#
+# df_train_sampled = m5_flares_data
 
-'''Only use samples of ARs that flare'''
-m5_flares = df_train[df_train['label'].str.match('Positive')]
-m5_flared_NOAA = m5_flares['NOAA'].unique()
-m5_flares_data = df_train[df_train['NOAA'].isin(m5_flared_NOAA)]
-not_m5_data = df_train[~df_train['NOAA'].isin(m5_flared_NOAA)]
-not_m5_data.loc[:, 'label'] = '<M5'
-m5_flares_data.loc[m5_flares_data['label'] == 'Negative','label'] = '>M5, ' \
-                                                                    '>24h ' \
-                                                                    'before'
-m5_flares_data.loc[m5_flares_data['label'] == 'Positive','label'] = '>M5, ' \
-                                                                    '0-24h ' \
-                                                                    'before'
-
-df = pd.concat([not_m5_data, m5_flares_data])
-
-# todo doen pca van die ook
-pca = PCA(n_components=2)
-X = pca.fit_transform(df.iloc[:, 5:])
-y = df['label']
-
-fig = plt.figure(figsize=(16,10))
-plot_2d_space(X, y, 'PCA of ARs')
-plt.savefig(drop_path + 'M5_PCA.png')
-plt.show()
-
-df_train_sampled = m5_flares_data
-
-new_path = '../Data/Liu/M5_only/'
+new_path = '../Data/Sampled/'
 if not os.path.exists(new_path):
     os.makedirs(new_path)
 df_train_sampled.to_csv(new_path + 'normalized_training.csv', index=False)
