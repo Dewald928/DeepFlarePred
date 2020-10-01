@@ -16,8 +16,11 @@ def interpret_model(model, device, input_df, backgroud_df):
     print("\n Interpreting Model...")
 
     input_tensor = torch.tensor(input_df).float()
-    background = torch.tensor(backgroud_df).float()
+    background = torch.tensor(backgroud_df).float() #todo get larger #baseline
     input_tensor.requires_grad = True
+    # l0 = background.shape[0]
+    # l1 = input_tensor.shape[0]
+    # input_tensor = input_tensor[l1-l0:,:]
     model.eval()
 
     model = model.to('cpu')
@@ -29,9 +32,8 @@ def interpret_model(model, device, input_df, backgroud_df):
     input_x_gradient = InputXGradient(model)
     gbp = GuidedBackprop(model)
     occ = Occlusion(model)
-    abl = FeatureAblation(model)
+    # abl = FeatureAblation(model)
     svs = ShapleyValueSampling(model)
-
 
     attr_sal = sal.attribute(input_tensor, target=1)
     attr_ig, delta_ig = ig.attribute(input_tensor, target=1,
@@ -41,32 +43,31 @@ def interpret_model(model, device, input_df, backgroud_df):
     attr_ixg = input_x_gradient.attribute(input_tensor, target=1)
     attr_gbp = gbp.attribute(input_tensor, target=1)
     attr_occ = occ.attribute(input_tensor, target=1,
-                                 sliding_window_shapes=(1,))
-    attr_abl = abl.attribute(input_tensor, target=1)
+                             sliding_window_shapes=(1,))
+    # attr_abl = abl.attribute(input_tensor, target=1)
     attr_shap = svs.attribute(input_tensor, target=1)
 
-    return [attr_sal, attr_ig, delta_ig, attr_dl, delta_dl, attr_ixg,
-            attr_gbp, attr_occ, attr_abl, attr_shap]
+    return [attr_sal, attr_ig, attr_dl, attr_ixg, attr_gbp, attr_occ,
+            attr_shap]
 
 
 # Helper method to print importance and visualize distribution
 def visualize_importance(feature_names, attr, n_features,
                          title="Average Feature Importance", plot=True):
-
     importance_avg = np.mean(attr.detach().numpy(), axis=0)
     importance_std = np.std(attr.detach().numpy(), axis=0)
     if importance_avg.shape.__len__() == 1:  # seq len 1 reshape
         importance_avg = np.reshape(importance_avg, (-1, 1))
         importance_std = np.reshape(importance_std, (-1, 1))
-    importance_avg = importance_avg[:,-1] if importance_avg.shape[1] > 0 else importance_avg
-    importance_std = importance_std[:,-1] if importance_std.shape[1] > 0 else importance_std
+    importance_avg = importance_avg[:, -1] if importance_avg.shape[
+                                                  1] > 0 else importance_avg
+    importance_std = importance_std[:, -1] if importance_std.shape[
+                                                  1] > 0 else importance_std
 
     x_pos = (np.arange(len(feature_names)))
     if plot:
         fig = plt.figure(figsize=(8, 4))
-        plt.bar(x_pos, importance_avg,
-                yerr=importance_std,
-                align='center')
+        plt.bar(x_pos, importance_avg, yerr=importance_std, align='center')
         plt.xticks(x_pos, feature_names, rotation='vertical')
         plt.xlabel('Features')
         plt.ylabel('Importance')
@@ -76,8 +77,8 @@ def visualize_importance(feature_names, attr, n_features,
         wandb.log({f"Feature Importance: {title}": wandb.Image(fig)})
 
         # plot ranked
-        df_sorted = pd.DataFrame({'Features': feature_names,
-                                  "Importances": importance_avg})
+        df_sorted = pd.DataFrame(
+            {'Features': feature_names, "Importances": importance_avg})
         df_sorted = df_sorted.sort_values('Importances', ascending=False)
         fig_sorted = df_sorted.plot(kind='bar', y='Importances', x='Features',
                                     title=title, figsize=(8, 4),
@@ -85,8 +86,48 @@ def visualize_importance(feature_names, attr, n_features,
         plt.ylabel('Importance')
         plt.tight_layout()
         plt.show()
-        wandb.log({f"Sorted Feature Importance: {title}": wandb.Image(
-            fig_sorted)})
+        wandb.log(
+            {f"Sorted Feature Importance: {title}": wandb.Image(fig_sorted)})
+
+
+def plot_all_attr(attrs_list, feature_list, attr_name_list):
+    fig, axes = plt.subplots(8, 5, figsize=(20, 20), sharex=True, sharey=True)
+    axes = axes.reshape(-1)
+    for i, feature in enumerate(feature_list):
+        axes[i].set(title=feature)
+        for j, attr in enumerate(attrs_list):
+            # print(attr.shape)
+            importance_avg = np.mean(attr[:,i].detach().numpy(), axis=0)
+            importance_std = np.std(attr[:,i].detach().numpy(), axis=0)
+            # if importance_avg.shape.__len__() == 1:  # seq len 1 reshape
+            #     importance_avg = np.reshape(importance_avg, (-1, 1))
+            #     importance_std = np.reshape(importance_std, (-1, 1))
+            # importance_avg = importance_avg[:, -1] if importance_avg.shape[1] > 0 else importance_avg
+            # importance_std = importance_std[:, -1] if importance_std.shape[ 1] > 0 else importance_std
+
+            axes[i].barh(attr_name_list[j], importance_avg,
+                         xerr=importance_std,
+                         align='center', label=attr_name_list[j])
+        # plt.tight_layout()
+    # plt.legend()
+    plt.show()
+    print('plots boiii!')
+
+
+def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
+    fig, axes = plt.subplots(8, 5, figsize=(20, 20), sharex=True)
+    axes = axes.reshape(-1)
+    for i, feature in enumerate(feature_list):
+        axes[i].set(title=feature)
+        for j, attr in enumerate(attrs_list):
+            # print(attr.shape)
+            importance = attr[:,i].detach().numpy()
+            axes[i].plot(importance, label=attr_name_list[j])
+            axes[i].axvspan(xmin=127,
+                            xmax=152, ymin=0, ymax=1,
+                            alpha=0.1, color='r')
+    plt.legend()
+    plt.show()
 
 
 def check_significance(attr, test_features, feature_num=1):
@@ -109,7 +150,6 @@ def check_significance(attr, test_features, feature_num=1):
 
 def get_shap(model, input_df, backgroud_df, device, cfg, feature_names,
              start_feature):
-
     test_samples = torch.tensor(input_df).float().to(device)
     background = torch.tensor(backgroud_df).float().to(device)
 
@@ -122,16 +162,15 @@ def get_shap(model, input_df, backgroud_df, device, cfg, feature_names,
     else:
         shap_numpy = []
         test_numpy = test_samples.cpu().numpy()
-        test_numpy = test_numpy[:,:,-1]
+        test_numpy = test_numpy[:, :, -1]
         for i in shap_values:
-            shap_numpy.append(i[:,:,-1])
+            shap_numpy.append(i[:, :, -1])
 
     # plot shap values
     fig_shap = plt.figure()
     plt.title('SHAP Summary Plot')
-    shap.summary_plot(shap_numpy[1], test_numpy,
-                      feature_names=feature_names[start_feature:start_feature +
-                                                                cfg.n_features],
+    shap.summary_plot(shap_numpy[1], test_numpy, feature_names=feature_names[
+                                                               start_feature:start_feature + cfg.n_features],
                       max_display=cfg.n_features)
     plt.tight_layout()
     fig_shap.show()

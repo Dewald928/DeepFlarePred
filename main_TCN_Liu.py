@@ -434,10 +434,11 @@ if __name__ == '__main__':
               'R_VALUE', 'TOTUSJH', 'TOTUSJZ', 'MEANJZH', 'MEANJZD', 'MEANPOT',
               'MEANSHR', 'MEANALP', 'MEANGAM', 'MEANGBZ', 'MEANGBT',
               'MEANGBH', ]  # 18
-    lorentz = ['TOTBSQ','TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY', 'EPSZ'] # 7
+    lorentz = ['TOTBSQ', 'TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY',
+               'EPSZ']  # 7
     history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
                         'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
-                        'Mhis1d', 'Xhis1d', 'Xmax1d'] # 15
+                        'Mhis1d', 'Xhis1d', 'Xmax1d']  # 15
     listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT',
                             'AREA_ACR', 'Cdec', 'Chis', 'Edec', 'Mhis',
                             'Xmax1d', 'Mdec', 'MEANPOT', 'R_VALUE', 'Mhis1d',
@@ -449,7 +450,7 @@ if __name__ == '__main__':
     bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
-    feature_list = None
+    feature_list = all
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -1051,37 +1052,39 @@ if __name__ == '__main__':
             input_df = torch.tensor(input_df).float().permute(0, 2, 1)
 
         # interpret using captum
-        [attr_sal, attr_ig, delta_ig, attr_dl, delta_dl, attr_ixg, attr_gbp,
-         attr_occ, attr_abl, attr_shap] = interpreter.interpret_model(model,
-                                                                      device,
-                                                                      input_df,
-                                                                      backgroud_df)
+        attrs_list = interpreter.interpret_model(model, device, input_df,
+                                                 backgroud_df)
+        attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
+                          "Input x Gradient", "Guided Backprop", "Occlusion",
+                          "Shapley Value Sampling"]
+        interpreter.plot_all_attr(attrs_list, feature_list,attr_name_list)
+        interpreter.plot_attr_vs_time(attrs_list, feature_list,attr_name_list)
 
         # visualize interpretation
-        interpreter.visualize_importance(np.array(
-            feature_names[start_feature:start_feature + cfg.n_features]),
-            attr_sal, cfg.n_features, title="Saliency")
-        interpreter.visualize_importance(np.array(
-            feature_names[start_feature:start_feature + cfg.n_features]),
-            attr_ig, cfg.n_features, title="Integrated Gradients")
-        interpreter.visualize_importance(np.array(
-            feature_names[start_feature:start_feature + cfg.n_features]),
-            attr_dl, cfg.n_features, title="Deeplift")
-        interpreter.visualize_importance(np.array(
-            feature_names[start_feature:start_feature + cfg.n_features]),
-            attr_ixg, cfg.n_features, title="Input x Gradient")
-        interpreter.visualize_importance(np.array(
-            feature_names[start_feature:start_feature + cfg.n_features]),
-            attr_gbp, cfg.n_features, title="Guided Backprop")
-        interpreter.visualize_importance(np.array(
-            feature_names[start_feature:start_feature + cfg.n_features]),
-            attr_occ, cfg.n_features, title="Occlusion")
-        interpreter.visualize_importance(np.array(
-            feature_names[start_feature:start_feature + cfg.n_features]),
-            attr_abl, cfg.n_features, title="Ablation")
-        interpreter.visualize_importance(np.array(
-            feature_names[start_feature:start_feature + cfg.n_features]),
-            attr_shap, cfg.n_features, title="Shapley Value Sampling")
+        # interpreter.visualize_importance(np.array(
+        #     feature_names[start_feature:start_feature + cfg.n_features]),
+        #     attr_sal, cfg.n_features, title="Saliency")
+        # interpreter.visualize_importance(np.array(
+        #     feature_names[start_feature:start_feature + cfg.n_features]),
+        #     attr_ig, cfg.n_features, title="Integrated Gradients")
+        # interpreter.visualize_importance(np.array(
+        #     feature_names[start_feature:start_feature + cfg.n_features]),
+        #     attr_dl, cfg.n_features, title="DeepLIFT")
+        # interpreter.visualize_importance(np.array(
+        #     feature_names[start_feature:start_feature + cfg.n_features]),
+        #     attr_ixg, cfg.n_features, title="Input x Gradient")
+        # interpreter.visualize_importance(np.array(
+        #     feature_names[start_feature:start_feature + cfg.n_features]),
+        #     attr_gbp, cfg.n_features, title="Guided Backprop")
+        # interpreter.visualize_importance(np.array(
+        #     feature_names[start_feature:start_feature + cfg.n_features]),
+        #     attr_occ, cfg.n_features, title="Occlusion")
+        # interpreter.visualize_importance(np.array(
+        #     feature_names[start_feature:start_feature + cfg.n_features]),
+        #     attr_abl, cfg.n_features, title="Ablation")
+        # interpreter.visualize_importance(np.array(
+        #     feature_names[start_feature:start_feature + cfg.n_features]),
+        #     attr_shap, cfg.n_features, title="Shapley Value Sampling")
 
         '''SHAP'''
         plt.close('all')
