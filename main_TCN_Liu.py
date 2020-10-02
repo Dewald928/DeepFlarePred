@@ -451,7 +451,7 @@ if __name__ == '__main__':
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
     # feature_list = feature_names[5:5+cfg.n_features]
-    feature_list = listofuncorrfeatures
+    feature_list = all
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -1028,8 +1028,11 @@ if __name__ == '__main__':
         df = pd.read_csv(filepath + 'normalized_testing.csv')
         if not os.path.exists(filepath + 'Case_Study/'):
             os.makedirs(filepath + 'Case_Study/')
-        case = df[df['NOAA'] == 12673].to_csv(filepath + 'Case_Study/AR12673.csv', index=False)
-        cas2 = df[df['NOAA'] == 12252].to_csv(filepath + 'Case_Study/AR12252.csv', index=False)
+        case = df[df['NOAA'] == 12673]
+        case2 = df[df['NOAA'] == 12252]
+        # case = case.iloc[len(case)-len(case2):,:]
+        case.to_csv(filepath + 'Case_Study/AR12673.csv', index=False)
+        case2.to_csv(filepath + 'Case_Study/AR12252.csv', index=False)
 
         # get samples to interpret
         input_df, _ = data_loader.load_data(
@@ -1058,8 +1061,8 @@ if __name__ == '__main__':
         attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
                           "Input x Gradient", "Guided Backprop", "Occlusion",
                           "Shapley Value Sampling"]
-        interpreter.plot_all_attr(attrs_list, feature_list,attr_name_list)
-        interpreter.plot_attr_vs_time(attrs_list, feature_list,attr_name_list)
+        interpreter.plot_all_attr(attrs_list, feature_list, attr_name_list)
+        interpreter.plot_attr_vs_time(attrs_list, feature_list, attr_name_list)
 
         # visualize interpretation
         # interpreter.visualize_importance(np.array(
@@ -1090,7 +1093,7 @@ if __name__ == '__main__':
         '''SHAP'''
         plt.close('all')
         interpreter.get_shap(model, input_df, backgroud_df, device, cfg,
-                             feature_names, start_feature)
+                             feature_list, start_feature)
 
     print('Finished')
 

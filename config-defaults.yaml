@@ -3,13 +3,12 @@ tag:
   desc: wandb tags
   value:
     - Interpret
-    - NoCorr
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 200
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -21,7 +20,7 @@ optim:
   value: SGD
 n_features:
   desc: number of features to include (max 40)
-  value: 32
+  value: 40
 
 # Learning rate
 learning_rate:
@@ -106,7 +105,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 12
+  value: 13
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -124,7 +123,7 @@ training:
   value: True
 model_name:
   desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2)
-  value: dewald123/liu_pytorch_MLP/qyzfsefo
+  value: dewald123/liu_pytorch_MLP/2dsj8449
 num_workers:
   desc: number of gpu workers
   value: 9
@@ -148,5 +147,5 @@ interpret:
   value: True
 evaluation:
   desc: Do final evaluation, pr roc threholds
-  value: True
+  value: False
 

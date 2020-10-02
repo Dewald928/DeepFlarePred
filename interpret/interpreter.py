@@ -17,7 +17,7 @@ def interpret_model(model, device, input_df, backgroud_df):
     print("\n Interpreting Model...")
 
     input_tensor = torch.tensor(input_df).float()
-    background = torch.tensor(backgroud_df).float() #todo get larger #baseline
+    background = torch.tensor(backgroud_df).float()
     input_tensor.requires_grad = True
     # l0 = background.shape[0]
     # l1 = input_tensor.shape[0]
@@ -99,7 +99,7 @@ def plot_all_attr(attrs_list, feature_list, attr_name_list):
     for i, feature in enumerate(feature_list):
         axes[i].set(title=feature)
         for j, attr in enumerate(attrs_list):
-            # print(attr.shape)
+            # print(attr.shape) #todo is TCN compatible?
             importance_avg = np.mean(attr[:,i].detach().numpy(), axis=0)
             importance_std = np.std(attr[:,i].detach().numpy(), axis=0)
             # if importance_avg.shape.__len__() == 1:  # seq len 1 reshape
@@ -111,23 +111,20 @@ def plot_all_attr(attrs_list, feature_list, attr_name_list):
             axes[i].barh(attr_name_list[j], importance_avg,
                          xerr=importance_std,
                          align='center', label=attr_name_list[j])
-        # plt.tight_layout()
-    # plt.legend()
     plt.show()
-    print('plots boiii!')
 
 
 def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
-
-    fig, axes = plt.subplots(8, 4, figsize=(20, 20), sharex=True)
+    n0, n1 = math_stuff.get_largest_primes(len(feature_list))
+    fig, axes = plt.subplots(n0, n1, figsize=(20, 20), sharex=True)
     axes = axes.reshape(-1)
     for i, feature in enumerate(feature_list):
         axes[i].set(title=feature)
         for j, attr in enumerate(attrs_list):
-            # print(attr.shape)
+            # print(attr.shape) # todo TCN?
             importance = attr[:,i].detach().numpy()
             axes[i].plot(importance, label=attr_name_list[j])
-            axes[i].axvspan(xmin=127,
+            axes[i].axvspan(xmin=128,
                             xmax=152, ymin=0, ymax=1,
                             alpha=0.1, color='r')
     plt.legend()
@@ -174,8 +171,7 @@ def get_shap(model, input_df, backgroud_df, device, cfg, feature_names,
     # plot shap values
     fig_shap = plt.figure()
     plt.title('SHAP Summary Plot')
-    shap.summary_plot(shap_numpy[1], test_numpy, feature_names=feature_names[
-                                                               start_feature:start_feature + cfg.n_features],
+    shap.summary_plot(shap_numpy[1], test_numpy, feature_names=feature_names,
                       max_display=cfg.n_features)
     plt.tight_layout()
     fig_shap.show()
@@ -184,8 +180,7 @@ def get_shap(model, input_df, backgroud_df, device, cfg, feature_names,
 
     # for single sample 151, X9.3 flare
     fig = shap.force_plot(e.expected_value[0], shap_numpy[1][151],
-                          matplotlib=True, feature_names=feature_names[
-                                                         start_feature:start_feature + cfg.n_features],
+                          matplotlib=True, feature_names=feature_names,
                           link='identity', show=False)
     fig_shap1 = plt.gcf()
     # plt.title('SHAP Force Plot')
