@@ -450,7 +450,8 @@ if __name__ == '__main__':
     bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
-    feature_list = feature_names[5:5+cfg.n_features]
+    # feature_list = feature_names[5:5+cfg.n_features]
+    feature_list = listofuncorrfeatures
     # can be
     # None, need to change
     # cfg.n_features to match length

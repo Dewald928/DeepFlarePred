@@ -8,6 +8,7 @@ import torch
 from captum.attr import *
 
 import shap
+from utils import math_stuff
 
 import wandb
 
@@ -91,7 +92,9 @@ def visualize_importance(feature_names, attr, n_features,
 
 
 def plot_all_attr(attrs_list, feature_list, attr_name_list):
-    fig, axes = plt.subplots(8, 5, figsize=(20, 20), sharex=True, sharey=True)
+    n0, n1 = math_stuff.get_largest_primes(len(feature_list))
+    fig, axes = plt.subplots(n0, n1, figsize=(20, 20), sharex=True,
+                             sharey=True)
     axes = axes.reshape(-1)
     for i, feature in enumerate(feature_list):
         axes[i].set(title=feature)
@@ -115,7 +118,8 @@ def plot_all_attr(attrs_list, feature_list, attr_name_list):
 
 
 def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
-    fig, axes = plt.subplots(8, 5, figsize=(20, 20), sharex=True)
+
+    fig, axes = plt.subplots(8, 4, figsize=(20, 20), sharex=True)
     axes = axes.reshape(-1)
     for i, feature in enumerate(feature_list):
         axes[i].set(title=feature)
