@@ -132,6 +132,18 @@ def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
     plt.show()
 
 
+def log_attrs(attrs_list, feature_list, attr_name_list, cfg):
+
+    for i, attr_name in enumerate(attr_name_list):
+        df_attr = pd.DataFrame(attrs_list[i].detach().numpy(),
+                               columns=feature_list)
+
+        df_attr.to_csv(
+            f"./saved/results/attribution/{attr_name.replace(' ', '')}"
+            f"_{cfg.seed}.csv", index=False)
+    print('ja man lekker logs')
+
+
 def check_significance(attr, test_features, feature_num=1):
     fig = plt.hist(attr[:, feature_num], 100)
     plt.title("Distribution of Attribution Values")

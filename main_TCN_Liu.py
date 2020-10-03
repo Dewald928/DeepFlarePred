@@ -446,12 +446,12 @@ if __name__ == '__main__':
                             'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
                             'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
                             'Bdec', 'Bhis1d'] # 32
-    all = sharps+lorentz+history_features
+    all_f = sharps+lorentz+history_features
     bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
-    # feature_list = feature_names[5:5+cfg.n_features]
-    feature_list = all
+    feature_list = feature_names[5:5+cfg.n_features]
+    # feature_list = all_f
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -1058,11 +1058,13 @@ if __name__ == '__main__':
         # interpret using captum
         attrs_list = interpreter.interpret_model(model, device, input_df,
                                                  backgroud_df)
+
         attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
                           "Input x Gradient", "Guided Backprop", "Occlusion",
                           "Shapley Value Sampling"]
-        interpreter.plot_all_attr(attrs_list, feature_list, attr_name_list)
+        # interpreter.plot_all_attr(attrs_list, feature_list, attr_name_list)
         interpreter.plot_attr_vs_time(attrs_list, feature_list, attr_name_list)
+        interpreter.log_attrs(attrs_list, feature_list, attr_name_list, cfg)
 
         # visualize interpretation
         # interpreter.visualize_importance(np.array(
