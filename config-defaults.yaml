@@ -2,13 +2,13 @@
 tag:
   desc: wandb tags
   value:
-    - Interpret
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: MLP
+  value: TCN
 epochs:
   desc: Number of epochs to train over
-  value: 200
+  value: 50
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -40,25 +40,25 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 1
+  value: 0.25
 lr_metric:
   desc: Loss or TSS (loss is better, or is it??)
   value: TSS
 lr_rangetest_iter:
   desc: number of iterations for range test (200 seems best)
-  value: 200
+  value: 100
 
 
 # TCN HP
 levels:
   desc: num of tcn blocks
-  value: 2
+  value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 3
+  value: 2
 nhid:
   desc: number of filters
-  value: 80
+  value: 40
 seq_len:
   desc: size of sequence (Be 1 for MLP)
   value: 1
@@ -74,7 +74,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.9
+  value: 0.5
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -105,7 +105,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 13
+  value: 3
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -122,8 +122,8 @@ training:
   desc: Trains models, else only tests
   value: True
 model_name:
-  desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2)
-  value: dewald123/liu_pytorch_MLP/2dsj8449
+  desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/2dsj8449
+  value: dewald123/liu_pytorch_MLP/p2typptv
 num_workers:
   desc: number of gpu workers
   value: 9
@@ -144,7 +144,7 @@ shuffle:
 # Interpretation
 interpret:
   desc: activate captum/SHAP attribution methods
-  value: True
+  value: False
 evaluation:
   desc: Do final evaluation, pr roc threholds
   value: False

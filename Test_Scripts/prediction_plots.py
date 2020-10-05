@@ -37,7 +37,7 @@ df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
 # Get flux and dates
-df = pd.concat([df_test], axis=0)
+df = pd.concat([df_train,df_val,df_test], axis=0)
 df['Flux'] = df['flare'].apply(data_loader.flare_to_flux)
 df['Date'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%dT%H:%M:%S.%fZ')
 df = df.sort_values(by=['NOAA', 'timestamp'])
@@ -58,7 +58,10 @@ m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
 
 # Predict probabilites
-y_proba = metric.get_proba(model(X_test_data_tensor.to(device)))
+y_proba = metric.get_proba(model(torch.cat((X_train_data_tensor,
+                                            X_valid_data_tensor,
+                                            X_test_data_tensor),
+                                           0).to(device)))
 y_pred = metric.to_labels(y_proba)
 df['Prob'] = y_proba[:,1]
 df['Pred'] = y_pred[:,1]
@@ -88,7 +91,7 @@ for i, noaa in enumerate(m5_flared_NOAA):
     ax2.set(ylabel='Flux')
     h1, l1 = axes[0].get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
-    axes[0].legend(h1 + h2, l1 + l2, loc=4,bbox_to_anchor=(1.15, -0.25))
+    axes[0].legend(h1 + h2, l1 + l2, loc=4, bbox_to_anchor=(1.15, -0.25))
     ax2.set(title=f'NOAA: {noaa}')
     # axes 2
     df_ar.plot(x="Date", y="Pred", ax=axes[1], legend=False)
@@ -96,8 +99,8 @@ for i, noaa in enumerate(m5_flared_NOAA):
     axes[1].legend(loc=4,bbox_to_anchor=(1.15, -0.25))
     axes[1].set(title=f'NOAA: {noaa}')
     axes[1].set(ylabel='Prediction')
-    plt.savefig(dump_path + f"NOAA_{noaa}.png")
     plt.tight_layout()
+    plt.savefig(dump_path + f"NOAA_{noaa}.png")
     plt.show()
 
 #

@@ -450,11 +450,22 @@ if __name__ == '__main__':
     bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
-    feature_list = feature_names[5:5+cfg.n_features]
+    feature_list = None
     # feature_list = all_f
     # can be
     # None, need to change
     # cfg.n_features to match length
+
+    # get receptive field
+    if cfg.model_type == "TCN":
+        receptive_field = 1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)
+        wandb.config.update({"seq_len": receptive_field},
+                            allow_val_change=True)
+    elif cfg.model_type == "CNN":
+        receptive_field = cfg.ksize
+        wandb.config.update({"seq_len": cfg.ksize}, allow_val_change=True)
+    print("Receptive Field: " + str(receptive_field))
+
 
     # setup dataloaders
     if (cfg.dataset != 'Synth/') and (cfg.dataset != 'Sampled/'):
@@ -597,13 +608,18 @@ if __name__ == '__main__':
                               dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, ))
     elif cfg.model_type == "TCN":
+        print("Receptive Field: " + str(
+            1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)))
+        wandb.config.update({"seq_len": 1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)})
         model = TCN(cfg.n_features, nclass, channel_sizes,
                     kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
     elif cfg.model_type == "CNN":
+        wandb.config.update({"seq_len": cfg.ksize}, allow_val_change=True)
         model = tcn.Simple1DConv(cfg.n_features, cfg.nhid, cfg.levels,
                                  kernel_size=kernel_size, dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
+        print(f'Receptive field: {cfg.seq_len}')
     elif cfg.model_type == 'RNN':
         model = lstm.LSTMModel(cfg.n_features, cfg.nhid, cfg.levels,
                                output_dim=nclass, dropout=cfg.dropout, device=device,
@@ -675,8 +691,7 @@ if __name__ == '__main__':
 
 
     # print model parameters
-    print("Receptive Field: " + str(
-        1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)))
+
     # print(len(list(model.parameters())))
     # for i in range(len(list(model.parameters()))):
     #     print(list(model.parameters())[i].size())

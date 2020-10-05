@@ -22,7 +22,7 @@ class TemporalBlock(nn.Module):
         # self.conv1 = weight_norm(
         #     nn.Conv1d(n_inputs, n_outputs, kernel_size, stride=stride,
         #               padding=padding, dilation=dilation))
-        # del(self.conv1.weight)  # todo error with graph leaves
+        # del(self.conv1.weight)  # todo error with graph leaves, when
         self.chomp1 = Chomp1d(padding)
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout)
@@ -50,6 +50,7 @@ class TemporalBlock(nn.Module):
         # self.conv2.weight = []
         # self.conv1.weight_v.data.normal_(0, 0.01) # uncomment for weight norm
         # self.conv2.weight_v.data.normal_(0, 0.01)
+
         self.conv1.weight.data.normal_(0, 0.01)
         self.conv2.weight.data.normal_(0, 0.01)
         if self.downsample is not None:
