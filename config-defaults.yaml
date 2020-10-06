@@ -8,7 +8,7 @@ model_type:
   value: TCN
 epochs:
   desc: Number of epochs to train over
-  value: 50
+  value: 1000
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -25,10 +25,10 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.00001
+  value: 0.1
 lr_scheduler:
   desc: if scheduler is on
-  value: True
+  value: False
 lr_finder:
   desc: is lr finder should run
   value: False
@@ -46,7 +46,7 @@ lr_metric:
   value: TSS
 lr_rangetest_iter:
   desc: number of iterations for range test (200 seems best)
-  value: 100
+  value: 200
 
 
 # TCN HP
@@ -55,7 +55,7 @@ levels:
   value: 1
 ksize:
   desc: kernel size (smallest is 2)
-  value: 2
+  value: 3
 nhid:
   desc: number of filters
   value: 40
@@ -74,7 +74,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.5
+  value: 0.8
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -99,7 +99,7 @@ skorch:
   value: True
 checkpoint:
   desc: should use network on best checkpoint?
-  value: False
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
@@ -114,7 +114,7 @@ cuda:
   value: True
 early_stop:
   desc: stops training if overfitting, Don't use with lr scheduler
-  value: False
+  value: True
 patience:
   desc: amount of epochs for early stopping
   value: 30

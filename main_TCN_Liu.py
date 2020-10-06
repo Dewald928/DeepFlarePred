@@ -466,7 +466,6 @@ if __name__ == '__main__':
         wandb.config.update({"seq_len": cfg.ksize}, allow_val_change=True)
     print("Receptive Field: " + str(receptive_field))
 
-
     # setup dataloaders
     if (cfg.dataset != 'Synth/') and (cfg.dataset != 'Sampled/'):
         X_train_data, y_train_data = data_loader.load_data(
@@ -895,7 +894,7 @@ if __name__ == '__main__':
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss_cb, valid_tss_cb,
-                                             valid_hss_cb, valid_bss_cb,
+                                             valid_hss_cb,
                                              earlystop, checkpoint,
                                              # load_state,
                                              # reload_at_end,

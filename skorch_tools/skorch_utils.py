@@ -108,7 +108,7 @@ class LoggingCallback(Callback):
                    'Training_TSS': h['train_tss'],
                    'Validation_HSS': h['valid_hss'],
                    'Validation_Loss': h['valid_loss'],
-                   'Validation_BSS': h['valid_bss'],
+                   # 'Validation_BSS': h['valid_bss'],
                    # 'Validation_PR_AUC': h['valid_pr_auc'],
                    'Test_TSS_curve': tss_test_score,
                    'Epoch': h['epoch']})
