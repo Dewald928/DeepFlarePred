@@ -29,7 +29,8 @@ le = preprocessing.LabelEncoder()
 
 # model already trained
 
-dump_path = './saved/figures/dump/'
+dump_path = os.path.expanduser(
+    '~/Dropbox/_Meesters/figures/MLP/NOAA_prediction/')
 if not os.path.exists(dump_path):
     os.makedirs(dump_path)
 filepath = './Data/Liu/z_train/'
