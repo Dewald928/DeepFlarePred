@@ -461,10 +461,11 @@ if __name__ == '__main__':
         receptive_field = 1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)
         wandb.config.update({"seq_len": receptive_field},
                             allow_val_change=True)
+        print("Receptive Field: " + str(receptive_field))
     elif cfg.model_type == "CNN":
         receptive_field = cfg.ksize
         wandb.config.update({"seq_len": cfg.ksize}, allow_val_change=True)
-    print("Receptive Field: " + str(receptive_field))
+        print("Receptive Field: " + str(receptive_field))
 
     # setup dataloaders
     if (cfg.dataset != 'Synth/') and (cfg.dataset != 'Sampled/'):
