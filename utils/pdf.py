@@ -13,7 +13,7 @@ from sklearn.metrics import roc_curve
 
 def plot_density_estimation(net, yhat, labels, dataset_name):
     # seaborn prob dens plot
-    fig = plt.figure()
+    fig = plt.figure(dpi=200)
     x = yhat
     y = labels
     x_flare = x[np.where(y >= 1)[0]]
@@ -55,6 +55,7 @@ def plot_calibration_curve(yprob, ytrue, ax, name='Test'):
     ax2 = ax.twinx()
 
     ax.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+    # ax.plot([0, 1], [0, 0.0075], "k:", label="BSS=0")
 
     # fraction of positives
     fop, mean_predicted_value = calibration_curve(ytrue, yprob, n_bins=20,
@@ -122,7 +123,7 @@ def plot_eval_graphs(yprob, ytrue, dataset='Test'):
     # plot Reliability diagram
     # plot ROC
     # plot thresholded metrics (SSP) skill score profiles
-    fig, axes = plt.subplots(1, 3, figsize=(12, 5), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(12, 5), sharey=True, dpi=200)
     plot_ssp(yprob, ytrue, axes[0])
     plot_roc_curve(yprob, ytrue, axes[1])
     plot_calibration_curve(yprob, ytrue, axes[2], dataset)

@@ -28,7 +28,7 @@ import seaborn as sn
 
 def get_new_fig(fn, figsize=[9, 9]):
     """ Init graphics """
-    fig1 = plt.figure(fn, figsize)
+    fig1 = plt.figure(fn, figsize, dpi=200)
     ax1 = fig1.gca()  # Get Current Axis
     ax1.cla()  # clear existing plot
     return fig1, ax1

@@ -30,7 +30,9 @@ le = preprocessing.LabelEncoder()
 # model already trained
 
 dump_path = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/MLP/NOAA_prediction/')
+    '~/Dropbox/_Meesters/figures/NOAA_prediction/CNN/')
+# dump_path = os.path.expanduser(
+#     './saved/figures/dump/')
 if not os.path.exists(dump_path):
     os.makedirs(dump_path)
 filepath = './Data/Liu/z_train/'
@@ -56,14 +58,20 @@ m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 # x_flares = df[df['flare'].str.contains('X')]
 # x_flares_NOAA = x_flares['NOAA'].unique()
 # x_flares_data = df[df['NOAA'].isin(x_flares_NOAA)]
-
+model = model.to('cpu')
 
 # Predict probabilites
 y_proba = metric.get_proba(model(torch.cat((X_train_data_tensor,
                                             X_valid_data_tensor,
                                             X_test_data_tensor),
-                                           0).to(device)))
-y_pred = metric.to_labels(y_proba)
+                                           0).to('cpu')))
+# l_train = pd.read_csv('./saved/results/liu/train.csv')
+# l_val = pd.read_csv('./saved/results/liu/val.csv')
+# l_test = pd.read_csv('./saved/results/liu/test.csv')
+# y_proba = pd.concat([l_train, l_val, l_test]).to_numpy()
+
+
+y_pred = metric.to_labels(y_proba, 0.5)
 df['Prob'] = y_proba[:,1]
 df['Pred'] = y_pred[:,1]
 df['Target'] = le.fit_transform(df['label'])
@@ -71,7 +79,7 @@ df['Target'] = le.fit_transform(df['label'])
 # Plot flux and probability per AR
 for i, noaa in enumerate(m5_flared_NOAA):
     print(noaa)
-    fig, axes = plt.subplots(1,2, figsize=(10,5))
+    fig, axes = plt.subplots(1,2, figsize=(10,5), dpi=200)
     df_ar = df[df['NOAA']==noaa]
     lns1 = df_ar.plot(x="Date", y="Prob", ax=axes[0], legend=False)
     axes[0].axvspan(xmin=df_ar['Date'].iloc[1], xmax=df_ar['Date'].iloc[-1],
