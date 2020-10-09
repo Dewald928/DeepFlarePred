@@ -66,10 +66,11 @@ def preprocess_customdataset(x_val, y_val):
 
 class TCN(nn.Module):
     def __init__(self, input_size, output_size, num_channels, kernel_size,
-                 dropout):
+                 dropout, attention=False):
         super(TCN, self).__init__()
         self.tcn = TemporalConvNet(input_size, num_channels,
-                                   kernel_size=kernel_size, dropout=dropout)
+                                   kernel_size=kernel_size, dropout=dropout,
+                                   attention=attention)
         self.linear = nn.Linear(num_channels[-1], output_size)
         self.init_weights()
 
@@ -379,6 +380,8 @@ def init_project():
         project = 'liu_pytorch_tcn'
     elif model_type == 'CNN':
         project = 'liu_pytorch_cnn'
+    elif model_type == 'RNN':
+        project = 'liu_pytorch_lstm'
     tags = cfg['tag']['value']
 
     return project, tags
@@ -450,8 +453,8 @@ if __name__ == '__main__':
     bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
-    feature_list = None
-    # feature_list = all_f
+    # feature_list = None
+    feature_list = all_f
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -612,7 +615,8 @@ if __name__ == '__main__':
             1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)))
         wandb.config.update({"seq_len": 1 + 2 * (cfg.ksize - 1) * (2 ** cfg.levels - 1)})
         model = TCN(cfg.n_features, nclass, channel_sizes,
-                    kernel_size=kernel_size, dropout=cfg.dropout).to(device)
+                    kernel_size=kernel_size, dropout=cfg.dropout,
+                    attention=False).to(device)
         summary(model, input_size=(cfg.n_features, cfg.seq_len))
     elif cfg.model_type == "CNN":
         wandb.config.update({"seq_len": cfg.ksize}, allow_val_change=True)
@@ -992,10 +996,14 @@ if __name__ == '__main__':
     Model interpretation
     '''
     if cfg.evaluation:
+        # all_ones = np.ones(inputs.shape[0])
+        # all_zeros = np.zeros(inputs.shape[0])
+        # all_fill = np.full(inputs.shape[0], 0.01)
 
         # Train
         # yprob = infer_model(model, device, train_loader)
         yprob = metric.get_proba(model(X_train_data_tensor.to(device)))[:,1]
+        # yprob = pd.read_csv('./saved/results/liu/train.csv').to_numpy()
 
         pdf.plot_eval_graphs(yprob, y_train_tr_tensor.numpy(), 'Train')
         metric.plot_precision_recall(model, yprob, y_train_tr_tensor, 'Train')
@@ -1008,6 +1016,7 @@ if __name__ == '__main__':
         # Validation
         # yprob = infer_model(model, device, valid_loader)
         yprob = metric.get_proba(model(X_valid_data_tensor.to(device)))[:,1]
+        # yprob = pd.read_csv('./saved/results/liu/val.csv').to_numpy()
 
         pdf.plot_eval_graphs(yprob, y_valid_tr_tensor.numpy(), 'Validation')
         metric.plot_precision_recall(model, yprob, y_valid_tr_tensor, 'Validation')
@@ -1020,6 +1029,7 @@ if __name__ == '__main__':
         # Test
         # yprob = infer_model(model, device, test_loader)
         yprob = metric.get_proba(model(X_test_data_tensor.to(device)))[:,1]
+        # yprob = pd.read_csv('./saved/results/liu/test.csv').to_numpy()
 
         metric.plot_precision_recall(model, yprob, y_test_tr_tensor, 'Test')
         pdf.plot_eval_graphs(yprob, y_test_tr_tensor.numpy(), 'Test')
@@ -1075,7 +1085,7 @@ if __name__ == '__main__':
                                                  backgroud_df)
 
         attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
-                          "Input x Gradient", "Guided Backprop", "Occlusion",
+                          "Input x Gradient", "Guided Backprop", "Ablation",
                           "Shapley Value Sampling"]
         # interpreter.plot_all_attr(attrs_list, feature_list, attr_name_list)
         interpreter.plot_attr_vs_time(attrs_list, feature_list, attr_name_list)

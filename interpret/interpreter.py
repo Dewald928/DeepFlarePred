@@ -15,7 +15,7 @@ import wandb
 
 def interpret_model(model, device, input_df, backgroud_df):
     print("\n Interpreting Model...")
-
+    is_seq = True if len(input_df.shape)>2 else False
     input_tensor = torch.tensor(input_df).float()
     background = torch.tensor(backgroud_df).float()
     input_tensor.requires_grad = True
@@ -32,8 +32,8 @@ def interpret_model(model, device, input_df, backgroud_df):
     dl = DeepLift(model)
     input_x_gradient = InputXGradient(model)
     gbp = GuidedBackprop(model)
-    occ = Occlusion(model)
-    # abl = FeatureAblation(model)
+    # occ = Occlusion(model)
+    abl = FeatureAblation(model)
     svs = ShapleyValueSampling(model)
 
     attr_sal = sal.attribute(input_tensor, target=1)
@@ -43,12 +43,12 @@ def interpret_model(model, device, input_df, backgroud_df):
                                      return_convergence_delta=True)
     attr_ixg = input_x_gradient.attribute(input_tensor, target=1)
     attr_gbp = gbp.attribute(input_tensor, target=1)
-    attr_occ = occ.attribute(input_tensor, target=1,
-                             sliding_window_shapes=(1,))
-    # attr_abl = abl.attribute(input_tensor, target=1)
+    # attr_occ = occ.attribute(input_tensor, target=1,
+    #                          sliding_window_shapes=(1,))
+    attr_abl = abl.attribute(input_tensor, target=1)
     attr_shap = svs.attribute(input_tensor, target=1)
 
-    return [attr_sal, attr_ig, attr_dl, attr_ixg, attr_gbp, attr_occ,
+    return [attr_sal, attr_ig, attr_dl, attr_ixg, attr_gbp, attr_abl,
             attr_shap]
 
 
@@ -122,6 +122,7 @@ def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
         axes[i].set(title=feature)
         for j, attr in enumerate(attrs_list):
             # print(attr.shape) # todo TCN?
+            attr = attr if len(attr.shape) == 2 else attr[:, :, -1]
             importance = attr[:,i].detach().numpy()
             axes[i].plot(importance, label=attr_name_list[j])
             axes[i].axvspan(xmin=128,
@@ -135,11 +136,14 @@ def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
 def log_attrs(attrs_list, feature_list, attr_name_list, cfg):
 
     for i, attr_name in enumerate(attr_name_list):
+        attrs_list[i] = attrs_list[i] if len(attrs_list[i].shape) == 2 else \
+            attrs_list[i][:, :, -1]
         df_attr = pd.DataFrame(attrs_list[i].detach().numpy(),
                                columns=feature_list)
 
         df_attr.to_csv(
-            f"./saved/results/attribution/{attr_name.replace(' ', '')}"
+            f"./saved/results/attribution/{cfg.model_type}"
+            f"/{attr_name.replace(' ', '')}"
             f"_{cfg.seed}.csv", index=False)
     print('ja man lekker logs')
 

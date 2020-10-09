@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
 import torch.nn.functional as F
+import math
 
 
 class Chomp1d(nn.Module):
@@ -78,7 +79,8 @@ class TemporalConvNet(nn.Module):
                               dropout=dropout)]
 
             if attention == True:
-                layers += [AttentionBlock(max_length, max_length, max_length)]
+                layers += [AttentionBlock(num_inputs, kernel_size, 3,
+                                          seq_len=in_channels)]
 
         self.network = nn.Sequential(*layers)
 
