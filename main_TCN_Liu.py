@@ -564,14 +564,18 @@ if __name__ == '__main__':
         X_test_data = np.reshape(X_test_data,
                                  (len(X_test_data), cfg.n_features))
         X_test_data_tensor = torch.tensor(X_test_data).float()
-    elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN') or (
-            cfg.model_type == 'RNN'):
+    elif (cfg.model_type == 'TCN') or (cfg.model_type == 'CNN'):
         X_train_data = torch.tensor(X_train_data).float()
         X_train_data_tensor = X_train_data.permute(0, 2, 1)
         X_valid_data = torch.tensor(X_valid_data).float()
         X_valid_data_tensor = X_valid_data.permute(0, 2, 1)
         X_test_data = torch.tensor(X_test_data).float()
         X_test_data_tensor = X_test_data.permute(0, 2, 1)
+    else:
+        X_train_data_tensor = torch.tensor(X_train_data).float()
+        X_valid_data_tensor = torch.tensor(X_valid_data).float()
+        X_test_data_tensor = torch.tensor(X_test_data).float()
+
     # (samples, seq_len, features) -> (samples, features, seq_len)
     y_train_tr_tensor = torch.tensor(y_train_tr).long()
     y_valid_tr_tensor = torch.tensor(y_valid_tr).long()
