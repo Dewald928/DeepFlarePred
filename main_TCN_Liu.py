@@ -903,7 +903,7 @@ if __name__ == '__main__':
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
                                   callbacks=[train_tss_cb, valid_tss_cb,
-                                             valid_hss_cb,
+                                             valid_hss_cb, valid_bss_cb,
                                              earlystop, checkpoint,
                                              # load_state,
                                              # reload_at_end,
@@ -1003,6 +1003,8 @@ if __name__ == '__main__':
         # all_ones = np.ones(inputs.shape[0])
         # all_zeros = np.zeros(inputs.shape[0])
         # all_fill = np.full(inputs.shape[0], 0.01)
+        device = 'cpu'
+        model = model.to(device)
 
         # Train
         # yprob = infer_model(model, device, train_loader)

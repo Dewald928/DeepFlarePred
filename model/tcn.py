@@ -79,8 +79,7 @@ class TemporalConvNet(nn.Module):
                               dropout=dropout)]
 
             if attention == True:
-                layers += [AttentionBlock(num_inputs, kernel_size, 3,
-                                          seq_len=in_channels)]
+                layers += [AttentionBlock(max_length,max_length,max_length)]
 
         self.network = nn.Sequential(*layers)
 

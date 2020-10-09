@@ -28,9 +28,9 @@ le = preprocessing.LabelEncoder()
 #         4.1 for each AR
 
 # model already trained
-
+threshold=0.5
 dump_path = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/NOAA_prediction/CNN/')
+    '~/Dropbox/_Meesters/figures/NOAA_prediction/CNN_underfit/')
 # dump_path = os.path.expanduser(
 #     './saved/figures/dump/')
 if not os.path.exists(dump_path):
@@ -71,7 +71,7 @@ y_proba = metric.get_proba(model(torch.cat((X_train_data_tensor,
 # y_proba = pd.concat([l_train, l_val, l_test]).to_numpy()
 
 
-y_pred = metric.to_labels(y_proba, 0.5)
+y_pred = metric.to_labels(y_proba, threshold)
 df['Prob'] = y_proba[:,1]
 df['Pred'] = y_pred[:,1]
 df['Target'] = le.fit_transform(df['label'])
@@ -83,7 +83,7 @@ for i, noaa in enumerate(m5_flared_NOAA):
     df_ar = df[df['NOAA']==noaa]
     lns1 = df_ar.plot(x="Date", y="Prob", ax=axes[0], legend=False)
     axes[0].axvspan(xmin=df_ar['Date'].iloc[1], xmax=df_ar['Date'].iloc[-1],
-               ymin=0.5,
+               ymin=threshold,
                ymax=1, alpha=0.2,
                color='b')
     axes[0].set(ylabel='Probability')

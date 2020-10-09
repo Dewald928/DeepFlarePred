@@ -2,13 +2,15 @@
 tag:
   desc: wandb tags
   value:
-    - Debug
+    - Interpret
+    - Evaluation
+    - Underfit
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: TCN
+  value: CNN
 epochs:
   desc: Number of epochs to train over
-  value: 1000
+  value: 8
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -25,7 +27,7 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.1
+  value: 0.13
 lr_scheduler:
   desc: if scheduler is on
   value: False
@@ -40,7 +42,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.25
+  value: 0.04
 lr_metric:
   desc: Loss or TSS (loss is better, or is it??)
   value: TSS
@@ -99,7 +101,7 @@ skorch:
   value: True
 checkpoint:
   desc: should use network on best checkpoint?
-  value: True
+  value: False
 flare_label:
   desc: Types of flare class
   value: M5
@@ -117,13 +119,13 @@ early_stop:
   value: True
 patience:
   desc: amount of epochs for early stopping
-  value: 30
+  value: 40
 training:
   desc: Trains models, else only tests
   value: True
 model_name:
-  desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/2dsj8449
-  value: dewald123/liu_pytorch_MLP/p2typptv
+  desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/wq7vfdcf
+  value: dewald123/liu_pytorch_cnn/1pr9uz5x
 num_workers:
   desc: number of gpu workers
   value: 9
@@ -147,5 +149,5 @@ interpret:
   value: False
 evaluation:
   desc: Do final evaluation, pr roc threholds
-  value: False
+  value: True
 
