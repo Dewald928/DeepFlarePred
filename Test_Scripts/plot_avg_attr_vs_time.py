@@ -14,32 +14,28 @@ import wandb
 from utils import math_stuff
 
 
-def sort_according(old_feature_list, new_feature_list, axes):
-    # get axies title, current pos
-    # find in new list, idx
-    # swap axes
-    # update lists
-    axes_orig = axes.copy()
-    old_list = old_feature_list.copy()
-    for i, feature in enumerate(new_feature_list):
-        print(axes[i].get_title())
-        new_idx = next((j for j, x in enumerate(old_list) if
-                        x==feature), None)
-        # print(feature, new_idx, old_list[i])
-        temp = old_list[i]
-        old_list[i] = new_feature_list[i]
-        old_list[new_idx] = temp
-
-        temp = axes[i]
-        axes[i] = axes[new_idx]
-        axes[new_idx] = temp
-        print(axes[i].get_title())
-        # pos1 = axes[i].get_position()
-        # axes[i].set_position(axes[new_idx].get_position())
-        # axes[new_idx].set_position(pos1)
-
-
-
+sharps = ['USFLUX', 'SAVNCPP', 'TOTPOT', 'ABSNJZH', 'SHRGT45', 'AREA_ACR',
+          'R_VALUE', 'TOTUSJH', 'TOTUSJZ', 'MEANJZH', 'MEANJZD', 'MEANPOT',
+          'MEANSHR', 'MEANALP', 'MEANGAM', 'MEANGBZ', 'MEANGBT',
+          'MEANGBH', ]  # 18
+lorentz = ['TOTBSQ', 'TOTFX', 'TOTFY', 'TOTFZ', 'EPSX', 'EPSY',
+           'EPSZ']  # 7
+history_features = ['Bdec', 'Cdec', 'Mdec', 'Xdec', 'Edec', 'logEdec',
+                    'Bhis', 'Chis', 'Mhis', 'Xhis', 'Bhis1d', 'Chis1d',
+                    'Mhis1d', 'Xhis1d', 'Xmax1d']  # 15
+listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT',
+                        'AREA_ACR', 'Cdec', 'Chis', 'Edec', 'Mhis',
+                        'Xmax1d', 'Mdec', 'MEANPOT', 'R_VALUE', 'Mhis1d',
+                        'MEANGAM', 'TOTFX', 'MEANJZH', 'MEANGBZ', 'TOTFZ',
+                        'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
+                        'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
+                        'Bdec', 'Bhis1d'] # 32
+all_f = sharps+lorentz+history_features
+bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
+                'Bhis1d']
+# feature_list = [x for x in all if x not in bad_features] #
+feature_list = feature_names[5:5+cfg.n_features]
+# feature_list = all_f
 
 directory = "./saved/results/attribution/"
 fig, axes = plt.subplots(10, 4, figsize=(15, 20), sharex=True)
@@ -66,12 +62,12 @@ for j, attr in enumerate(attr_name_list):
     attr = attr.replace(' ', '')
     print(attr)
 
-    for i, feature in enumerate(feature_list):
+    for i, feature in enumerate(all_f):
         print(feature)
 
         ax = axes[i]
 
-        g = sns.lineplot(x=df_dict[attr].index, y=df_dict[attr].iloc[:, i],
+        g = sns.lineplot(x=df_dict[attr].index, y=df_dict[attr].loc[:,feature],
                          data=df_dict[attr], ci=68, label=attr_name_list[j],
                          ax=ax)
         ax.axvspan(xmin=127, xmax=151, ymin=0, ymax=1, alpha=0.1, color='r')
@@ -82,7 +78,6 @@ for j, attr in enumerate(attr_name_list):
         ax.get_legend().set_visible(False)
         ax.grid(True)
         plt.tight_layout()
-sort_according(feature_list, all_f, axes)
 plt.legend()
 plt.savefig('./saved/results/attribution/atrr_avg_test.png', dpi=500)
 plt.show()
