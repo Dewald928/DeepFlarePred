@@ -1005,6 +1005,7 @@ if __name__ == '__main__':
         # all_fill = np.full(inputs.shape[0], 0.01)
         device = 'cpu'
         model = model.to(device)
+        # model.device = device
 
         # Train
         # yprob = infer_model(model, device, train_loader)
@@ -1015,8 +1016,12 @@ if __name__ == '__main__':
         metric.plot_precision_recall(model, yprob, y_train_tr_tensor, 'Train')
         metric.plot_confusion_matrix(yprob, y_train_tr_tensor, 'Train')
         roc_auc = metric.get_roc(model, yprob, y_train_tr_tensor, device, 'Train')
-        th = metric.get_metrics_threshold(yprob,y_train_tr_tensor)[11]
+        th = metric.get_metrics_threshold(yprob, y_train_tr_tensor)[11]
         pdf.plot_density_estimation(model, yprob, y_train_tr_tensor, 'Train')
+
+        cm = sklearn.metrics.confusion_matrix(y_train_tr_tensor,
+                                              metric.to_labels(yprob, 0.5))
+        tss_train = metric.calculate_metrics(cm, 2)[4]
 
 
         # Validation
@@ -1031,6 +1036,10 @@ if __name__ == '__main__':
         th_norm = pdf.plot_density_estimation(model, yprob, y_valid_tr_tensor,'Validation')
         th = metric.get_metrics_threshold(yprob, y_valid_tr_tensor)[11]
 
+        cm = sklearn.metrics.confusion_matrix(y_valid_tr_tensor,
+                                              metric.to_labels(yprob, 0.5))
+        tss_val = metric.calculate_metrics(cm, 2)[4]
+
 
         # Test
         # yprob = infer_model(model, device, test_loader)
@@ -1039,7 +1048,8 @@ if __name__ == '__main__':
 
         metric.plot_precision_recall(model, yprob, y_test_tr_tensor, 'Test')
         pdf.plot_eval_graphs(yprob, y_test_tr_tensor.numpy(), 'Test')
-        cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,metric.to_labels(yprob, th))
+        cm = sklearn.metrics.confusion_matrix(y_test_tr_tensor,
+                                              metric.to_labels(yprob, th))
         tss_th = metric.calculate_metrics(cm, 2)[4]
         metric.plot_confusion_matrix(yprob, y_test_tr_tensor, 'Test')
         tss = metric.get_metrics_threshold(yprob, y_test_tr_tensor)[8]
