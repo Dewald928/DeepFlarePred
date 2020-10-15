@@ -70,6 +70,7 @@ def plot_calibration_curve(yprob, ytrue, ax, name='Test'):
     ax.set_xlabel("Probability")
     ax.set_ylim([-0.05, 1.05])
     ax.legend(loc="upper right")
+    ax.set(title='c)')
     # ax.set_title('Calibration plots  (reliability curve)')
 
     ax2.set_ylabel("Count")
@@ -90,6 +91,7 @@ def plot_ssp(yprob, ytrue, ax):
     ax.set(ylabel='TSS, HSS')
     ax.set(xlim=(0, 1))
     ax.set(ylim=(0, 1))
+    ax.set(title='a)')
     ax.grid(True)
     plt.tight_layout()
 
@@ -113,6 +115,7 @@ def plot_roc_curve(yprob, ytrue, ax):
     ax.set(xlabel='False Positive Rate')
     ax.set(ylabel='True Positive Rate')
     ax.set(ylim=(0, 1.01))
+    ax.set(title='b)')
     # show the legend
     ax.legend()
     ax.grid(True)
