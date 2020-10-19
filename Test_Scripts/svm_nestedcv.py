@@ -23,8 +23,9 @@ from sklearn.model_selection import RepeatedStratifiedKFold, \
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 # explore the algorithm wrapped by RFE
-from sklearn.svm import LinearSVC, l1_min_c
+from sklearn.svm import LinearSVC, l1_min_c, SVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 
@@ -41,7 +42,7 @@ start_feature = 5
 mask_value = 0
 drop_path = os.path.expanduser(
     '~/Dropbox/_Meesters/figures/features_inspect/')
-filepath = './Data/Liu/M5_only'
+filepath = './Data/Liu/z_train/'
 
 # todo removed redundant features
 listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT', 'AREA_ACR',
@@ -96,13 +97,15 @@ SVM Nested CV
 '''
 seed = 5
 params = {'C': [0.000001,0.00001,0.0001,0.001,0.01,0.1,1,10,100]}  # choose C
-clf = LinearSVC(penalty="l2", dual=False, verbose=0, max_iter=10000,
-                class_weight='balanced')
+# clf = LinearSVC(penalty="l2", dual=False, verbose=0, max_iter=10000,
+#                 class_weight='balanced')
+clf = SVC(verbose=0, max_iter=10000, class_weight='balanced')
+clf = RandomForestClassifier(min_samples_split=3, n_estimators=500)
 
 inner_cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=seed)
 outer_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
 
-gcv = GridSearchCV(estimator=clf, param_grid=params,
+gcv = GridSearchCV(estimator=clf, param_grid={'n_estimators': [500]},
                    scoring=make_scorer(balanced_accuracy_score,
                                        **{'adjusted': True}),
                    n_jobs=-1, cv=inner_cv, refit=True,
@@ -150,6 +153,7 @@ print("|---|---|")
 print('| Training + Validation | %.4f |' % (train_tss))
 print('| Test | %.4f |' % (test_tss))
 
+yprob = gcv.predict_proba(X_test_data)[:, 1]
 
 # save to csv
 nested_score_df = pd.Series(nested_score, name='best_outer_score')
@@ -157,15 +161,14 @@ df_csv = pd.concat([pd.DataFrame(gcv.cv_results_), nested_score_df], axis=1)
 df_csv.to_csv('../saved/scores/nestedcv_svm_{}_strat.csv'.format(seed))
 
 # calibration
-from sklearn.calibration import CalibratedClassifierCV, calibration_curve
-
-cclf = CalibratedClassifierCV(base_estimator=LinearSVC(penalty='l2',
-                                                       dual=False, C=0.001), cv=5)
-cclf.fit(X, y)
-res = cclf.predict_proba(X_test_data)[:, 1]
-
-# or use
-y_pred = gcv.decision_function(X_test_data)
+# from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+#
+# cclf = CalibratedClassifierCV(clf, cv=5)
+# cclf.fit(X, y)
+# yprob = cclf.predict_proba(X_test_data)[:, 1]
+#
+# # or use
+# y_pred = gcv.decision_function(X_test_data)
 
 
 
