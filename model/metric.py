@@ -227,25 +227,25 @@ def brier_skill_score(y, yhat, brier_ref):
 
 def bss_analysis(y_proba, y):
     # no skill prediction 0
-    probabilities = [0.0 for _ in range(len(y))]
-    avg_brier = brier_score_loss(y, probabilities)
+    # probabilities = [0.0 for _ in range(len(y))]
+    # avg_brier = brier_score_loss(y, probabilities)
     # print('P(class1=0): Brier Score=%.4f' % (avg_brier))
     # no skill prediction 1
-    probabilities = [1.0 for _ in range(len(y))]
-    avg_brier = brier_score_loss(y, probabilities)
+    # probabilities = [1.0 for _ in range(len(y))]
+    # avg_brier = brier_score_loss(y, probabilities)
     # print('P(class1=1): Brier Score=%.4f' % (avg_brier))
     # baseline probabilities
-    probabilities = [0.01 for _ in range(len(y))]
-    avg_brier = brier_score_loss(y, probabilities)
+    # probabilities = [0.01 for _ in range(len(y))]
+    # avg_brier = brier_score_loss(y, probabilities)
     # print('Baseline: Brier Score=%.4f' % (avg_brier))
     # perfect probabilities
-    avg_brier = brier_score_loss(y, y)
+    # avg_brier = brier_score_loss(y, y)
     # print('Perfect: Brier Score=%.4f' % (avg_brier))
     # actual probabilities
-    avg_brier = brier_score_loss(y, y_proba)
+    # avg_brier = brier_score_loss(y, y_proba)
     # print('Actual: Brier Score=%.4f' % (avg_brier))
     # calculate reference
-    probabilities = [0.01 for _ in range(len(y))]
+    probabilities = [0.0075 for _ in range(len(y))]
     brier_ref = brier_score_loss(y, probabilities)
     print('Reference: Brier Score=%.4f' % (brier_ref))
     # no skill prediction 0
@@ -257,7 +257,7 @@ def bss_analysis(y_proba, y):
     bss = brier_skill_score(y, probabilities, brier_ref)
     # print('P(class1=1): BSS=%.4f' % (bss))
     # baseline probabilities
-    probabilities = [0.01 for _ in range(len(y))]
+    probabilities = [0.0075 for _ in range(len(y))]
     bss = brier_skill_score(y, probabilities, brier_ref)
     print('Baseline: BSS=%.4f' % (bss))
     # perfect probabilities
