@@ -270,7 +270,7 @@ def bss_analysis(y_proba, y):
 
 
 def get_bss(y_proba, y):
-    probabilities = [0.01 for _ in range(len(y))]
+    probabilities = [0.0075 for _ in range(len(y))]
     brier_ref = brier_score_loss(y, probabilities)
     bss = brier_skill_score(y, y_proba, brier_ref)
     return bss

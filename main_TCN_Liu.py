@@ -453,7 +453,7 @@ if __name__ == '__main__':
     bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
-    # feature_list = None
+    # feature_list = feature_names[5:]
     feature_list = all_f
     # can be
     # None, need to change
@@ -609,7 +609,11 @@ if __name__ == '__main__':
 
     # Create model
     if cfg.model_type == 'MLP':
-        model = mlp.MLPModule(input_units=cfg.n_features,
+        # model = mlp.MLPModule(input_units=cfg.n_features,
+        #                       hidden_units=cfg.hidden_units,
+        #                       num_hidden=cfg.layers,
+        #                       dropout=cfg.dropout).to(device)
+        model = mlp.DEFNR(input_units=cfg.n_features,
                               hidden_units=cfg.hidden_units,
                               num_hidden=cfg.layers,
                               dropout=cfg.dropout).to(device)
@@ -847,7 +851,7 @@ if __name__ == '__main__':
                                                                cfg.learning_rate,
                                                                cfg.seed))
 
-        checkpoint = Checkpoint(monitor='valid_tss_best',
+        checkpoint = Checkpoint(monitor='valid_bss_best',
                                 dirname=savename)
         if cfg.lr_scheduler:
             # lrscheduler = LRScheduler(policy='TorchCyclicLR',
@@ -894,8 +898,8 @@ if __name__ == '__main__':
         net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
                                   batch_size=cfg.batch_size,
                                   criterion=nn.CrossEntropyLoss,
-                                  criterion__weight=torch.FloatTensor(
-                                      class_weights).to(device),
+                                  # criterion__weight=torch.FloatTensor(
+                                  #     class_weights).to(device),
                                   optimizer=torch.optim.SGD,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
@@ -1103,6 +1107,7 @@ if __name__ == '__main__':
         attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
                           "Input x Gradient", "Guided Backprop", "Ablation",
                           "Shapley Value Sampling"]
+
         # interpreter.plot_all_attr(attrs_list, feature_list, attr_name_list)
         interpreter.plot_attr_vs_time(attrs_list, feature_list, attr_name_list)
         interpreter.log_attrs(attrs_list, feature_list, attr_name_list, cfg)
