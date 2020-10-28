@@ -13,7 +13,7 @@ from utils import math_stuff
 import wandb
 
 
-def interpret_model(model, device, input_df, backgroud_df):
+def interpret_model(model, input_df, backgroud_df, device='cpu'):
     print("\n Interpreting Model...")
     is_seq = True if len(input_df.shape)>2 else False
     input_tensor = torch.tensor(input_df).float()
@@ -24,8 +24,8 @@ def interpret_model(model, device, input_df, backgroud_df):
     # input_tensor = input_tensor[l1-l0:,:]
     model.eval()
 
-    model = model.to('cpu')
-    input_tensor = input_tensor.to('cpu')
+    model = model.to(device)
+    input_tensor = input_tensor.to(device)
 
     sal = Saliency(model)
     ig = IntegratedGradients(model)
@@ -123,7 +123,7 @@ def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
         for j, attr in enumerate(attrs_list):
             # print(attr.shape) # todo TCN?
             attr = attr if len(attr.shape) == 2 else attr[:, :, -1]
-            importance = attr[:,i].detach().numpy()
+            importance = attr[:,i].cpu().detach().numpy()
             axes[i].plot(importance, label=attr_name_list[j])
             axes[i].axvspan(xmin=128,
                             xmax=152, ymin=0, ymax=1,
@@ -138,7 +138,7 @@ def log_attrs(attrs_list, feature_list, attr_name_list, cfg):
     for i, attr_name in enumerate(attr_name_list):
         attrs_list[i] = attrs_list[i] if len(attrs_list[i].shape) == 2 else \
             attrs_list[i][:, :, -1]
-        df_attr = pd.DataFrame(attrs_list[i].detach().numpy(),
+        df_attr = pd.DataFrame(attrs_list[i].cpu().detach().numpy(),
                                columns=feature_list)
 
         df_attr.to_csv(

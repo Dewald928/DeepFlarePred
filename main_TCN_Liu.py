@@ -1105,8 +1105,9 @@ if __name__ == '__main__':
             input_df = torch.tensor(input_df).float().permute(0, 2, 1)
 
         # interpret using captum
-        attrs_list = interpreter.interpret_model(model, device, input_df,
-                                                 backgroud_df)
+        device = 'cpu'
+        attrs_list = interpreter.interpret_model(model, input_df,
+                                                 backgroud_df, device)
 
         attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
                           "Input x Gradient", "Guided Backprop", "Ablation",
