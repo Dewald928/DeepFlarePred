@@ -30,7 +30,7 @@ le = preprocessing.LabelEncoder()
 # model already trained
 threshold=0.5
 dump_path = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/NOAA_prediction/MLP/')
+    '~/Dropbox/_Meesters/figures/NOAA_prediction/test/')
 # dump_path = os.path.expanduser(
 #     './saved/figures/dump/')
 if not os.path.exists(dump_path):
@@ -67,6 +67,8 @@ y_proba = metric.get_proba(model(torch.cat((X_train_data_tensor,
 y_pred = metric.to_labels(y_proba, threshold)
 df['Prob'] = y_proba[:,1]
 df['Pred'] = y_pred[:,1]
+# df['Prob'] = y_proba
+# df['Pred'] = y_pred
 df['Target'] = le.fit_transform(df['label'])
 
 # Plot flux and probability per AR
@@ -83,7 +85,8 @@ for i, noaa in enumerate(m5_flared_NOAA):
     axes[0].set(xlabel='Date')
     axes[0].set(ylim=(0,1))
     ax2 = axes[0].twinx()
-    lns2 = df_ar.plot(x="Date", y="Flux", ax=ax2, color="r", legend=False)
+    lns2 = df_ar.plot(x="Date", y="Flux", ax=ax2, color="r",
+                          legend=False)
     ax2.axvspan(xmin=df_ar['Date'].iloc[1], xmax=df_ar['Date'].iloc[-1],
                ymin=0.68,
                ymax=1, alpha=0.2,

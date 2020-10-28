@@ -19,13 +19,13 @@ def plot_density_estimation(net, yhat, labels, dataset_name):
     x_flare = x[np.where(y >= 1)[0]]
     x_no_flare = x[np.where(y < 1)[0]]
     ax0 = sns.distplot(x_flare, bins=30, fit=norm,
-                       kde_kws={'color': 'r', 'label': 'Flare_KDE'},
-                       fit_kws={'color': '#ff81c0', 'label': 'Flare_Normal'},
+                       kde_kws={'color': 'r', 'label': 'Flare KDE'},
+                       fit_kws={'color': '#ff81c0', 'label': 'Flare Normal'},
                        hist_kws={'color': 'r'})
     ax1 = sns.distplot(x_no_flare, bins=30, fit=norm,
-                       kde_kws={'color': 'b', 'label': 'No_Flare_KDE'},
+                       kde_kws={'color': 'b', 'label': 'No-Flare KDE'},
                        fit_kws={'color': '#75bbfd',
-                                'label': 'No_Flare_Normal'},
+                                'label': 'No-Flare Normal'},
                        hist_kws={'color': 'b'})
 
     x = ax0.lines[3].get_xdata()

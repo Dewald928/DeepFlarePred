@@ -74,12 +74,13 @@ class block1(nn.Module):
         self.linear4 = nn.Linear(hidden_units, input_units)
         self.output_units = output_units
         self.batch_norm = nn.BatchNorm1d(input_units)
+        self.batch_norm1 = nn.BatchNorm1d(hidden_units)
 
     def forward(self, x):
         residual = x
-        out = F.relu(self.batch_norm(self.linear1(x)))
-        out = F.relu(self.batch_norm(self.linear2(out)))
-        out = F.relu(self.batch_norm(self.linear3(out)))
+        out = F.relu(self.batch_norm1(self.linear1(x)))
+        out = F.relu(self.batch_norm1(self.linear2(out)))
+        out = F.relu(self.batch_norm1(self.linear3(out)))
         out = F.relu(self.batch_norm(self.linear4(out)))
 
         out += residual

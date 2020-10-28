@@ -14,15 +14,15 @@ import wandb
 # ==============================================================
 # batch_list = [256, 1024, 8192, 65536]
 batch_list = [65536]
-# dataset_list = ['Liu/z_train/', 'Liu/z_minmax_train/', 'Liu/z_minmax_all/']
-dataset_list = ['Liu/z_train/']
-dropout_list=[0.8,0.9]
+dataset_list = ['Liu/z_train/', 'Liu/z_minmax_train/', 'Liu/z_minmax_all/']
+# dataset_list = ['Liu/z_train/']
+dropout_list=[0.8, 0.9]
 epochs_list=[50,100, 200, 400]
-# wd_list = [0, 0.001, 0.01]
+wd_list = [0, 0.001, 0.01]
 hidden_units_list = [10, 25, 50, 100]
 
-filename = 'CNN_GS_40f_2.csv'
-pathname = os.path.expanduser('~/Dropbox/_Meesters/figures/CNN/Grid_Search/')
+filename = 'MLP_GS_static_6.csv'
+pathname = os.path.expanduser('~/Dropbox/_Meesters/figures/MLP/Grid_Search/')
 all_df = pd.read_csv(pathname + filename) if os.path.isfile(
     pathname + filename) is True else pd.DataFrame()
 # model_type = 'MLP'  # 'TCN 'or 'MLP'
@@ -40,16 +40,20 @@ api = wandb.Api()
 def get_wandb_runs(all_df):
     # list of sweeps
     # Get runs from a specific sweep
-    sweep0 = api.runs(path="dewald123/liu_pytorch_cnn",
-                      filters={'sweep': "yvlq0llr"}, per_page=1200)
-    sweep1 = api.runs(path="dewald123/liu_pytorch_cnn",
-                      filters={'sweep': "r5oj5sz1"}, per_page=1200)
-    sweep2 = api.runs(path="dewald123/liu_pytorch_cnn",
-                      filters={'sweep': "hioonqpc"}, per_page=1200)
-    # sweep3 = api.runs(path="dewald123/liu_pytorch_MLP",
-    #                   filters={'sweep': "3wkyzs3k"}, per_page=1200)
+    sweep0 = api.runs(path="dewald123/liu_pytorch_MLP",
+                      filters={'sweep': "2skejkog"}, per_page=1200)
+    sweep1 = api.runs(path="dewald123/liu_pytorch_MLP",
+                      filters={'sweep': "w7022anm"}, per_page=1200)
+    sweep2 = api.runs(path="dewald123/liu_pytorch_MLP",
+                      filters={'sweep': "2vggufi5"}, per_page=1200)
+    sweep3 = api.runs(path="dewald123/liu_pytorch_MLP",
+                      filters={'sweep': "aiqkwhly"}, per_page=1200)
+    sweep4 = api.runs(path="dewald123/liu_pytorch_MLP",
+                      filters={'sweep': "ul7buq1r"}, per_page=1200)
+    sweep5 = api.runs(path="dewald123/liu_pytorch_MLP",
+                      filters={'sweep': "4w3obi17"}, per_page=1200)
 
-    sweeps = [sweep0, sweep1, sweep2]
+    sweeps = [sweep0, sweep1, sweep2, sweep3, sweep4, sweep5]
 
     for sweep in sweeps:
         summary_list = []
@@ -96,7 +100,7 @@ def get_wandb_runs(all_df):
     all_df.to_csv(pathname + filename, index=False)
 
 
-get_wandb_runs(all_df)  # uncomment to get runs
+# get_wandb_runs(all_df)  # uncomment to get runs
 
 # ===============================================================
 # list of df from groups
@@ -105,34 +109,40 @@ all_df = pd.read_csv(pathname + filename) if os.path.isfile(
 
 # =============================================================
 # plot graphs
-fig, axes = plt.subplots(1,2, figsize=(10, 5), sharey=True, dpi=200)
+fig, axes = plt.subplots(1,3, figsize=(10, 5), sharey=True, dpi=200)
 i = 0
-for dropout in dropout_list:
-    # fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharey=True,
-    #                          constrained_layout=True)
+for dataset in dataset_list:
+    # fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharey=False)
+    # i=0
+    # for batch_size in batch_list:
 
-    # for hidden in hidden_units_list:
-        # filter_df = all_df[(all_df['batch_size'] == batch_size) & (
-        #         all_df['dataset'] == dataset)]
-    filter_df = all_df[(all_df['dropout'] == dropout) & (all_df[
-                                                             'learning_rate'] < 0.8)]
+        # for hidden in hidden_units_list:
+    # filter_df = all_df[(all_df['dataset'] == dataset) & (
+    #         all_df['batch_size'] == batch_size)]
+    filter_df = all_df[(all_df['dataset'] == dataset)]
+    # filter_df = all_df[(all_df['dropout'] == dropout) & (
+    #             all_df['weight_decay'] == wd)]
+    # filter_df = all_df[(all_df['dropout'] == dropout) & (all_df[
+    #     'learning_rate']<0.8)]
 
     ax = axes.flat[i]
     # ax = axes
 
     sns.lineplot(x='learning_rate', y='Best_Train_TSS', data=filter_df,
-                 ci=68, color='b', label='Train', ax=ax)
+                 ci=68, color='b', label='Train', ax=ax, marker='o')
     sns.lineplot(x='learning_rate', y='Best_Validation_TSS',
                  data=filter_df, ci=68, ax=ax, color='g',
-                 label='Validation')
+                 label='Validation', marker='o')
     sns.lineplot(x='learning_rate', y='Test_TSS', data=filter_df, ci=68,
-                 ax=ax, color='y', label='Test')
-    # ax.set_xscale("log")
-    ax.set_title(f"Dropout: {dropout}")
+                 ax=ax, color='y', label='Test', marker='o')
+    ax.set_xscale("log")
+    # ax.set_title(f"Dropout: {dropout}.")
+    ax.set_title(f"Scaling strategy: {dataset[4:-1]}")
     ax.set_ylabel('TSS')
+    ax.set_xlabel('Learning Rate')
     ax.grid(True)
     plt.tight_layout()
     i += 1
 fig.tight_layout()
-plt.savefig(pathname + f"TSS_vs_LR_2.png")
+plt.savefig(pathname + f"TSS_vs_LR_S_scalers.pdf")
 plt.show()

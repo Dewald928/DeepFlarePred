@@ -34,10 +34,13 @@ all_f = sharps+lorentz+history_features
 bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
                 'Bhis1d']
 # feature_list = [x for x in all if x not in bad_features] #
-feature_list = feature_names[5:]
+# feature_list = feature_names[5:]
 # feature_list = all_f
+attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
+                          "Input x Gradient", "Guided Backprop", "Ablation",
+                          "Shapley Value Sampling"]
 
-directory = "../saved/results/attribution/MLP/"
+directory = "../saved/results/attribution/CNN/"
 fig, axes = plt.subplots(10, 4, figsize=(15, 20), sharex=True)
 axes = axes.reshape(-1)
 df_list = []
@@ -46,7 +49,7 @@ df_dict = {'Saliency': e, 'IntegratedGradients': e, 'DeepLIFT': e,
            'InputxGradient': e, 'GuidedBackprop': e, 'Ablation': e,
            'ShapleyValueSampling': e}
 
-for j, attr in enumerate(attrs_list):
+for j, attr in enumerate(attr_name_list):
     name = attr_name_list[j].replace(' ', '')
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
@@ -79,7 +82,7 @@ for j, attr in enumerate(attr_name_list):
         ax.grid(True)
         plt.tight_layout()
 plt.legend(title='Attribution method', loc='upper left', fontsize='xx-small')
-plt.savefig('../saved/results/attribution/MLP/atrr_avg_MLP.pdf')
+plt.savefig('../saved/results/attribution/CNN/atrr_avg_CNN.pdf')
 plt.show()
 
 

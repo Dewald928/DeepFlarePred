@@ -101,6 +101,7 @@ params = {'C': [0.000001,0.00001,0.0001,0.001,0.01,0.1,1,10,100]}  # choose C
 #                 class_weight='balanced')
 clf = SVC(verbose=0, max_iter=10000, class_weight='balanced')
 clf = RandomForestClassifier(min_samples_split=3, n_estimators=500)
+# clf.fit(X,y)
 
 inner_cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=seed)
 outer_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
@@ -154,6 +155,7 @@ print('| Training + Validation | %.4f |' % (train_tss))
 print('| Test | %.4f |' % (test_tss))
 
 yprob = gcv.predict_proba(X_test_data)[:, 1]
+ypred = (gcv.predict_proba(X_test_data)[:, 1] >=0.0075).astype(bool)
 
 # save to csv
 nested_score_df = pd.Series(nested_score, name='best_outer_score')

@@ -2,18 +2,16 @@
 tag:
   desc: wandb tags
   value:
-    - Interpret
-    - Evaluation
-    - Underfit
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: CNN
+  value: TCN
 epochs:
   desc: Number of epochs to train over
-  value: 8
+  value: 1000
 batch_size:
   desc: Size of each mini-batch
-  value: 65536
+  value: 4096
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -27,7 +25,7 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.13
+  value: 0.002
 lr_scheduler:
   desc: if scheduler is on
   value: False
@@ -42,7 +40,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.04
+  value: 0.3
 lr_metric:
   desc: Loss or TSS (loss is better, or is it??)
   value: TSS
@@ -54,13 +52,13 @@ lr_rangetest_iter:
 # TCN HP
 levels:
   desc: num of tcn blocks
-  value: 1
+  value: 3
 ksize:
   desc: kernel size (smallest is 2)
   value: 3
 nhid:
   desc: number of filters
-  value: 40
+  value: 114
 seq_len:
   desc: size of sequence (Be 1 for MLP)
   value: 1
@@ -71,15 +69,15 @@ layers:
   value: 1
 hidden_units:
   desc: number hidden nodes in layer
-  value: 100
+  value: 150
 
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.8
+  value: 0.71
 weight_decay:
   desc: L2 regularizing
-  value: 0.0
+  value: 0.0009
 
 # Cross Validation
 liu_fold:
@@ -107,7 +105,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 3
+  value: 1
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -125,7 +123,7 @@ training:
   value: True
 model_name:
   desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/wq7vfdcf
-  value: dewald123/liu_pytorch_cnn/1pr9uz5x
+  value: dewald123/liu_pytorch_MLP/16z66cnv
 num_workers:
   desc: number of gpu workers
   value: 9
@@ -149,5 +147,5 @@ interpret:
   value: False
 evaluation:
   desc: Do final evaluation, pr roc threholds
-  value: True
+  value: False
 

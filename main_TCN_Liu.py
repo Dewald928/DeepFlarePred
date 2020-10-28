@@ -454,7 +454,7 @@ if __name__ == '__main__':
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
     # feature_list = feature_names[5:]
-    feature_list = all_f
+    feature_list = all_f 
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -609,14 +609,14 @@ if __name__ == '__main__':
 
     # Create model
     if cfg.model_type == 'MLP':
-        # model = mlp.MLPModule(input_units=cfg.n_features,
-        #                       hidden_units=cfg.hidden_units,
-        #                       num_hidden=cfg.layers,
-        #                       dropout=cfg.dropout).to(device)
-        model = mlp.DEFNR(input_units=cfg.n_features,
+        model = mlp.MLPModule(input_units=cfg.n_features,
                               hidden_units=cfg.hidden_units,
                               num_hidden=cfg.layers,
                               dropout=cfg.dropout).to(device)
+        # model = mlp.DEFNR(input_units=cfg.n_features,
+        #                       hidden_units=cfg.hidden_units,
+        #                       num_hidden=cfg.layers,
+        #                       dropout=cfg.dropout).to(device)
         summary(model, input_size=(cfg.n_features, ))
     elif cfg.model_type == "TCN":
         print("Receptive Field: " + str(
@@ -812,6 +812,9 @@ if __name__ == '__main__':
         valid_pr_auc_cb = EpochScoring(
             scoring=make_scorer(skorch_utils.get_pr_auc, needs_proba=False),
             lower_is_better=False, name='valid_pr_auc', use_caching=True)
+        train_bss_cb = EpochScoring(scoring=skorch_utils.get_bss,
+            lower_is_better=False, name='train_bss', use_caching=False,
+                                    on_train=True)
         train_tss_cb = EpochScoring(scoring=make_scorer(skorch_utils.get_tss,
                                                      needs_proba=False),
                                  lower_is_better=False, name='train_tss',
@@ -851,7 +854,7 @@ if __name__ == '__main__':
                                                                cfg.learning_rate,
                                                                cfg.seed))
 
-        checkpoint = Checkpoint(monitor='valid_bss_best',
+        checkpoint = Checkpoint(monitor='valid_tss_best',
                                 dirname=savename)
         if cfg.lr_scheduler:
             # lrscheduler = LRScheduler(policy='TorchCyclicLR',
@@ -898,15 +901,16 @@ if __name__ == '__main__':
         net = NeuralNetClassifier(model, max_epochs=cfg.epochs,
                                   batch_size=cfg.batch_size,
                                   criterion=nn.CrossEntropyLoss,
-                                  # criterion__weight=torch.FloatTensor(
-                                  #     class_weights).to(device),
+                                  criterion__weight=torch.FloatTensor(
+                                      class_weights).to(device),
                                   optimizer=torch.optim.SGD,
                                   optimizer__lr=cfg.learning_rate,
                                   optimizer__weight_decay=cfg.weight_decay,
                                   device=device,
                                   train_split=predefined_split(valid_ds),
                                   # train_split=skorch.dataset.CVSplit(cv=10),
-                                  callbacks=[train_tss_cb, valid_tss_cb,
+                                  callbacks=[train_tss_cb,
+                                             train_bss_cb, valid_tss_cb,
                                              valid_hss_cb, valid_bss_cb,
                                              earlystop, checkpoint,
                                              # load_state,
