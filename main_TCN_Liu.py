@@ -1021,6 +1021,8 @@ if __name__ == '__main__':
         # Train
         # yprob = infer_model(model, device, train_loader)
         yprob = metric.get_proba(model(X_train_data_tensor.to(device)))[:,1]
+        pd.DataFrame(yprob).to_csv('./saved/results/TCN/train.csv',
+                                   index=False)
         # yprob = pd.read_csv('./saved/results/liu/train.csv').to_numpy()
 
         pdf.plot_eval_graphs(yprob, y_train_tr_tensor.numpy(), 'Train')
@@ -1038,6 +1040,8 @@ if __name__ == '__main__':
         # Validation
         # yprob = infer_model(model, device, valid_loader)
         yprob = metric.get_proba(model(X_valid_data_tensor.to(device)))[:,1]
+        pd.DataFrame(yprob).to_csv('./saved/results/TCN/train.csv',
+                                   index=False)
         # yprob = pd.read_csv('./saved/results/liu/val.csv').to_numpy()
 
         pdf.plot_eval_graphs(yprob, y_valid_tr_tensor.numpy(), 'Validation')
@@ -1055,6 +1059,8 @@ if __name__ == '__main__':
         # Test
         # yprob = infer_model(model, device, test_loader)
         yprob = metric.get_proba(model(X_test_data_tensor.to(device)))[:,1]
+        pd.DataFrame(yprob).to_csv('./saved/results/TCN/train.csv',
+                                   index=False)
         # yprob = pd.read_csv('./saved/results/liu/test.csv').to_numpy()
 
         metric.plot_precision_recall(model, yprob, y_test_tr_tensor, 'Test')
