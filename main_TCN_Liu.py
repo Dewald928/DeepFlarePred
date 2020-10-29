@@ -773,6 +773,7 @@ if __name__ == '__main__':
                 torch.load(os.path.join(wandb.run.dir, 'model_tss.pt')))
         except:
             print('No model loaded... Loading default')
+            api = wandb.Api()
             run = api.run(cfg.model_name)
             weights_file = run.file('model.pt').download(replace=True)
             # weights_file = wandb.restore('model.pt',
