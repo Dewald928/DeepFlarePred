@@ -1040,7 +1040,7 @@ if __name__ == '__main__':
         # Validation
         # yprob = infer_model(model, device, valid_loader)
         yprob = metric.get_proba(model(X_valid_data_tensor.to(device)))[:,1]
-        pd.DataFrame(yprob).to_csv('./saved/results/TCN/train.csv',
+        pd.DataFrame(yprob).to_csv('./saved/results/TCN/val.csv',
                                    index=False)
         # yprob = pd.read_csv('./saved/results/liu/val.csv').to_numpy()
 
@@ -1059,7 +1059,7 @@ if __name__ == '__main__':
         # Test
         # yprob = infer_model(model, device, test_loader)
         yprob = metric.get_proba(model(X_test_data_tensor.to(device)))[:,1]
-        pd.DataFrame(yprob).to_csv('./saved/results/TCN/train.csv',
+        pd.DataFrame(yprob).to_csv('./saved/results/TCN/test.csv',
                                    index=False)
         # yprob = pd.read_csv('./saved/results/liu/test.csv').to_numpy()
 
