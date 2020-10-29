@@ -96,7 +96,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 checkpoint:
   desc: should use network on best checkpoint?
   value: False
@@ -105,7 +105,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 1
+  value: 3
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -120,10 +120,10 @@ patience:
   value: 40
 training:
   desc: Trains models, else only tests
-  value: True
+  value: False
 model_name:
   desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/wq7vfdcf
-  value: dewald123/liu_pytorch_MLP/16z66cnv
+  value: dewald123/liu_pytorch_tcn/91w0qfdw
 num_workers:
   desc: number of gpu workers
   value: 9
