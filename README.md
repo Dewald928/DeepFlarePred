@@ -8,6 +8,7 @@ By using the [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction)
 ```wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh```
 
 ```bash Miniconda3-latest-Linux-x86_64.sh```
+```echo ". /home/<user>/miniconda3/etc/profile.d/conda.sh" >> ~/.bashrc```
 ### Git clone
 ```git clone https://github.com/Dewald928/DeepFlarePred.git```
 ### Create virtual environment
