@@ -5,13 +5,13 @@ tag:
     - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
-  value: TCN
+  value: MLP
 epochs:
   desc: Number of epochs to train over
   value: 1000
 batch_size:
   desc: Size of each mini-batch
-  value: 4096
+  value: 65536
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -25,7 +25,7 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.002
+  value: 0.1
 lr_scheduler:
   desc: if scheduler is on
   value: False
@@ -96,10 +96,10 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: False
+  value: True
 checkpoint:
   desc: should use network on best checkpoint?
-  value: False
+  value: True
 flare_label:
   desc: Types of flare class
   value: M5
@@ -120,7 +120,7 @@ patience:
   value: 40
 training:
   desc: Trains models, else only tests
-  value: False
+  value: True
 model_name:
   desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/wq7vfdcf
   value: dewald123/liu_pytorch_tcn/91w0qfdw

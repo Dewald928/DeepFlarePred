@@ -5,6 +5,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import auc
 from skorch.callbacks import *
 from model import metric
+from scipy.special import softmax
 
 
 def get_metric(y_true, y_pred, nclass, metric_name='tss'):
@@ -141,6 +142,6 @@ class MyCheckpoint(Checkpoint):
 
 
 def get_bss(net, ds, y=None):
-    y_prob = net.predict_proba(ds)[:,1]
+    y_prob = softmax(net.predict_proba(ds)[:,1])
     bss = metric.get_bss(y_prob,y)
     return bss

@@ -30,7 +30,7 @@ le = preprocessing.LabelEncoder()
 # model already trained
 threshold=0.5
 dump_path = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/NOAA_prediction/test/')
+    '~/Dropbox/_Meesters/figures/NOAA_prediction/TCN/')
 # dump_path = os.path.expanduser(
 #     './saved/figures/dump/')
 if not os.path.exists(dump_path):
@@ -51,24 +51,24 @@ m5_flares = df[df['label'].str.match('Positive')]
 m5_flared_NOAA = m5_flares['NOAA'].unique()
 m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
-model = model.to('cpu')
+# model = model.to('cpu')
 
 # Predict probabilites
-y_proba = metric.get_proba(model(torch.cat((X_train_data_tensor,
-                                            X_valid_data_tensor,
-                                            X_test_data_tensor),
-                                           0).to('cpu')))
-# l_train = pd.read_csv('./saved/results/liu/train.csv')
-# l_val = pd.read_csv('./saved/results/liu/val.csv')
-# l_test = pd.read_csv('./saved/results/liu/test.csv')
-# y_proba = pd.concat([l_train, l_val, l_test]).to_numpy()
+# y_proba = metric.get_proba(model(torch.cat((X_train_data_tensor,
+#                                             X_valid_data_tensor,
+#                                             X_test_data_tensor),
+#                                            0).to('cpu')))
+l_train = pd.read_csv('./saved/results/TCN/train.csv')
+l_val = pd.read_csv('./saved/results/TCN/val.csv')
+l_test = pd.read_csv('./saved/results/TCN/test.csv')
+y_proba = pd.concat([l_train, l_val, l_test]).to_numpy()
 
 
 y_pred = metric.to_labels(y_proba, threshold)
-df['Prob'] = y_proba[:,1]
-df['Pred'] = y_pred[:,1]
-# df['Prob'] = y_proba
-# df['Pred'] = y_pred
+# df['Prob'] = y_proba[:,1]
+# df['Pred'] = y_pred[:,1]
+df['Prob'] = y_proba
+df['Pred'] = y_pred
 df['Target'] = le.fit_transform(df['label'])
 
 # Plot flux and probability per AR
@@ -114,5 +114,5 @@ for i, noaa in enumerate(m5_flared_NOAA):
     savepath = dump_path + dataset
     if not os.path.exists(savepath):
         os.makedirs(savepath)
-    plt.savefig(savepath + f"/NOAA_{noaa}.pdf")
+    plt.savefig(savepath + f"/PP_NOAA_{noaa}.pdf")
     plt.show()

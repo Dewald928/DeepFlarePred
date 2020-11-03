@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y \
  && rm -rf /var/lib/apt/lists/*
 
 # create environment
-COPY deepflarepred.yml .
+COPY archive/deepflarepred.yml .
 RUN conda env create -f deepflarepred.yml
 
 WORKDIR /DeepFlarePred
