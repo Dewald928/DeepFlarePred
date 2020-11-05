@@ -36,8 +36,8 @@ bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
 # feature_list = [x for x in all if x not in bad_features] #
 # feature_list = feature_names[5:]
 # feature_list = all_f
-attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
-                          "Input x Gradient", "Guided Backprop", "Ablation",
+attr_name_list = ["Integrated Gradients", "DeepLIFT",
+                          "Input x Gradient", "Ablation",
                           "Shapley Value Sampling"]
 
 directory = "../saved/results/attribution/CNN/"
@@ -45,8 +45,8 @@ fig, axes = plt.subplots(10, 4, figsize=(15, 20), sharex=True)
 axes = axes.reshape(-1)
 df_list = []
 e = pd.DataFrame()
-df_dict = {'Saliency': e, 'IntegratedGradients': e, 'DeepLIFT': e,
-           'InputxGradient': e, 'GuidedBackprop': e, 'Ablation': e,
+df_dict = { 'IntegratedGradients': e, 'DeepLIFT': e,
+           'InputxGradient': e, 'Ablation': e,
            'ShapleyValueSampling': e}
 
 for j, attr in enumerate(attr_name_list):

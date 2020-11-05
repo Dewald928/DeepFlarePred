@@ -453,8 +453,8 @@ if __name__ == '__main__':
     bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec','Bhis',
                     'Bhis1d']
     # feature_list = [x for x in all if x not in bad_features] #
-    # feature_list = feature_names[5:]
-    feature_list = all_f 
+    feature_list = feature_names[5:]
+    # feature_list = all_f
     # can be
     # None, need to change
     # cfg.n_features to match length
@@ -1029,7 +1029,7 @@ if __name__ == '__main__':
         metric.plot_precision_recall(model, yprob, y_train_tr_tensor, 'Train')
         metric.plot_confusion_matrix(yprob, y_train_tr_tensor, 'Train')
         roc_auc = metric.get_roc(model, yprob, y_train_tr_tensor, device, 'Train')
-        th = metric.get_metrics_threshold(yprob, y_train_tr_tensor)[11]
+        th = metric.get_metrics_threshold(yprob, y_train_tr_tensor)[8]
         pdf.plot_density_estimation(model, yprob, y_train_tr_tensor, 'Train')
 
         cm = sklearn.metrics.confusion_matrix(y_train_tr_tensor,
@@ -1118,8 +1118,8 @@ if __name__ == '__main__':
         attrs_list = interpreter.interpret_model(model, input_df,
                                                  backgroud_df, device)
 
-        attr_name_list = ["Saliency", "Integrated Gradients", "DeepLIFT",
-                          "Input x Gradient", "Guided Backprop", "Ablation",
+        attr_name_list = ["Integrated Gradients", "DeepLIFT",
+                          "Input x Gradient", "Ablation",
                           "Shapley Value Sampling"]
 
         # interpreter.plot_all_attr(attrs_list, feature_list, attr_name_list)

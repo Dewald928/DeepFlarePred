@@ -17,12 +17,12 @@ batch_list = [65536]
 # dataset_list = ['Liu/z_train/', 'Liu/z_minmax_train/', 'Liu/z_minmax_all/']
 dataset_list = ['Liu/z_train/']
 dropout_list = [0.8]
-ksize_list = [3, 7]
+ksize_list = [3, 7, 13]
 epochs_list = [50, 100, 200, 400]
 wd_list = [0, 0.001, 0.01]
 hidden_units_list = [10, 25, 50, 100]
 
-filename = 'CNN_GS_40f_k37_1.csv'
+filename = 'CNN_GS_40f_k3713_1.csv'
 pathname = os.path.expanduser('~/Dropbox/_Meesters/figures/CNN/Grid_Search/')
 all_df = pd.read_csv(pathname + filename) if os.path.isfile(
     pathname + filename) is True else pd.DataFrame()
@@ -53,8 +53,13 @@ def get_wandb_runs(all_df):
                       filters={'sweep': "r5oj5sz1"}, per_page=1200)
     sweep5 = api.runs(path="dewald123/liu_pytorch_cnn",
                       filters={'sweep': "hioonqpc"}, per_page=1200)
+    sweep6 = api.runs(path="dewald123/liu_pytorch_cnn",
+                      filters={'sweep': "5ztffkt7"}, per_page=1200)
+    sweep7 = api.runs(path="dewald123/liu_pytorch_cnn",
+                      filters={'sweep': "dxoynpru"}, per_page=1200)
 
-    sweeps = [sweep0, sweep1, sweep3, sweep4, sweep5]
+
+    sweeps = [sweep0, sweep1, sweep3, sweep4, sweep5, sweep6, sweep7]
 
     for sweep in sweeps:
         summary_list = []
@@ -110,7 +115,7 @@ all_df = pd.read_csv(pathname + filename) if os.path.isfile(
 
 # =============================================================
 # plot graphs
-fig, axes = plt.subplots(1, 2, figsize=(10, 6), sharey=True)
+fig, axes = plt.subplots(1, 3, figsize=(10, 6), sharey=True)
 i = 0
 for dropout in dropout_list:
     # fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharey=True)
@@ -125,9 +130,11 @@ for dropout in dropout_list:
         # filter_df = all_df[(all_df['dropout'] == dropout) & (
         #             all_df['weight_decay'] == wd)]
         filter_df = all_df[
-            (all_df['dropout'] == dropout) & (all_df['ksize'] == ksize) & (
-                        all_df['nhid'] == 40) & (all_df['batch_size'] ==
-                                                             65536)]
+            (all_df['dropout'] == dropout)
+            & (all_df['ksize'] == ksize)
+            & (all_df['nhid'] == 40)
+            & (all_df['batch_size'] == 65536)
+            & (all_df['learning_rate'] < 0.2)]
 
         # filter_df = all_df[(all_df['dropout'] == dropout) & (all_df[
         #     'learning_rate']<0.8)]
@@ -140,8 +147,8 @@ for dropout in dropout_list:
         sns.lineplot(x='learning_rate', y='Best_Validation_TSS',
                      data=filter_df, ci=68, ax=ax, color='g',
                      label='Validation', marker='o')
-        sns.lineplot(x='learning_rate', y='Test_TSS', data=filter_df, ci=68,
-                     ax=ax, color='y', label='Test', marker='o')
+        # sns.lineplot(x='learning_rate', y='Test_TSS', data=filter_df, ci=68,
+        #              ax=ax, color='y', label='Test', marker='o')
         ax.set_xscale("log")
         ax.set_title(f"Dropout: {dropout}. Kernel size: {ksize}")
         # ax.set_title(f"Scaling strategy: {dataset[4:-1]}")
@@ -153,5 +160,5 @@ for dropout in dropout_list:
         plt.tight_layout()
         i += 1
 fig.tight_layout()
-plt.savefig(pathname + f"TSS_vs_LR_k37_1.pdf")
+plt.savefig(pathname + f"TSS_vs_LR_k3713_1.pdf")
 plt.show()

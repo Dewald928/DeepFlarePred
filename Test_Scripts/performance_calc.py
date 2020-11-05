@@ -11,7 +11,7 @@ api = wandb.Api()
 
 # select 3 seed for model
 # mlp oclr
-mp1 = "dewald123/liu_pytorch_MLP/a01s2pba"
+# mp1 = "dewald123/liu_pytorch_MLP/a01s2pba"
 # mp2 = "dewald123/liu_pytorch_MLP/7m1ej35n"
 # mp3 = "dewald123/liu_pytorch_MLP/2jxi0lk6"
 # mlp 2_500
@@ -19,13 +19,13 @@ mp1 = "dewald123/liu_pytorch_MLP/a01s2pba"
 # mp2 = "dewald123/liu_pytorch_MLP/n9nofrxj"
 # mp3 = "dewald123/liu_pytorch_MLP/z6u7232a"
 # MLP 1_100
-# mp1 = "dewald123/liu_pytorch_MLP/16z66cnv"
-# mp2 = "dewald123/liu_pytorch_MLP/bugqi272"
-# mp3 = "dewald123/liu_pytorch_MLP/nzgx1hv5"
-# CNN 1_40_3
-# mp1 = "dewald123/liu_pytorch_cnn/370xy167"
-# mp2 = "dewald123/liu_pytorch_cnn/6yb1y7wq"
-# mp3 = "dewald123/liu_pytorch_cnn/j3arm81a"
+mp1 = "dewald123/liu_pytorch_MLP/16z66cnv"
+mp2 = "dewald123/liu_pytorch_MLP/bugqi272"
+mp3 = "dewald123/liu_pytorch_MLP/nzgx1hv5"
+# CNN 1_40_7
+# mp1 = "dewald123/liu_pytorch_cnn/mvzfu01i"
+# mp2 = "dewald123/liu_pytorch_cnn/wub5kw1h"
+# mp3 = "dewald123/liu_pytorch_cnn/87hiw98o"
 
 th = 0.5
 model_paths = [mp1, mp2, mp3]
@@ -71,6 +71,7 @@ for i in range(len(model_paths)):
 for part in partitions:
     avg = data_dict[part].mean(axis=0)
     se = data_dict[part].sem(axis=0)
+    std = data_dict[part].std()
 
     metrics_df[f'{part}_avg'] = avg
     metrics_df[f'{part}_se'] = se

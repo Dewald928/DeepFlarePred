@@ -27,28 +27,28 @@ def interpret_model(model, input_df, backgroud_df, device='cpu'):
     model = model.to(device)
     input_tensor = input_tensor.to(device)
 
-    sal = Saliency(model)
+    # sal = Saliency(model)
     ig = IntegratedGradients(model)
     dl = DeepLift(model)
     input_x_gradient = InputXGradient(model)
-    gbp = GuidedBackprop(model)
+    # gbp = GuidedBackprop(model)
     # occ = Occlusion(model)
     abl = FeatureAblation(model)
     svs = ShapleyValueSampling(model)
 
-    attr_sal = sal.attribute(input_tensor, target=1)
+    # attr_sal = sal.attribute(input_tensor, target=1)
     attr_ig, delta_ig = ig.attribute(input_tensor, target=1,
                                      return_convergence_delta=True)
     attr_dl, delta_dl = dl.attribute(input_tensor, target=1,
                                      return_convergence_delta=True)
     attr_ixg = input_x_gradient.attribute(input_tensor, target=1)
-    attr_gbp = gbp.attribute(input_tensor, target=1)
+    # attr_gbp = gbp.attribute(input_tensor, target=1)
     # attr_occ = occ.attribute(input_tensor, target=1,
     #                          sliding_window_shapes=(1,))
     attr_abl = abl.attribute(input_tensor, target=1)
     attr_shap = svs.attribute(input_tensor, target=1)
 
-    return [attr_sal, attr_ig, attr_dl, attr_ixg, attr_gbp, attr_abl,
+    return [attr_ig, attr_dl, attr_ixg, attr_abl,
             attr_shap]
 
 
