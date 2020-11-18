@@ -64,29 +64,29 @@ for j, attr in enumerate(attr_name_list):
         else:
             continue
 
-# for j, attr in enumerate(attr_name_list):
-#     attr = attr.replace(' ', '')
-#     print(attr)
-#
-#     for i, feature in enumerate(all_f):
-#         print(feature)
-#
-#         ax = axes[i]
-#
-#         g = sns.lineplot(x=df_dict[attr].index, y=df_dict[attr].loc[:,feature],
-#                          data=df_dict[attr], ci=68, label=attr_name_list[j],
-#                          ax=ax)
-#         ax.axvspan(xmin=127, xmax=151, ymin=0, ymax=1, alpha=0.1, color='r')
-#         # ax.set_xscale("log")
-#         ax.set_title(feature)
-#         ax.set_ylabel('Importance')
-#         ax.set_xlabel('Sample')
-#         ax.get_legend().set_visible(False)
-#         ax.grid(True)
-#         plt.tight_layout()
-# plt.legend(title='Attribution method', loc='upper left', fontsize='x-small')
-# plt.savefig('../saved/results/attribution/CNN/atrr_avg_MLP.pdf')
-# plt.show()
+for j, attr in enumerate(attr_name_list):
+    attr = attr.replace(' ', '')
+    print(attr)
+
+    for i, feature in enumerate(all_f):
+        print(feature)
+
+        ax = axes[i]
+
+        g = sns.lineplot(x=df_dict[attr].index, y=df_dict[attr].loc[:,feature],
+                         data=df_dict[attr], ci=68, label=attr_name_list[j],
+                         ax=ax)
+        ax.axvspan(xmin=127, xmax=151, ymin=0, ymax=1, alpha=0.1, color='r')
+        # ax.set_xscale("log")
+        ax.set_title(feature)
+        ax.set_ylabel('Importance')
+        ax.set_xlabel('Sample')
+        ax.get_legend().set_visible(False)
+        ax.grid(True)
+        plt.tight_layout()
+plt.legend(title='Attribution method', loc='upper left', fontsize='x-small')
+plt.savefig('../saved/results/attribution/CNN/atrr_avg_MLP.pdf')
+plt.show()
 
 df_24_imp_avg = {'IntegratedGradients': e, 'DeepLIFT': e,
                  'InputxGradient': e, 'Ablation': e,

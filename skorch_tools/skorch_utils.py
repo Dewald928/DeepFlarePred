@@ -142,6 +142,6 @@ class MyCheckpoint(Checkpoint):
 
 
 def get_bss(net, ds, y=None):
-    y_prob = softmax(net.predict_proba(ds)[:,1])
-    bss = metric.get_bss(y_prob,y)
+    y_prob = net.predict_proba(ds)[:,1]
+    bss = metric.get_bss(y_prob, y)
     return bss
