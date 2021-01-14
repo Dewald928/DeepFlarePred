@@ -30,7 +30,7 @@ le = preprocessing.LabelEncoder()
 # model already trained
 threshold=0.5
 dump_path = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/NOAA_prediction/MLP/')
+    '~/Dropbox/_Meesters/figures/NOAA_prediction/MLP_not_relabelled/')
 # dump_path = os.path.expanduser(
 #     './saved/figures/dump/')
 if not os.path.exists(dump_path):
@@ -51,24 +51,24 @@ m5_flares = df[df['label'].str.match('Positive')]
 m5_flared_NOAA = m5_flares['NOAA'].unique()
 m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)]
 
-# model = model.to('cpu')
+model = model.to('cpu')
 
 # Predict probabilites
-# y_proba = metric.get_proba(model(torch.cat((X_train_data_tensor,
-#                                             X_valid_data_tensor,
-#                                             X_test_data_tensor),
-#                                            0).to('cpu')))
-l_train = pd.read_csv('./saved/results/TCN/train.csv')
-l_val = pd.read_csv('./saved/results/TCN/val.csv')
-l_test = pd.read_csv('./saved/results/TCN/test.csv')
-y_proba = pd.concat([l_train, l_val, l_test]).to_numpy()
+y_proba = metric.get_proba(model(torch.cat((X_train_data_tensor,
+                                            X_valid_data_tensor,
+                                            X_test_data_tensor),
+                                           0).to('cpu')))
+# l_train = pd.read_csv('./saved/results/TCN/train.csv')
+# l_val = pd.read_csv('./saved/results/TCN/val.csv')
+# l_test = pd.read_csv('./saved/results/TCN/test.csv')
+# y_proba = pd.concat([l_train, l_val, l_test]).to_numpy()
 
 
 y_pred = metric.to_labels(y_proba, threshold)
-# df['Prob'] = y_proba[:,1]
-# df['Pred'] = y_pred[:,1]
-df['Prob'] = y_proba
-df['Pred'] = y_pred
+df['Prob'] = y_proba[:,1]
+df['Pred'] = y_pred[:,1]
+# df['Prob'] = y_proba
+# df['Pred'] = y_pred
 df['Target'] = le.fit_transform(df['label'])
 
 # Plot flux and probability per AR
@@ -85,15 +85,18 @@ for i, noaa in enumerate(m5_flared_NOAA):
     axes[0].set(xlabel='Date')
     axes[0].set(ylim=(0,1))
     ax2 = axes[0].twinx()
-    lns2 = df_ar.plot(x="Date", y="Flux", ax=ax2, color="r",
-                          legend=False)
+    # lns2 = df_ar.plot(x="Date", y="Flux", ax=ax2, color="r",
+    #                       legend=False)
+    diff_idx = df_ar[df_ar['Flux'] >= 0.000001]['Flux'].diff(periods=-1).astype(bool).astype(int)
+    diff_idx = diff_idx[diff_idx == 1].index
+    lns2 = ax2.stem(df_ar['Date'].loc[diff_idx], df_ar['Flux'].loc[diff_idx], linefmt='--r', markerfmt='*r', use_line_collection=True)
     ax2.axvspan(xmin=df_ar['Date'].iloc[1], xmax=df_ar['Date'].iloc[-1],
                ymin=0.68,
                ymax=1, alpha=0.2,
                color='r')
     ax2.set(yscale='log')
     ax2.set(ylim=(1e-7, 1e-3))
-    ax2.set(ylabel=r'\text{Flux} [W/m^2]')
+    ax2.set(ylabel=r'Flux $[W/m^2]$')
     h1, l1 = axes[0].get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
     axes[0].legend(h1 + h2, l1 + l2, loc=4, bbox_to_anchor=(1.15, -0.25))
