@@ -2,14 +2,13 @@
 tag:
   desc: wandb tags
   value:
-    - Interpret
-    - Evaluation
+    - Relabelled
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 1
+  value: 30
 batch_size:
   desc: Size of each mini-batch
   value: 65536
@@ -26,7 +25,7 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.1
+  value: 0.5
 lr_scheduler:
   desc: if scheduler is on
   value: False
@@ -75,10 +74,10 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.71
+  value: 0.8
 weight_decay:
   desc: L2 regularizing
-  value: 0.0009
+  value: 0.0
 
 # Cross Validation
 liu_fold:
@@ -97,7 +96,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: False
+  value: True
 checkpoint:
   desc: should use network on best checkpoint?
   value: True
@@ -121,7 +120,7 @@ patience:
   value: 40
 training:
   desc: Trains models, else only tests
-  value: False
+  value: True
 model_name:
   desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/wq7vfdcf
   value: dewald123/liu_pytorch_MLP/16z66cnv
@@ -137,7 +136,7 @@ dataset:
   desc: which dataset to use \
     (z_minmax_all/z_minmax_train/z_train/z_p_transformed/Krynauw/ Synth/ \
     Sampled/ M5_only)
-  value: Liu/z_train/
+  value: Liu/z_train_relabelled/
 shuffle:
   desc: if data should be shuffled or not
   value: False
@@ -148,5 +147,5 @@ interpret:
   value: True
 evaluation:
   desc: Do final evaluation, pr roc threholds
-  value: False
+  value: True
 

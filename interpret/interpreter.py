@@ -11,6 +11,7 @@ import shap
 from utils import math_stuff
 
 import wandb
+import os
 
 
 def interpret_model(model, input_df, backgroud_df, device='cpu'):
@@ -141,8 +142,11 @@ def log_attrs(attrs_list, feature_list, attr_name_list, cfg):
         df_attr = pd.DataFrame(attrs_list[i].cpu().detach().numpy(),
                                columns=feature_list)
 
+        filepath_new = f'./saved/results/attribution/{cfg.model_type}'
+        if not os.path.exists(filepath_new):
+            os.makedirs(filepath_new)
         df_attr.to_csv(
-            f"./saved/results/attribution/{cfg.model_type}"
+            f"{filepath_new}"
             f"/{attr_name.replace(' ', '')}"
             f"_{cfg.seed}.csv", index=False)
     print('ja man lekker logs')

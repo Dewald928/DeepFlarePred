@@ -30,7 +30,7 @@ le = preprocessing.LabelEncoder()
 # model already trained
 threshold=0.5
 dump_path = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/NOAA_prediction/TCN/')
+    '~/Dropbox/_Meesters/figures/NOAA_prediction/MLP/')
 # dump_path = os.path.expanduser(
 #     './saved/figures/dump/')
 if not os.path.exists(dump_path):
@@ -93,7 +93,7 @@ for i, noaa in enumerate(m5_flared_NOAA):
                color='r')
     ax2.set(yscale='log')
     ax2.set(ylim=(1e-7, 1e-3))
-    ax2.set(ylabel='Flux')
+    ax2.set(ylabel=r'\text{Flux} [W/m^2]')
     h1, l1 = axes[0].get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
     axes[0].legend(h1 + h2, l1 + l2, loc=4, bbox_to_anchor=(1.15, -0.25))

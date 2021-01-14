@@ -19,10 +19,9 @@ Activate environment:
 
 ```conda activate DeepFlarePred```
 
-If you have errors with the predefined validation set do:
+If you have errors with the predefined validation set do get dev branch 0.9:
 
 ```pip install git+https://github.com/skorch-dev/skorch.git```
-```pip install git+https://github.com/skorch-dev/skorch.git@6508d88c4044bcdb2d944081d437c706e346354a```
 
 ### Download and prepare data
 The Liu data should be downloaded from [Liu dataset](https://github.com/JasonTLWang/LSTM-flare-prediction).
