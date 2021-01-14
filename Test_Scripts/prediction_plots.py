@@ -30,12 +30,12 @@ le = preprocessing.LabelEncoder()
 # model already trained
 threshold=0.5
 dump_path = os.path.expanduser(
-    '~/Dropbox/_Meesters/figures/NOAA_prediction/MLP_not_relabelled/')
+    '~/Dropbox/_Meesters/figures/NOAA_prediction/MLP_relabelled/')
 # dump_path = os.path.expanduser(
 #     './saved/figures/dump/')
 if not os.path.exists(dump_path):
     os.makedirs(dump_path)
-filepath = './Data/Liu/z_train/'
+filepath = './Data/Liu/z_train_relabelled/'
 df_train = pd.read_csv(filepath + 'normalized_training.csv')
 df_val = pd.read_csv(filepath + 'normalized_validation.csv')
 df_test = pd.read_csv(filepath + 'normalized_testing.csv')
@@ -104,7 +104,7 @@ for i, noaa in enumerate(m5_flared_NOAA):
     # axes 2
     df_ar.plot(x="Date", y="Pred", ax=axes[1], legend=False)
     df_ar.plot(x="Date", y="Target", ax=axes[1], color='r', legend=False)
-    axes[1].legend(loc=4,bbox_to_anchor=(1.15, -0.25))
+    axes[1].legend(loc=4, bbox_to_anchor=(1.15, -0.25))
     axes[1].set(title=f'NOAA: {noaa}')
     axes[1].set(ylabel='Prediction')
     plt.tight_layout()

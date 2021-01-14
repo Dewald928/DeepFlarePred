@@ -39,10 +39,10 @@ for split in splits:
     df = pd.read_csv(filepath + 'normalized_{}.csv'.format(split))
 
     # get positive labels
-    df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%dT%H:%M:%S.%fZ')
+    df['date'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%dT%H:%M:%S.%fZ')
     m5_flares = df[df['label'].str.match('Positive')]
     m5_flared_NOAA = m5_flares['NOAA'].unique()
-    m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)].sort_values(by=['NOAA','timestamp'])
+    m5_flares_data = df[df['NOAA'].isin(m5_flared_NOAA)].sort_values(by=['NOAA','date'])
 
     # check if spans 24hours for that noaa
     # for each flare event
@@ -52,8 +52,8 @@ for split in splits:
         current_ar_df = m5_flares_data[m5_flares_data['NOAA'] == noaa_ar]
         time_before = peak_time - timedelta(hours=24)
         # get samples between peak and 24h before, label as positive
-        mask = ((current_ar_df['timestamp'] > time_before) &
-             (current_ar_df['timestamp'] < peak_time))
+        mask = ((current_ar_df['date'] > time_before) &
+             (current_ar_df['date'] < peak_time))
         time_before_flare_df = current_ar_df.loc[mask]
         df.loc[df.index[time_before_flare_df.index], 'label'] = \
             'Positive'
@@ -62,4 +62,5 @@ for split in splits:
     filepath_new = '../Data/Liu/z_train_relabelled/'
     if not os.path.exists(filepath_new):
         os.makedirs(filepath_new)
+    df = df.drop(columns=['date'])
     df.to_csv(filepath_new + f'normalized_{split}.csv', index=False)

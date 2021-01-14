@@ -2,13 +2,13 @@
 tag:
   desc: wandb tags
   value:
-    - Relabelled
+    - Debug
 model_type:
   desc: which model to use (CNN/TCN/MLP/RNN)
   value: MLP
 epochs:
   desc: Number of epochs to train over
-  value: 30
+  value: 4
 batch_size:
   desc: Size of each mini-batch
   value: 65536
