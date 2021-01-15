@@ -117,7 +117,7 @@ def train(model, device, train_loader, optimizer, epoch, criterion, cfg,
         confusion_matrix.numpy(), nclass)
 
     # calculate predicted values
-    yhat = infer_model(model, device, train_loader)
+    yhat = infer_model(model, device, train_loader)[:,1]
 
     # PR curves on train
     f1, pr_auc = metric.get_pr_auc(yhat, train_loader.dataset.targets)[2:4]
@@ -173,7 +173,7 @@ def validate(model, device, valid_loader, criterion, epoch, best_tss,
         confusion_matrix.numpy(), nclass)
 
     # calculate predicted values
-    yhat = infer_model(model, device, valid_loader)
+    yhat = infer_model(model, device, valid_loader)[:,1]
 
     # PR curves on train
     f1, pr_auc = metric.get_pr_auc(yhat, valid_loader.dataset.targets)[2:4]
@@ -552,8 +552,6 @@ if __name__ == '__main__':
         X_train_data = X_train.astype(np.float32)
         y_train_tr = y_train.astype(np.int64)
 
-
-
     if cfg.model_type == 'MLP':
         X_train_data = np.reshape(X_train_data,
                                   (len(X_train_data), cfg.n_features))
@@ -650,6 +648,8 @@ if __name__ == '__main__':
     # noinspection PyArgumentList
     criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(class_weights).to(
         device))  # weighted cross entropy
+    scheduler = None
+
     if cfg.optim == 'SGD':
         optimizer = torch.optim.SGD(model.parameters(), lr=cfg.learning_rate,
                                     weight_decay=cfg.weight_decay,
@@ -700,7 +700,6 @@ if __name__ == '__main__':
                                                     train_loader),
                                                 epochs=cfg.epochs,
                                                 cycle_momentum=False)
-
 
     # print model parameters
 

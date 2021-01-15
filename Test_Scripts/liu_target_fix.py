@@ -55,8 +55,8 @@ for split in splits:
         mask = ((current_ar_df['date'] > time_before) &
              (current_ar_df['date'] < peak_time))
         time_before_flare_df = current_ar_df.loc[mask]
-        df.loc[df.index[time_before_flare_df.index], 'label'] = \
-            'Positive'
+        df.loc[df.index[time_before_flare_df.index], 'label'] = 'Positive'
+        df.loc[df.index[time_before_flare_df.index], 'flare'] = listofresults['goes_class'].iloc[i]
 
     # save new dataset
     filepath_new = '../Data/Liu/z_train_relabelled/'

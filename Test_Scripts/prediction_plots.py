@@ -89,7 +89,7 @@ for i, noaa in enumerate(m5_flared_NOAA):
     #                       legend=False)
     diff_idx = df_ar[df_ar['Flux'] >= 0.000001]['Flux'].diff(periods=-1).astype(bool).astype(int)
     diff_idx = diff_idx[diff_idx == 1].index
-    lns2 = ax2.stem(df_ar['Date'].loc[diff_idx], df_ar['Flux'].loc[diff_idx], linefmt='--r', markerfmt='*r', use_line_collection=True)
+    lns2 = ax2.stem(df_ar['Date'].loc[diff_idx], df_ar['Flux'].loc[diff_idx], linefmt='--r', markerfmt='*r', use_line_collection=True, label='Flux')
     ax2.axvspan(xmin=df_ar['Date'].iloc[1], xmax=df_ar['Date'].iloc[-1],
                ymin=0.68,
                ymax=1, alpha=0.2,
