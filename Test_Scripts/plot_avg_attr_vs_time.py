@@ -77,30 +77,37 @@ for j, attr in enumerate(attr_name_list):
                          data=df_dict[attr], ci=68, label=attr_name_list[j],
                          ax=ax)
         ax.axvspan(xmin=127, xmax=151, ymin=0, ymax=1, alpha=0.1, color='r')
-        # ax.set_xscale("log")
         ax.set_title(feature)
-        ax.set_ylabel('Importance')
-        ax.set_xlabel('Sample')
+        # ax.set_ylabel('Importance')
+        # ax.set_xlabel('Sample')
         ax.get_legend().set_visible(False)
         ax.grid(True)
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
         plt.tight_layout()
+# plt.gca().axes.get_xaxis().set_visible(False)
+# plt.gca().axes.get_yaxis().set_visible(False)
+plt.tight_layout()
+fig.text(0.5, 0.0, 'Sample', ha='center')
+fig.text(0, 0.5, 'Importance', va='center', rotation='vertical')
+
 plt.legend(title='Attribution method', loc='upper left', fontsize='x-small')
-plt.savefig('../saved/results/attribution/CNN/atrr_avg_MLP.pdf')
+plt.savefig('../saved/results/attribution/MLP/attr_avg.pdf')
 plt.show()
 
-df_24_imp_avg = {'IntegratedGradients': e, 'DeepLIFT': e,
-                 'InputxGradient': e, 'Ablation': e,
-                 'ShapleyValueSampling': e}
-df_24_imp_std = {'IntegratedGradients': e, 'DeepLIFT': e,
-                 'InputxGradient': e, 'Ablation': e,
-                 'ShapleyValueSampling': e}
-for j, attr in enumerate(attr_name_list):
-    name = attr_name_list[j].replace(' ', '')
-    df_24_imp_avg[name] = df_24_imp[name].mean().sort_values(ascending=False)
-    df_24_imp_std[name] = df_24_imp[name].std()[df_24_imp_avg[name].index.to_list()]
-    plt.bar(df_24_imp_avg[name].index.values, df_24_imp_avg[name], yerr=df_24_imp_std[name], label=name)
-    plt.xticks(rotation=90)
-    plt.legend()
-    plt.show()
+# df_24_imp_avg = {'IntegratedGradients': e, 'DeepLIFT': e,
+#                  'InputxGradient': e, 'Ablation': e,
+#                  'ShapleyValueSampling': e}
+# df_24_imp_std = {'IntegratedGradients': e, 'DeepLIFT': e,
+#                  'InputxGradient': e, 'Ablation': e,
+#                  'ShapleyValueSampling': e}
+# for j, attr in enumerate(attr_name_list):
+#     name = attr_name_list[j].replace(' ', '')
+#     df_24_imp_avg[name] = df_24_imp[name].mean().sort_values(ascending=False)
+#     df_24_imp_std[name] = df_24_imp[name].std()[df_24_imp_avg[name].index.to_list()]
+#     plt.bar(df_24_imp_avg[name].index.values, df_24_imp_avg[name], yerr=df_24_imp_std[name], label=name)
+#     plt.xticks(rotation=90)
+#     plt.legend()
+#     plt.show()
 
 

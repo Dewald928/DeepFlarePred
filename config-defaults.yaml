@@ -11,7 +11,7 @@ epochs:
   value: 500
 batch_size:
   desc: Size of each mini-batch
-  value: 65536
+  value: 16384
 momentum:
   desc: momentum for SGD
   value: 0.9
@@ -25,7 +25,7 @@ n_features:
 # Learning rate
 learning_rate:
   desc: initial learning rate
-  value: 0.5
+  value: 0.4
 lr_scheduler:
   desc: if scheduler is on
   value: True
@@ -77,7 +77,7 @@ hidden_units:
 # Regularizer
 dropout:
   desc: dropout applied to layers
-  value: 0.8
+  value: 0.7
 weight_decay:
   desc: L2 regularizing
   value: 0.0
@@ -99,7 +99,7 @@ n_splits:
 # Environment
 skorch:
   desc: if skorch should be used to train (Faster, fewer metrics)
-  value: True
+  value: False
 checkpoint:
   desc: should use network on best checkpoint?
   value: True
@@ -108,7 +108,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 2
+  value: 3
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -123,10 +123,10 @@ patience:
   value: 40
 training:
   desc: Trains models, else only tests
-  value: True
+  value: False
 model_name:
   desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/wq7vfdcf
-  value: dewald123/liu_pytorch_MLP/16z66cnv
+  value: dewald123/liu_pytorch_MLP/22t0s2o6
 num_workers:
   desc: number of gpu workers
   value: 9
@@ -147,8 +147,8 @@ shuffle:
 # Interpretation
 interpret:
   desc: activate captum/SHAP attribution methods
-  value: False
+  value: True
 evaluation:
   desc: Do final evaluation, pr roc threholds
-  value: False
+  value: True
 
