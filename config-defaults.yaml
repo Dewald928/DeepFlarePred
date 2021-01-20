@@ -28,7 +28,10 @@ learning_rate:
   value: 0.5
 lr_scheduler:
   desc: if scheduler is on
-  value: False
+  value: True
+reduce_on_plateau:
+  desc: if reduce on plateu true
+  value: True
 lr_finder:
   desc: is lr finder should run
   value: False
@@ -40,7 +43,7 @@ min_lr:
   value: 0.00001
 max_lr:
   desc: cyclic lr max value
-  value: 0.3
+  value: 1
 lr_metric:
   desc: Loss or TSS (loss is better, or is it??)
   value: TSS
@@ -105,7 +108,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 1
+  value: 2
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -136,7 +139,7 @@ dataset:
   desc: which dataset to use \
     (z_minmax_all/z_minmax_train/z_train/z_p_transformed/Krynauw/ Synth/ \
     Sampled/ M5_only)
-  value: Liu/z_train/
+  value: Liu/z_train_relabelled/
 shuffle:
   desc: if data should be shuffled or not
   value: False
@@ -144,8 +147,8 @@ shuffle:
 # Interpretation
 interpret:
   desc: activate captum/SHAP attribution methods
-  value: True
+  value: False
 evaluation:
   desc: Do final evaluation, pr roc threholds
-  value: True
+  value: False
 

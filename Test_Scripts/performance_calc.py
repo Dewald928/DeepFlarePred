@@ -14,14 +14,26 @@ api = wandb.Api()
 # mp1 = "dewald123/liu_pytorch_MLP/a01s2pba"
 # mp2 = "dewald123/liu_pytorch_MLP/7m1ej35n"
 # mp3 = "dewald123/liu_pytorch_MLP/2jxi0lk6"
+# MLP OCLR RELABELLED
+# mp1 = "dewald123/liu_pytorch_MLP/z9oq59pc"
+# mp2 = "dewald123/liu_pytorch_MLP/vlq1apay"
+# mp3 = "dewald123/liu_pytorch_MLP/t9xb3vp8"
 # mlp 2_500
 # mp1 = "dewald123/liu_pytorch_MLP/662bk65k"
 # mp2 = "dewald123/liu_pytorch_MLP/n9nofrxj"
 # mp3 = "dewald123/liu_pytorch_MLP/z6u7232a"
+# mlp 2_500 relabelled
+mp1 = "dewald123/liu_pytorch_MLP/osl2u52s"
+mp2 = "dewald123/liu_pytorch_MLP/6mmd4m7x"
+mp3 = "dewald123/liu_pytorch_MLP/mukcxkol"
 # MLP 1_100
-mp1 = "dewald123/liu_pytorch_MLP/16z66cnv"
-mp2 = "dewald123/liu_pytorch_MLP/bugqi272"
-mp3 = "dewald123/liu_pytorch_MLP/nzgx1hv5"
+# mp1 = "dewald123/liu_pytorch_MLP/16z66cnv"
+# mp2 = "dewald123/liu_pytorch_MLP/bugqi272"
+# mp3 = "dewald123/liu_pytorch_MLP/nzgx1hv5"
+# MLP 1_100 relabelled
+# mp1 = "dewald123/liu_pytorch_MLP/05gcxxjl"
+# mp2 = "dewald123/liu_pytorch_MLP/ohw3rt3f"
+# mp3 = "dewald123/liu_pytorch_MLP/ynlh3izo"
 # CNN 1_40_7
 # mp1 = "dewald123/liu_pytorch_cnn/mvzfu01i"
 # mp2 = "dewald123/liu_pytorch_cnn/wub5kw1h"

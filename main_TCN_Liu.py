@@ -832,8 +832,8 @@ if __name__ == '__main__':
 
 
         if cfg.early_stop:
-            earlystop = EarlyStopping(monitor='train_loss',
-                                      lower_is_better=True,
+            earlystop = EarlyStopping(monitor='valid_tss',
+                                      lower_is_better=False,
                                       patience=cfg.patience)
         else:
             earlystop = None
@@ -882,13 +882,20 @@ if __name__ == '__main__':
                                       # div_factor=25,
                                       # total_steps=5000
                                       )
+            if cfg.reduce_on_plateau:
+                lrscheduler = LRScheduler(policy=lr_scheduler.ReduceLROnPlateau,
+                                          monitor='valid_tss',
+                                          mode='max',
+                                          factor=0.5,
+                                          verbose=True)
+
             # plot lr over iterations
-            lrs = lrscheduler.simulate(cfg.epochs*len(train_loader),
-                                       cfg.max_lr)
-            plt.plot(lrs)
-            plt.ylabel('Learning rate')
-            plt.xlabel('Iterations')
-            plt.show()
+            # lrs = lrscheduler.simulate(cfg.epochs*len(train_loader),
+            #                            cfg.max_lr)
+            # plt.plot(lrs)
+            # plt.ylabel('Learning rate')
+            # plt.xlabel('Iterations')
+            # plt.show()
             # for i in range(len(lrs)):
             #     wandb.log({'Learning Rate': lrs[i], 'Iterations': i})
         else:
