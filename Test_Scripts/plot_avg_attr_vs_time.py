@@ -40,6 +40,7 @@ attr_name_list = ["Integrated Gradients", "DeepLIFT",
                   "Shapley Value Sampling"]
 
 directory = "../saved/results/attribution/MLP/"
+drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/attribution/')
 fig, axes = plt.subplots(10, 4, figsize=(15, 20), sharex=True)
 axes = axes.reshape(-1)
 df_list = []

@@ -115,7 +115,7 @@ def plot_all_attr(attrs_list, feature_list, attr_name_list):
     plt.show()
 
 
-def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
+def plot_attr_vs_time(attrs_list, feature_list, attr_name_list, flaretime):
     n0, n1 = math_stuff.get_largest_primes(len(feature_list))
     fig, axes = plt.subplots(n0, n1, figsize=(20, 20), sharex=True)
     axes = axes.reshape(-1)
@@ -126,15 +126,15 @@ def plot_attr_vs_time(attrs_list, feature_list, attr_name_list):
             attr = attr if len(attr.shape) == 2 else attr[:, :, -1]
             importance = attr[:,i].cpu().detach().numpy()
             axes[i].plot(importance, label=attr_name_list[j])
-            axes[i].axvspan(xmin=128,
-                            xmax=152, ymin=0, ymax=1,
+            axes[i].axvspan(xmin=flaretime-24,
+                            xmax=flaretime, ymin=0, ymax=1,
                             alpha=0.1, color='r')
     plt.legend()
     wandb.log({'Attribution over Time': wandb.Image(fig)})
     plt.show()
 
 
-def log_attrs(attrs_list, feature_list, attr_name_list, cfg):
+def log_attrs(attrs_list, feature_list, attr_name_list, cfg, NOAA):
 
     for i, attr_name in enumerate(attr_name_list):
         attrs_list[i] = attrs_list[i] if len(attrs_list[i].shape) == 2 else \
@@ -142,7 +142,7 @@ def log_attrs(attrs_list, feature_list, attr_name_list, cfg):
         df_attr = pd.DataFrame(attrs_list[i].cpu().detach().numpy(),
                                columns=feature_list)
 
-        filepath_new = f'./saved/results/attribution/{cfg.model_type}'
+        filepath_new = f'./saved/results/attribution/{cfg.model_type}/{NOAA}'
         if not os.path.exists(filepath_new):
             os.makedirs(filepath_new)
         df_attr.to_csv(

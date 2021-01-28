@@ -1090,17 +1090,18 @@ if __name__ == '__main__':
         '''
     if cfg.interpret:
         df = pd.read_csv(filepath + 'normalized_testing.csv')
+        caseNOAA = 12297
         if not os.path.exists(filepath + 'Case_Study/'):
             os.makedirs(filepath + 'Case_Study/')
-        case = df[df['NOAA'] == 12673]
+        case = df[df['NOAA'] == caseNOAA]
         case2 = df[df['NOAA'] == 12252]
         # case = case.iloc[len(case)-len(case2):,:]
-        case.to_csv(filepath + 'Case_Study/AR12673.csv', index=False)
+        case.to_csv(filepath + f'Case_Study/AR{caseNOAA}.csv', index=False)
         case2.to_csv(filepath + 'Case_Study/AR12252.csv', index=False)
 
         # get samples to interpret
         input_df, _ = data_loader.load_data(
-            datafile=filepath+'Case_Study/AR12673.csv',
+            datafile=filepath+f'Case_Study/AR{caseNOAA}.csv',
             flare_label=cfg.flare_label, series_len=cfg.seq_len,
             start_feature=start_feature, n_features=cfg.n_features,
             mask_value=mask_value, feature_list=feature_list)
@@ -1129,8 +1130,8 @@ if __name__ == '__main__':
                           "Shapley Value Sampling"]
 
         # interpreter.plot_all_attr(attrs_list, feature_list, attr_name_list)
-        interpreter.plot_attr_vs_time(attrs_list, feature_list, attr_name_list)
-        interpreter.log_attrs(attrs_list, feature_list, attr_name_list, cfg)
+        interpreter.plot_attr_vs_time(attrs_list, feature_list, attr_name_list, 56) #152
+        interpreter.log_attrs(attrs_list, feature_list, attr_name_list, cfg, caseNOAA)
 
         # visualize interpretation
         # interpreter.visualize_importance(np.array(

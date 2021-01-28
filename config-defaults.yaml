@@ -108,7 +108,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 3
+  value: 4
 clip:
   desc: gradient clipping value (not skorch)
   value: -1
@@ -126,7 +126,7 @@ training:
   value: False
 model_name:
   desc: The model used for evaluation (if training disabled, 1_100_65536_9e-2) dewald123/liu_pytorch_MLP/wq7vfdcf
-  value: dewald123/liu_pytorch_MLP/22t0s2o6
+  value: dewald123/liu_pytorch_MLP/yl0307vc
 num_workers:
   desc: number of gpu workers
   value: 9
@@ -150,5 +150,5 @@ interpret:
   value: True
 evaluation:
   desc: Do final evaluation, pr roc threholds
-  value: True
+  value: False
 
