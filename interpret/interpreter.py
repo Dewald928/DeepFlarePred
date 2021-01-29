@@ -130,6 +130,7 @@ def plot_attr_vs_time(attrs_list, feature_list, attr_name_list, flaretime):
                             xmax=flaretime, ymin=0, ymax=1,
                             alpha=0.1, color='r')
     plt.legend()
+    plt.tight_layout()
     wandb.log({'Attribution over Time': wandb.Image(fig)})
     plt.show()
 

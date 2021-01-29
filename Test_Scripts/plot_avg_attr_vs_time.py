@@ -29,18 +29,19 @@ listofuncorrfeatures = ['TOTUSJH', 'SAVNCPP', 'ABSNJZH', 'TOTPOT',
                         'TOTFY', 'logEdec', 'EPSZ', 'MEANGBH', 'MEANJZD',
                         'Xhis1d', 'Xdec', 'Xhis', 'EPSX', 'EPSY', 'Bhis',
                         'Bdec', 'Bhis1d']  # 32
+custom_features = []
 all_f = sharps + lorentz + history_features
-bad_features = ['MEANPOT', 'Mhis1d', 'Edec', 'Xhis1d', 'Bdec', 'Bhis',
-                'Bhis1d']
 # feature_list = [x for x in all if x not in bad_features] #
 # feature_list = feature_names[5:]
 # feature_list = all_f
 attr_name_list = ["Integrated Gradients", "DeepLIFT",
                   "Input x Gradient", "Ablation",
                   "Shapley Value Sampling"]
-
-directory = "../saved/results/attribution/MLP/"
-drop_path = os.path.expanduser('~/Dropbox/_Meesters/figures/attribution/')
+NOAA = 12241
+directory = f"../saved/results/attribution/MLP/{NOAA}/"
+drop_path = os.path.expanduser(f'~/Dropbox/_Meesters/figures/attribution/{NOAA}/')
+if not os.path.exists(drop_path):
+    os.makedirs(drop_path)
 fig, axes = plt.subplots(10, 4, figsize=(15, 20), sharex=True)
 axes = axes.reshape(-1)
 df_list = []
@@ -89,7 +90,7 @@ fig.text(0.5, 0.0, 'Sample', ha='center')
 fig.text(0, 0.5, 'Importance', va='center', rotation='vertical')
 
 plt.legend(title='Attribution method', loc='upper left', fontsize='x-small')
-plt.savefig('../saved/results/attribution/MLP/attr_avg.pdf')
+plt.savefig(f'{drop_path}/attr_{NOAA}_avg.pdf')
 plt.show()
 
 # df_24_imp_avg = {'IntegratedGradients': e, 'DeepLIFT': e,

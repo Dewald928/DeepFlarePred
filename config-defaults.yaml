@@ -108,7 +108,7 @@ flare_label:
   value: M5
 seed:
   desc: random seed
-  value: 4
+  value: 1
 clip:
   desc: gradient clipping value (not skorch)
   value: -1

@@ -1090,7 +1090,7 @@ if __name__ == '__main__':
         '''
     if cfg.interpret:
         df = pd.read_csv(filepath + 'normalized_testing.csv')
-        caseNOAA = 12297
+        caseNOAA = 12673
         if not os.path.exists(filepath + 'Case_Study/'):
             os.makedirs(filepath + 'Case_Study/')
         case = df[df['NOAA'] == caseNOAA]
@@ -1130,7 +1130,7 @@ if __name__ == '__main__':
                           "Shapley Value Sampling"]
 
         # interpreter.plot_all_attr(attrs_list, feature_list, attr_name_list)
-        interpreter.plot_attr_vs_time(attrs_list, feature_list, attr_name_list, 56) #152
+        interpreter.plot_attr_vs_time(attrs_list, feature_list, attr_name_list, 151) #152
         interpreter.log_attrs(attrs_list, feature_list, attr_name_list, cfg, caseNOAA)
 
         # visualize interpretation
